@@ -1,0 +1,233 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum StreamStatus {
+  LIVE
+  OFFLINE
+  SCHEDULED
+  RESTRICTED
+  UNKNOWN
+}
+
+enum MediaType {
+  LIVE_VIDEO
+  SNAPSHOT
+  TIMELAPSE
+  RECORDED
+}
+
+model Country {
+  id      String @id @default(cuid())
+  isoCode String @unique @map("iso_code")
+  name    String
+  slug    String @unique
+  flag    String @default("🌍")
+  cities  City[]
+
+  @@map("countries")
+}
+
+model City {
+  id        String   @id @default(cuid())
+  countryId String   @map("country_id")
+  name      String
+  slug      String
+  lat       Float
+  lng       Float
+  timezone  String
+  country   Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  webcams   Webcam[]
+
+  @@unique([countryId, slug])
+  @@map("cities")
+}
+
+model Category {
+  id      String           @id @default(cuid())
+  slug    String           @unique
+  name    String
+  webcams WebcamCategory[]
+
+  @@map("categories")
+}
+
+model Provider {
+  id       String   @id @default(cuid())
+  name     String
+  type     String   // "youtube_channel" | "tourism_board" | "hotel" | "observatory"
+  website  String?
+  contact  String?  // Never exposed in public APIs
+  verified Boolean  @default(false)
+  webcams  Webcam[]
+
+  @@map("providers")
+}
+
+model Webcam {
+  id           String           @id @default(cuid())
+  providerId   String?          @map("provider_id")
+  cityId       String           @map("city_id")
+  slug         String           @unique
+  title        String
+  description  String
+  bestTime     String?          @map("best_time")
+  lat          Float
+  lng          Float
+  reviewStatus ReviewStatus     @default(PENDING) @map("review_status")
+  visibility   String           @default("PUBLIC")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  provider   Provider?        @relation(fields: [providerId], references: [id])
+  city       City             @relation(fields: [cityId], references: [id])
+  categories WebcamCategory[]
+  streams    Stream[]
+  licenses   License[]
+  reports    Report[]
+
+  @@index([reviewStatus, cityId])
+  @@index([lat, lng])
+  @@map("webcams")
+}
+
+model WebcamCategory {
+  webcamId   String   @map("webcam_id")
+  categoryId String   @map("category_id")
+  webcam     Webcam   @relation(fields: [webcamId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([webcamId, categoryId])
+  @@map("webcam_categories")
+}
+
+model Stream {
+  id            String        @id @default(cuid())
+  webcamId      String        @map("webcam_id")
+  sourceType    String        @map("source_type") // "youtube" | "official_embed"
+  externalId    String        @map("external_id")
+  embedUrl      String        @map("embed_url")
+  sourceUrl     String        @map("source_url")
+  mediaType     MediaType     @default(LIVE_VIDEO) @map("media_type")
+  status        StreamStatus  @default(UNKNOWN)
+  lastCheckedAt DateTime?     @map("last_checked_at")
+  isPrimary     Boolean       @default(true) @map("is_primary")
+
+  webcam       Webcam        @relation(fields: [webcamId], references: [id], onDelete: Cascade)
+  healthChecks HealthCheck[]
+
+  @@unique([sourceType, externalId])
+  @@index([status, lastCheckedAt])
+  @@map("streams")
+}
+
+model License {
+  id             String    @id @default(cuid())
+  webcamId       String    @map("webcam_id")
+  permissionType String    @map("permission_type")
+  evidence       String    // Never exposed in public APIs
+  verifiedAt     DateTime  @default(now()) @map("verified_at")
+  expiresAt      DateTime? @map("expires_at")
+  status         String    @default("ACTIVE")
+
+  webcam Webcam @relation(fields: [webcamId], references: [id], onDelete: Cascade)
+
+  @@map("licenses")
+}
+
+model DiscoveryJob {
+  id        String   @id @default(cuid())
+  source    String
+  query     String
+  status    String   @default("IDLE")
+  attempts  Int      @default(0)
+  quotaCost Int      @default(0) @map("quota_cost")
+  lastRunAt DateTime? @map("last_run_at")
+  nextRunAt DateTime @default(now()) @map("next_run_at")
+
+  @@map("discovery_jobs")
+}
+
+model Candidate {
+  id           String       @id @default(cuid())
+  source       String
+  externalId   String       @map("external_id")
+  title        String
+  countryName  String       @map("country_name")
+  cityName     String       @map("city_name")
+  categorySlug String       @map("category_slug")
+  embedUrl     String       @map("embed_url")
+  sourceUrl    String       @map("source_url")
+  licenseNote  String       @map("license_note")
+  privacyNote  String       @map("privacy_note")
+  reviewStatus ReviewStatus @default(PENDING) @map("review_status")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  @@unique([source, externalId])
+  @@map("candidates")
+}
+
+model Submission {
+  id          String       @id @default(cuid())
+  title       String
+  category    String
+  location    String
+  sourceUrl   String       @map("source_url")
+  operator    String?
+  contact     String       // Never exposed in public APIs
+  declaration Boolean      @default(false)
+  status      ReviewStatus @default(PENDING)
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@map("submissions")
+}
+
+model HealthCheck {
+  id        String       @id @default(cuid())
+  streamId  String       @map("stream_id")
+  status    StreamStatus
+  reason    String?
+  checkedAt DateTime     @default(now()) @map("checked_at")
+
+  stream Stream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+
+  @@map("health_checks")
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  webcamId    String   @map("webcam_id")
+  type        String
+  description String?
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  webcam Webcam @relation(fields: [webcamId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actor      String
+  action     String
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id")
+  detail     String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}

@@ -1,0 +1,83 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { Globe, Shuffle, Search } from "lucide-react";
+import { useState } from "react";
+
+export function Navbar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = query.trim();
+    if (trimmed) {
+      router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+    } else {
+      router.push("/search");
+    }
+  };
+
+  const navLink = (href: string, label: string) => {
+    const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+    return (
+      <Link
+        href={href}
+        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+          active
+            ? "bg-slate-100 text-slate-900"
+            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+        }`}
+      >
+        {label}
+      </Link>
+    );
+  };
+
+  return (
+    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+        <Link href="/" className="flex items-center gap-2.5 shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
+            <Globe className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-semibold text-sm tracking-tight leading-none flex items-center gap-1.5 text-slate-900">
+              LiveCam Global
+              <span className="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-normal border border-slate-200">
+                MVP
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 mt-0.5">Verified Live Views</div>
+          </div>
+        </Link>
+
+        <form onSubmit={handleSearch} className="hidden md:flex items-center flex-1 max-w-md relative">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search city, country, landmark, or category..."
+            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+          />
+        </form>
+
+        <nav className="flex items-center gap-1 sm:gap-1.5">
+          {navLink("/", "Discover")}
+          {navLink("/countries", "Map & Countries")}
+          <span className="hidden sm:inline-flex">{navLink("/submit", "Submit")}</span>
+          <Link
+            href="/random"
+            className="ml-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-sm"
+          >
+            <Shuffle className="w-3.5 h-3.5" />
+            Random
+          </Link>
+        </nav>
+      </div>
+    </header>
+  );
+}
