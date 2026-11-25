@@ -19,8 +19,8 @@ export function WorldMapClient({ webcams }: { webcams: PublicWebcam[] }) {
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-slate-900">Global Live Webcam Map</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Global Live Webcam Map</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Click any marker to preview local weather and open the official live stream
           </p>
         </div>
@@ -32,7 +32,7 @@ export function WorldMapClient({ webcams }: { webcams: PublicWebcam[] }) {
               className={`px-2.5 py-1 rounded-lg text-xs font-medium border capitalize ${
                 catFilter === cat
                   ? "bg-blue-600 text-white border-transparent"
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               }`}
             >
               {cat}
@@ -42,14 +42,14 @@ export function WorldMapClient({ webcams }: { webcams: PublicWebcam[] }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div className="lg:col-span-8 rounded-2xl border border-slate-200 bg-white overflow-hidden min-h-[420px] flex flex-col shadow-sm">
-          <div className="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between text-xs bg-slate-50 text-slate-500">
+        <div className="lg:col-span-8 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden min-h-[420px] flex flex-col shadow-sm">
+          <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400">
             <span>Interactive Marker Map · {filtered.length} active locations</span>
-            <span className="inline-flex items-center gap-1 text-slate-600">
+            <span className="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Live
             </span>
           </div>
-          <div className="relative flex-1 bg-sky-50/40 p-4 flex items-center justify-center">
+          <div className="relative flex-1 bg-sky-50/40 dark:bg-slate-950/60 p-4 flex items-center justify-center">
             <svg viewBox="0 0 1000 500" className="w-full h-auto max-h-[420px] select-none">
               <defs>
                 <pattern id="mapgrid" width="50" height="50" patternUnits="userSpaceOnUse">
@@ -107,15 +107,15 @@ export function WorldMapClient({ webcams }: { webcams: PublicWebcam[] }) {
           </div>
         </div>
 
-        <div className="lg:col-span-4 rounded-2xl border border-slate-200 bg-white p-5 flex flex-col justify-between gap-4 shadow-sm">
+        <div className="lg:col-span-4 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 flex flex-col justify-between gap-4 shadow-sm">
           {active && (
             <div className="space-y-3">
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-slate-500 dark:text-slate-400">
                 {active.country.flag} {active.country.name} · {active.city.name}
               </div>
-              <h3 className="text-base font-semibold text-slate-900">{active.title}</h3>
-              <p className="text-xs text-slate-500 line-clamp-3">{active.description}</p>
-              <div className="text-xs text-slate-600">{active.weatherSummary}</div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">{active.title}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3">{active.description}</p>
+              <div className="text-xs text-slate-600 dark:text-slate-300">{active.weatherSummary}</div>
               <Link
                 href={`/webcams/${active.slug}`}
                 className="block w-full text-center py-2 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700"
@@ -125,21 +125,21 @@ export function WorldMapClient({ webcams }: { webcams: PublicWebcam[] }) {
             </div>
           )}
 
-          <div className="pt-4 border-t border-slate-100 space-y-1.5 max-h-48 overflow-y-auto">
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-1.5 max-h-48 overflow-y-auto">
             {filtered.map((cam) => (
               <button
                 key={cam.id}
                 onClick={() => setSelectedSlug(cam.slug)}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-left text-xs flex items-center justify-between ${
                   active?.slug === cam.slug
-                    ? "bg-blue-50 text-blue-700 font-medium"
-                    : "text-slate-700 hover:bg-slate-50"
+                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 font-medium"
+                    : "text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
                 }`}
               >
                 <span>
                   {cam.city.name}, {cam.country.name}
                 </span>
-                <span className="text-slate-400">{cam.categories[0]?.name}</span>
+                <span className="text-slate-400 dark:text-slate-500">{cam.categories[0]?.name}</span>
               </button>
             ))}
           </div>

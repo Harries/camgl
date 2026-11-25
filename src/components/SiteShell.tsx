@@ -13,19 +13,19 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col transition-colors">
       <Navbar />
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
         {children}
       </main>
-      <footer className="border-t border-slate-200 bg-white mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500 dark:text-slate-400">
           <div>
             © {new Date().getFullYear()} LiveCam Global. Official embed player platform · No unauthorized surveillance streams.
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/countries" className="hover:text-slate-900">Map &amp; Countries</Link>
-            <Link href="/submit" className="hover:text-slate-900">Partners &amp; Submit</Link>
+            <Link href="/countries" className="hover:text-slate-900 dark:hover:text-white">Map &amp; Countries</Link>
+            <Link href="/submit" className="hover:text-slate-900 dark:hover:text-white">Partners &amp; Submit</Link>
           </div>
         </div>
       </footer>

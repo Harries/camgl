@@ -120,10 +120,10 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="text-xs text-slate-500 flex items-center gap-1.5">
-            <button onClick={resetAll} className="hover:underline text-slate-700 font-medium">
+          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+            <button onClick={resetAll} className="hover:underline text-slate-700 dark:text-slate-300 font-medium">
               World Explorer
             </button>
             {selectedCountry && (
@@ -131,7 +131,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
                 <span>/</span>
                 <button
                   onClick={() => setSelectedCity(null)}
-                  className="hover:underline text-slate-700 font-medium capitalize"
+                  className="hover:underline text-slate-700 dark:text-slate-300 font-medium capitalize"
                 >
                   {selectedCountry.replace(/-/g, " ")}
                 </button>
@@ -140,16 +140,16 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
             {selectedCity && (
               <>
                 <span>/</span>
-                <span className="text-slate-900 font-semibold capitalize">
+                <span className="text-slate-900 dark:text-white font-semibold capitalize">
                   {selectedCity.replace(/-/g, " ")}
                 </span>
               </>
             )}
           </div>
-          <h1 className="text-xl font-bold text-slate-900 mt-1">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
             Explore by Map, Country &amp; City
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Zoom, pan, or click any map marker, country, or city to filter live streams.
           </p>
         </div>
@@ -162,7 +162,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
               className={`px-2.5 py-1 rounded-lg text-xs font-medium border capitalize transition-colors ${
                 catFilter === cat
                   ? "bg-blue-600 text-white border-transparent"
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               }`}
             >
               {cat}
@@ -173,10 +173,10 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
 
       {/* Unified Real Map + Active Preview */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div className="lg:col-span-8 rounded-2xl border border-slate-200 bg-white overflow-hidden flex flex-col shadow-sm">
-          <div className="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between text-xs bg-slate-50 text-slate-500">
+        <div className="lg:col-span-8 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden flex flex-col shadow-sm">
+          <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400">
             <span>MapLibre GL · {filtered.length} matching cameras</span>
-            <span className="inline-flex items-center gap-3 text-slate-600">
+            <span className="inline-flex items-center gap-3 text-slate-600 dark:text-slate-300">
               <span className="inline-flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Live
               </span>
@@ -194,33 +194,33 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
         </div>
 
         {/* Selected Pin Preview + Countries Quick List */}
-        <div className="lg:col-span-4 rounded-2xl border border-slate-200 bg-white p-5 flex flex-col justify-between gap-4 shadow-sm">
+        <div className="lg:col-span-4 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 flex flex-col justify-between gap-4 shadow-sm">
           {activePin ? (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-500">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                 <span>
                   {activePin.country.flag} {activePin.country.name} · {activePin.city.name}
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-red-50 text-red-600 font-semibold">
+                <span className="px-2 py-0.5 rounded-full bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400 font-semibold">
                   {activePin.stream?.status ?? "LIVE"}
                 </span>
               </div>
-              <h2 className="text-base font-semibold text-slate-900">{activePin.title}</h2>
-              <p className="text-xs text-slate-500 line-clamp-3">{activePin.description}</p>
-              <div className="text-xs text-slate-600">{activePin.weatherSummary}</div>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{activePin.title}</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-3">{activePin.description}</p>
+              <div className="text-sm text-slate-600 dark:text-slate-300">{activePin.weatherSummary}</div>
               <Link
                 href={`/webcams/${activePin.slug}`}
-                className="block w-full text-center py-2 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700"
+                className="block w-full text-center py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
               >
                 Open Live Stream →
               </Link>
             </div>
           ) : (
-            <div className="text-xs text-slate-500">No cameras match this filter.</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">No cameras match this filter.</div>
           )}
 
-          <div className="pt-4 border-t border-slate-100 space-y-2">
-            <div className="text-xs font-medium text-slate-500">Countries ({countries.length})</div>
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Countries ({countries.length})</div>
             <div className="flex flex-wrap gap-1.5">
               {countries.map((ct) => {
                 const active = selectedCountry === ct.slug;
@@ -231,12 +231,12 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
                     className={`px-2.5 py-1 rounded-lg text-xs border transition-colors flex items-center gap-1 ${
                       active
                         ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                        : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700"
                     }`}
                   >
                     <span>{ct.flag}</span>
                     <span>{ct.name}</span>
-                    <span className={active ? "text-blue-100" : "text-slate-400"}>
+                    <span className={active ? "text-blue-100" : "text-slate-400 dark:text-slate-500"}>
                       ({ct.count})
                     </span>
                   </button>
@@ -248,15 +248,15 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
       </div>
 
       {/* Cities Filter Bar */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
             Cities {selectedCountry ? `in ${selectedCountry.replace(/-/g, " ")}` : "Worldwide"}
           </h2>
           {(selectedCountry || selectedCity || catFilter !== "all") && (
             <button
               onClick={resetAll}
-              className="text-xs text-blue-600 hover:underline font-medium"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
             >
               Reset all filters
             </button>
@@ -272,13 +272,13 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
                 className={`px-3 py-1.5 rounded-xl border text-xs transition-all flex items-center gap-1.5 ${
                   active
                     ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-white hover:border-blue-300"
+                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-white hover:border-blue-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 dark:hover:border-blue-500"
                 }`}
               >
                 <span className="font-medium">{city.name}</span>
                 <span
                   className={`px-1.5 py-0.5 rounded-full text-[11px] ${
-                    active ? "bg-white/20 text-white" : "bg-white border border-slate-200 text-slate-500"
+                    active ? "bg-white/20 text-white" : "bg-white border border-slate-200 text-slate-500 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-400"
                   }`}
                 >
                   {city.count}
@@ -292,7 +292,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
       {/* Filtered Webcams Grid */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
             Matching Live Webcams ({filtered.length})
           </h2>
           {selectedCountry && (
@@ -302,7 +302,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
                   ? `/countries/${selectedCountry}/${selectedCity}`
                   : `/countries/${selectedCountry}`
               }
-              className="text-xs text-blue-600 hover:underline font-medium"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
             >
               Open SEO directory page →
             </Link>
@@ -313,7 +313,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
             <Link
               key={cam.id}
               href={`/webcams/${cam.slug}`}
-              className="group rounded-2xl border border-slate-200 bg-white overflow-hidden hover:border-blue-400 hover:shadow-md transition-all shadow-sm flex flex-col"
+              className="group rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all shadow-sm flex flex-col"
             >
               <div className="relative aspect-video bg-gradient-to-br from-slate-900 via-blue-950 to-slate-800 flex items-center justify-center text-white">
                 <div className="text-center">
@@ -326,13 +326,13 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
                 </span>
               </div>
               <div className="p-4 space-y-1">
-                <div className="flex items-center justify-between text-xs text-slate-500">
+                <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
                   <span>
                     {cam.country.flag} {cam.country.name} · {cam.city.name}
                   </span>
                   <span>{cam.weatherSummary}</span>
                 </div>
-                <h3 className="font-semibold text-sm text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                <h3 className="font-semibold text-base text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
                   {cam.title}
                 </h3>
               </div>

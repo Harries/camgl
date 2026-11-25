@@ -49,34 +49,34 @@ export default async function CountryDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
-        <div className="flex items-center gap-2 text-xs text-slate-500">
+      <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-sm space-y-3">
+        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <Link href="/" className="hover:underline">Home</Link>
           <span>/</span>
           <Link href="/countries" className="hover:underline">Countries</Link>
           <span>/</span>
-          <span className="text-slate-900 font-medium">{countryInfo.name}</span>
+          <span className="text-slate-900 dark:text-white font-medium">{countryInfo.name}</span>
         </div>
-        <h1 className="text-xl font-bold text-slate-900">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">
           {countryInfo.flag} {countryInfo.name} Live Webcams
         </h1>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           Explore {webcams.length} verified live streams across {cities.length} {cities.length === 1 ? "city" : "cities"} in {countryInfo.name}.
         </p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-900">Cities in {countryInfo.name}</h2>
+      <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Cities in {countryInfo.name}</h2>
         <div className="flex flex-wrap gap-2.5">
           {cities.map((c) => (
             <Link
               key={c.slug}
               href={`/countries/${country}/${c.slug}`}
-              className="px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-700 hover:bg-white hover:border-blue-400 transition-all flex items-center gap-2"
+              className="px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-700 hover:bg-white hover:border-blue-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:border-blue-500 transition-all flex items-center gap-2"
             >
-              <span className="font-medium text-slate-900">{c.name}</span>
-              <span className="text-slate-400 tabular-nums">{c.localTime}</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600">
+              <span className="font-medium text-slate-900 dark:text-white">{c.name}</span>
+              <span className="text-slate-400 dark:text-slate-500 tabular-nums">{c.localTime}</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-400">
                 {c.count}
               </span>
             </Link>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  LayoutDashboard,
   CheckSquare,
   Video,
   Radar,
@@ -15,6 +16,7 @@ import {
   ShieldCheck,
   LogOut,
 } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 import type {
   AdminAuditLog,
   AdminCandidate,
@@ -35,7 +37,7 @@ interface AdminData {
 export function AdminConsoleClient({ initialData }: { initialData: AdminData }) {
   const router = useRouter();
   const [data, setData] = useState<AdminData>(initialData);
-  const [tab, setTab] = useState<"review" | "webcams" | "jobs" | "reports">("review");
+  const [tab, setTab] = useState<"dashboard" | "review" | "webcams" | "jobs" | "reports">("dashboard");
   const [collapsed, setCollapsed] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -67,6 +69,12 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
 
   const navItems = [
     {
+      key: "dashboard" as const,
+      label: "Dashboard",
+      badge: null,
+      icon: LayoutDashboard,
+    },
+    {
       key: "review" as const,
       label: "Review Queue",
       badge: data.candidates.length,
@@ -95,37 +103,37 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
   const activeTitle = navItems.find((n) => n.key === tab)?.label ?? "Admin Console";
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex">
       {/* Left Collapsible Sidebar */}
       <aside
-        className={`relative sticky top-0 h-screen bg-white border-r border-slate-200 flex flex-col justify-between transition-all duration-200 shrink-0 ${
+        className={`relative sticky top-0 h-screen bg-white border-r border-slate-200 dark:bg-slate-900 dark:border-slate-800 flex flex-col justify-between transition-all duration-200 shrink-0 ${
           collapsed ? "w-16" : "w-60"
         }`}
       >
-        {/* Divider Toggle Button */}
+        {/* Vertical Divider Middle Toggle Button */}
         <button
           onClick={() => setCollapsed((prev) => !prev)}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="absolute -right-3.5 top-16 -translate-y-1/2 z-30 w-7 h-7 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:border-slate-300 shadow-sm flex items-center justify-center transition-colors"
+          className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-30 w-7 h-7 rounded-full border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-white dark:hover:border-slate-600 shadow-sm flex items-center justify-center transition-colors"
         >
           {collapsed ? (
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-4 h-4" />
           ) : (
-            <ChevronLeft className="w-3.5 h-3.5" />
+            <ChevronLeft className="w-4 h-4" />
           )}
         </button>
 
         <div>
           {/* Sidebar Header */}
-          <div className={`h-16 px-3.5 border-b border-slate-200 flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
-            <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0">
+          <div className={`h-16 px-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
+            <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-blue-600 text-white flex items-center justify-center shrink-0">
               <ShieldCheck className="w-4 h-4" />
             </div>
             {!collapsed && (
               <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-900 truncate">LiveCam Admin</div>
-                <div className="text-[11px] text-slate-400 truncate">Operations Console</div>
+                <div className="text-sm font-bold text-slate-900 dark:text-white truncate">LiveCam Admin</div>
+                <div className="text-xs text-slate-400 dark:text-slate-500 truncate">Operations Console</div>
               </div>
             )}
           </div>
@@ -140,20 +148,20 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                   key={item.key}
                   onClick={() => setTab(item.key)}
                   title={collapsed ? item.label : undefined}
-                  className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors ${
+                  className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                     active
-                      ? "bg-slate-900 text-white shadow-sm"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      ? "bg-slate-900 text-white dark:bg-blue-600 shadow-sm"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
                   }`}
                 >
                   <span className="flex items-center gap-2.5 min-w-0">
                     <Icon className="w-4 h-4 shrink-0" />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </span>
-                  {!collapsed && (
+                  {!collapsed && item.badge !== null && (
                     <span
-                      className={`px-1.5 py-0.5 rounded-full text-[11px] tabular-nums ${
-                        active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                      className={`px-2 py-0.5 rounded-full text-xs tabular-nums ${
+                        active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                       }`}
                     >
                       {item.badge}
@@ -166,11 +174,11 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-2.5 border-t border-slate-200 space-y-1">
+        <div className="p-2.5 border-t border-slate-200 dark:border-slate-800 space-y-1">
           <Link
             href="/"
             title={collapsed ? "Public Site" : undefined}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
           >
             <ExternalLink className="w-4 h-4 shrink-0" />
             {!collapsed && <span>Public Site</span>}
@@ -178,7 +186,7 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
           <button
             onClick={handleLogout}
             title={collapsed ? "退出登录" : undefined}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50 transition-colors"
           >
             <LogOut className="w-4 h-4 shrink-0" />
             {!collapsed && <span>退出登录</span>}
@@ -189,70 +197,140 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
       {/* Right Main Panel */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Top Bar */}
-        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur border-b border-slate-200 px-6 flex items-center justify-between gap-4">
+        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur border-b border-slate-200 dark:bg-slate-900/95 dark:border-slate-800 px-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <h1 className="text-base font-bold text-slate-900">{activeTitle}</h1>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <h1 className="text-lg font-bold text-slate-900 dark:text-white">{activeTitle}</h1>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900">
               RBAC Protected
             </span>
           </div>
-          <button
-            disabled={busy}
-            onClick={() => runAction({ action: "healthCheck" })}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${busy ? "animate-spin" : ""}`} />
-            Run Health Check
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              disabled={busy}
+              onClick={() => runAction({ action: "healthCheck" })}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${busy ? "animate-spin" : ""}`} />
+              Run Health Check
+            </button>
+          </div>
         </header>
 
         {/* Content Area */}
         <div className="p-6 space-y-6">
-          {/* KPIs */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="text-xs text-slate-500">Published Webcams</div>
-              <div className="text-xl font-bold text-slate-900 mt-1 tabular-nums">{approvedCount}</div>
-              <div className="text-xs text-emerald-600 mt-0.5">100% License Verified</div>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="text-xs text-slate-500">Pending Review</div>
-              <div className="text-xl font-bold text-amber-600 mt-1 tabular-nums">{data.candidates.length}</div>
-              <div className="text-xs text-slate-400 mt-0.5">Candidate Pool</div>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="text-xs text-slate-500">Stream Health</div>
-              <div className="text-xl font-bold text-emerald-600 mt-1 tabular-nums">96.4%</div>
-              <div className="text-xs text-slate-400 mt-0.5">Cron every 30m</div>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="text-xs text-slate-500">YouTube Quota</div>
-              <div className="text-xl font-bold text-slate-900 mt-1 tabular-nums">
-                {data.youtubeQuotaUsed.toLocaleString()}{" "}
-                <span className="text-xs font-normal text-slate-400">/ 10k</span>
+          {/* Dedicated Dashboard Tab */}
+          {tab === "dashboard" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Published Webcams</div>
+                  <div className="text-xl font-bold text-slate-900 dark:text-white mt-1 tabular-nums">{approvedCount}</div>
+                  <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">100% License Verified</div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Pending Review</div>
+                  <div className="text-xl font-bold text-amber-600 dark:text-amber-400 mt-1 tabular-nums">{data.candidates.length}</div>
+                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Candidate Pool</div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Stream Health</div>
+                  <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">96.4%</div>
+                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Cron every 30m</div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">YouTube Quota</div>
+                  <div className="text-xl font-bold text-slate-900 dark:text-white mt-1 tabular-nums">
+                    {data.youtubeQuotaUsed.toLocaleString()}{" "}
+                    <span className="text-xs font-normal text-slate-400 dark:text-slate-500">/ 10k</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full mt-1.5 overflow-hidden">
+                    <div className="h-full bg-blue-600 rounded-full" style={{ width: `${quotaPct}%` }} />
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm col-span-2 lg:col-span-1">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Open Reports</div>
+                  <div className={`text-xl font-bold mt-1 tabular-nums ${openReports > 0 ? "text-red-600 dark:text-red-400" : "text-slate-900 dark:text-white"}`}>
+                    {openReports}
+                  </div>
+                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">SLA &lt; 24h</div>
+                </div>
               </div>
-              <div className="w-full h-1.5 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
-                <div className="h-full bg-blue-600 rounded-full" style={{ width: `${quotaPct}%` }} />
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <div className="lg:col-span-7 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Quick Operations</h2>
+                    <span className="text-xs text-slate-400 dark:text-slate-500">Shortcuts</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <button
+                      onClick={() => setTab("review")}
+                      className="p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:hover:border-slate-700 dark:hover:bg-slate-800/70 text-left transition-colors"
+                    >
+                      <div className="font-semibold text-slate-900 dark:text-white">Review Pending Candidates</div>
+                      <div className="text-slate-500 dark:text-slate-400 mt-1">{data.candidates.length} awaiting license &amp; privacy check</div>
+                    </button>
+                    <button
+                      onClick={() => setTab("webcams")}
+                      className="p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:hover:border-slate-700 dark:hover:bg-slate-800/70 text-left transition-colors"
+                    >
+                      <div className="font-semibold text-slate-900 dark:text-white">Monitor Stream Health</div>
+                      <div className="text-slate-500 dark:text-slate-400 mt-1">{data.webcams.length} total webcams registered</div>
+                    </button>
+                    <button
+                      onClick={() => setTab("jobs")}
+                      className="p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:hover:border-slate-700 dark:hover:bg-slate-800/70 text-left transition-colors"
+                    >
+                      <div className="font-semibold text-slate-900 dark:text-white">Discovery &amp; Quota Jobs</div>
+                      <div className="text-slate-500 dark:text-slate-400 mt-1">{data.jobs.length} scheduled collector tasks</div>
+                    </button>
+                    <button
+                      onClick={() => setTab("reports")}
+                      className="p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:hover:border-slate-700 dark:hover:bg-slate-800/70 text-left transition-colors"
+                    >
+                      <div className="font-semibold text-slate-900 dark:text-white">Handle Reports &amp; Takedowns</div>
+                      <div className="text-slate-500 dark:text-slate-400 mt-1">{openReports} open reports requiring review</div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-5 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
+                  <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Recent Activity</h2>
+                    <button
+                      onClick={() => setTab("reports")}
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                    >
+                      View all →
+                    </button>
+                  </div>
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                    {data.auditLogs.slice(0, 5).map((l) => (
+                      <div key={l.id} className="px-4 py-3 flex items-start justify-between gap-2">
+                        <div>
+                          <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{l.action}</span>
+                          <span className="text-slate-600 dark:text-slate-400"> · {l.targetId}</span>
+                          <div className="text-slate-400 dark:text-slate-500 mt-0.5">by {l.actor}</div>
+                        </div>
+                        <span className="text-slate-400 dark:text-slate-500 shrink-0">{l.createdAt}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm col-span-2 lg:col-span-1">
-              <div className="text-xs text-slate-500">Open Reports</div>
-              <div className={`text-xl font-bold mt-1 tabular-nums ${openReports > 0 ? "text-red-600" : "text-slate-900"}`}>
-                {openReports}
-              </div>
-              <div className="text-xs text-slate-400 mt-0.5">SLA &lt; 24h</div>
-            </div>
-          </div>
+          )}
 
           {/* Tab Panels */}
           {tab === "review" && (
-            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
               {data.candidates.length === 0 ? (
-                <div className="p-10 text-center text-xs text-slate-500">All candidates reviewed.</div>
+                <div className="p-10 text-center text-xs text-slate-500 dark:text-slate-400">All candidates reviewed.</div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 dark:bg-slate-800/70 dark:border-slate-800 dark:text-slate-400">
                       <tr>
                         <th className="px-3 py-2.5 font-medium">Candidate</th>
                         <th className="px-3 py-2.5 font-medium">Location</th>
@@ -261,23 +339,23 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                         <th className="px-3 py-2.5 font-medium text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                       {data.candidates.map((c) => (
-                        <tr key={c.id} className="hover:bg-slate-50/70">
-                          <td className="px-3 py-3 font-medium text-slate-900">{c.title}</td>
-                          <td className="px-3 py-3 text-slate-600">
+                        <tr key={c.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                          <td className="px-3 py-3 font-medium text-slate-900 dark:text-white">{c.title}</td>
+                          <td className="px-3 py-3 text-slate-600 dark:text-slate-300">
                             {c.cityName}, {c.countryName} · {c.categorySlug}
                           </td>
                           <td className="px-3 py-3">
-                            <div className="text-slate-900">{c.source}</div>
-                            <div className="text-slate-500 mt-0.5">{c.licenseNote}</div>
+                            <div className="text-slate-900 dark:text-slate-100">{c.source}</div>
+                            <div className="text-slate-500 dark:text-slate-400 mt-0.5">{c.licenseNote}</div>
                           </td>
                           <td className="px-3 py-3">
                             <span
                               className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                                 c.privacyNote.startsWith("Pass")
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                  : "bg-red-50 text-red-700 border border-red-200"
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900"
+                                  : "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900"
                               }`}
                             >
                               {c.privacyNote}
@@ -294,7 +372,7 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                             <button
                               disabled={busy}
                               onClick={() => runAction({ action: "reject", id: c.id })}
-                              className="px-2.5 py-1 rounded-md border border-slate-200 text-slate-600 hover:bg-red-50 hover:text-red-600"
+                              className="px-2.5 py-1 rounded-md border border-slate-200 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-red-950/50 dark:hover:text-red-400"
                             >
                               Reject
                             </button>
@@ -309,10 +387,10 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
           )}
 
           {tab === "webcams" && (
-            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 dark:bg-slate-800/70 dark:border-slate-800 dark:text-slate-400">
                     <tr>
                       <th className="px-4 py-3 font-medium">Title / Slug</th>
                       <th className="px-4 py-3 font-medium">Location</th>
@@ -321,38 +399,38 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                       <th className="px-4 py-3 font-medium text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {data.webcams.map((w) => {
                       const rev = w.reviewStatus ?? "APPROVED";
                       return (
-                        <tr key={w.id} className="hover:bg-slate-50/70">
+                        <tr key={w.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
                           <td className="px-4 py-3">
-                            <div className="font-medium text-slate-900">{w.title}</div>
-                            <div className="font-mono text-slate-400">/webcams/{w.slug}</div>
+                            <div className="font-medium text-slate-900 dark:text-white">{w.title}</div>
+                            <div className="font-mono text-slate-400 dark:text-slate-500">/webcams/{w.slug}</div>
                           </td>
-                          <td className="px-4 py-3 text-slate-600">
+                          <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                             {w.country.flag} {w.city.name}, {w.country.name}
                           </td>
                           <td className="px-4 py-3">
                             <span
                               className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                                 rev === "APPROVED"
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                  : "bg-amber-50 text-amber-700 border border-amber-200"
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900"
+                                  : "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900"
                               }`}
                             >
                               {rev}
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900">
                               {w.stream?.status ?? "UNKNOWN"}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
                             <Link
                               href={`/webcams/${w.slug}`}
-                              className="px-2.5 py-1 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50"
+                              className="px-2.5 py-1 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                             >
                               View
                             </Link>
@@ -361,7 +439,7 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                               onClick={() => runAction({ action: "suspend", slug: w.slug })}
                               className={`px-2.5 py-1 rounded-md ${
                                 rev === "APPROVED"
-                                  ? "border border-amber-200 text-amber-700 hover:bg-amber-50"
+                                  ? "border border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-900 dark:text-amber-400 dark:hover:bg-amber-950/50"
                                   : "bg-blue-600 text-white hover:bg-blue-700"
                               }`}
                             >
@@ -378,10 +456,10 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
           )}
 
           {tab === "jobs" && (
-            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 dark:bg-slate-800/70 dark:border-slate-800 dark:text-slate-400">
                     <tr>
                       <th className="px-4 py-3 font-medium">Source</th>
                       <th className="px-4 py-3 font-medium">Query / Scope</th>
@@ -390,15 +468,15 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                       <th className="px-4 py-3 font-medium">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {data.jobs.map((j) => (
                       <tr key={j.id}>
-                        <td className="px-4 py-3 font-medium text-slate-900">{j.source}</td>
-                        <td className="px-4 py-3 font-mono text-slate-600">{j.query}</td>
-                        <td className="px-4 py-3 text-slate-600">{j.quotaCost} units</td>
-                        <td className="px-4 py-3 text-slate-500">{j.lastRunAt}</td>
+                        <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{j.source}</td>
+                        <td className="px-4 py-3 font-mono text-slate-600 dark:text-slate-300">{j.query}</td>
+                        <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{j.quotaCost} units</td>
+                        <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{j.lastRunAt}</td>
                         <td className="px-4 py-3">
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900">
                             {j.status}
                           </span>
                         </td>
@@ -412,20 +490,20 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
 
           {tab === "reports" && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className="lg:col-span-7 rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                <div className="px-5 py-3.5 border-b border-slate-200 text-sm font-semibold text-slate-900">
+              <div className="lg:col-span-7 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
+                <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-900 dark:text-white">
                   User &amp; Copyright Reports
                 </div>
-                <div className="divide-y divide-slate-100 text-xs">
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                   {data.reports.map((r) => (
                     <div key={r.id} className="p-4 flex items-center justify-between gap-3">
                       <div>
-                        <div className="font-medium text-slate-900">{r.webcamTitle}</div>
-                        <div className="text-slate-500 mt-0.5">
+                        <div className="font-medium text-slate-900 dark:text-white">{r.webcamTitle}</div>
+                        <div className="text-slate-500 dark:text-slate-400 mt-0.5">
                           {r.type} · {r.createdAt}
                         </div>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900">
                         {r.status}
                       </span>
                     </div>
@@ -433,19 +511,19 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                 </div>
               </div>
 
-              <div className="lg:col-span-5 rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                <div className="px-5 py-3.5 border-b border-slate-200 text-sm font-semibold text-slate-900">
+              <div className="lg:col-span-5 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
+                <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-900 dark:text-white">
                   Audit Logs
                 </div>
-                <div className="divide-y divide-slate-100 text-xs">
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                   {data.auditLogs.map((l) => (
                     <div key={l.id} className="px-4 py-3 flex items-start justify-between gap-2">
                       <div>
-                        <span className="font-mono font-semibold text-slate-800">{l.action}</span>
-                        <span className="text-slate-600"> · {l.targetId}</span>
-                        <div className="text-slate-400 mt-0.5">by {l.actor}</div>
+                        <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{l.action}</span>
+                        <span className="text-slate-600 dark:text-slate-400"> · {l.targetId}</span>
+                        <div className="text-slate-400 dark:text-slate-500 mt-0.5">by {l.actor}</div>
                       </div>
-                      <span className="text-slate-400 shrink-0">{l.createdAt}</span>
+                      <span className="text-slate-400 dark:text-slate-500 shrink-0">{l.createdAt}</span>
                     </div>
                   ))}
                 </div>

@@ -114,7 +114,7 @@ export function RealMap({
   return (
     <div
       ref={containerRef}
-      className="w-full h-[380px] sm:h-[420px] bg-slate-100"
+      className="w-full h-[380px] sm:h-[420px] bg-slate-100 dark:bg-slate-900"
     />
   );
 }

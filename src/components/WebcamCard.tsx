@@ -14,7 +14,7 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
   return (
     <Link
       href={`/webcams/${webcam.slug}`}
-      className="group rounded-2xl border border-slate-200 bg-white overflow-hidden hover:border-blue-400 hover:shadow-md transition-all shadow-sm flex flex-col"
+      className="group rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all shadow-sm flex flex-col"
     >
       <div className="relative aspect-video bg-slate-900 overflow-hidden">
         <div
@@ -48,13 +48,13 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
       </div>
 
       <div className="p-4 space-y-1.5 flex-1">
-        <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
+        <div className="flex items-center justify-between gap-2 text-sm text-slate-500 dark:text-slate-400">
           <span>
             {webcam.country.flag} {webcam.country.name} · {webcam.city.name}
           </span>
           <span>{webcam.weatherSummary}</span>
         </div>
-        <h3 className="font-semibold text-sm text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+        <h3 className="font-semibold text-base text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
           {webcam.title}
         </h3>
       </div>

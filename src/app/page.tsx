@@ -22,7 +22,7 @@ export default async function HomePage({
     <div className="space-y-8">
       {/* Hero Spotlight */}
       {featured && (
-        <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+        <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
           <div className="grid grid-cols-1 lg:grid-cols-12">
             <Link
               href={`/webcams/${featured.slug}`}
@@ -50,44 +50,44 @@ export default async function HomePage({
               </div>
             </Link>
 
-            <div className="lg:col-span-5 p-6 flex flex-col justify-between gap-5 bg-white">
+            <div className="lg:col-span-5 p-6 flex flex-col justify-between gap-5 bg-white dark:bg-slate-900">
               <div className="space-y-3">
-                <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                <div className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">
                   Explore the World in Real Time
                 </div>
-                <h2 className="text-lg font-semibold leading-snug text-slate-900">
+                <h2 className="text-xl font-semibold leading-snug text-slate-900 dark:text-white">
                   Verified scenic webcams, local weather &amp; live timezones — free, no login required.
                 </h2>
-                <p className="text-xs text-slate-500 leading-relaxed">
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                   Browse by country, city, or category. Every stream is reviewed for licensing and privacy, embedded via official players, and monitored every 30 minutes.
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 pt-2 border-t border-slate-100">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-base font-bold tabular-nums text-slate-900">{webcams.length}</div>
-                  <div className="text-xs text-slate-500">Live Cams</div>
+              <div className="grid grid-cols-3 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/70 dark:border-slate-700/80">
+                  <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{webcams.length}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Live Cams</div>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-base font-bold tabular-nums text-slate-900">{countries.length}</div>
-                  <div className="text-xs text-slate-500">Countries</div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/70 dark:border-slate-700/80">
+                  <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{countries.length}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Countries</div>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-base font-bold tabular-nums text-emerald-600">100%</div>
-                  <div className="text-xs text-slate-500">Licensed</div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/70 dark:border-slate-700/80">
+                  <div className="text-lg font-bold tabular-nums text-emerald-600 dark:text-emerald-400">100%</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Licensed</div>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 <Link
                   href="/countries"
-                  className="px-3.5 py-2 rounded-lg text-xs font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
                 >
                   🗺️ Explore Map &amp; Countries
                 </Link>
                 <Link
                   href="/random"
-                  className="px-3.5 py-2 rounded-lg text-xs font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
                 >
                   🎲 Random Cam
                 </Link>
@@ -102,10 +102,10 @@ export default async function HomePage({
         <div className="flex items-center gap-2 overflow-x-auto py-1">
           <Link
             href="/"
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
               !category
                 ? "bg-blue-600 text-white shadow-sm"
-                : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
             }`}
           >
             All
@@ -114,17 +114,17 @@ export default async function HomePage({
             <Link
               key={cat.slug}
               href={`/?category=${cat.slug}`}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 category === cat.slug
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
               }`}
             >
               {cat.name}
             </Link>
           ))}
         </div>
-        <div className="text-xs text-slate-500">Showing {webcams.length} webcams</div>
+        <div className="text-sm text-slate-500 dark:text-slate-400">Showing {webcams.length} webcams</div>
       </section>
 
       {/* Webcam Grid */}
@@ -135,13 +135,13 @@ export default async function HomePage({
       </section>
 
       {/* Country Directory Strip */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">Browse by Country &amp; City</h3>
-            <p className="text-xs text-slate-500">Hierarchical SEO directories with local time &amp; weather context</p>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">Browse by Country &amp; City</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Hierarchical SEO directories with local time &amp; weather context</p>
           </div>
-          <Link href="/countries" className="text-xs text-blue-600 hover:underline font-medium">
+          <Link href="/countries" className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium">
             View all countries →
           </Link>
         </div>
@@ -150,11 +150,11 @@ export default async function HomePage({
             <Link
               key={ct.slug}
               href={`/countries/${ct.slug}`}
-              className="px-3 py-1.5 rounded-lg text-xs border border-slate-200 bg-slate-50 text-slate-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-lg text-sm border border-slate-200 bg-slate-50 text-slate-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:border-blue-500 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5"
             >
               <span>{ct.flag}</span>
               <span className="font-medium">{ct.name}</span>
-              <span className="text-slate-400">({ct.webcamCount})</span>
+              <span className="text-slate-400 dark:text-slate-500">({ct.webcamCount})</span>
             </Link>
           ))}
         </div>

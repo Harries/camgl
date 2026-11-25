@@ -20,12 +20,12 @@ export default async function CategoryPage({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-2">
-        <div className="text-xs text-slate-500">
+      <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-sm space-y-2">
+        <div className="text-xs text-slate-500 dark:text-slate-400">
           <Link href="/" className="hover:underline">Home</Link> / Categories / {catInfo.name}
         </div>
-        <h1 className="text-xl font-bold text-slate-900">{catInfo.name} Live Webcams</h1>
-        <p className="text-xs text-slate-500">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">{catInfo.name} Live Webcams</h1>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           {webcams.length} verified {catInfo.name.toLowerCase()} live stream{webcams.length === 1 ? "" : "s"}
         </p>
       </div>
