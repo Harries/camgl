@@ -235,8 +235,8 @@ export async function collectFromWindy(): Promise<CollectedCandidateInput[]> {
     for (const w of pages.flat()) {
       if (seen.has(w.webcamId)) continue;
       seen.add(w.webcamId);
-      const embed = w.player?.day || w.player?.live;
-      if (!embed) continue;
+      if (!w.player?.live) continue;
+      const embed = w.player.day || w.player.live;
       const normalizedEmbed = embed.replace(
         /^(https:\/\/webcams\.windy\.com\/webcams\/public\/embed\/player\/\d+)\/live(\?.*)?$/i,
         "$1/day$2"
@@ -347,6 +347,7 @@ export async function collectAndProbeAllSources(): Promise<
 
   const combined = [...windyItems, ...ytItems, ...PUBLIC_FEED_CATALOG].filter(
     (item) =>
+      item.mediaType === "LIVE_VIDEO" &&
       item.countryName.toLowerCase() !== "international" &&
       !(item.lat === 0 && item.lng === 0)
   );

@@ -83,6 +83,7 @@ function mapDbWebcam(r: {
   lat: number;
   lng: number;
   reviewStatus: string;
+  isFeatured?: boolean;
   city: {
     name: string;
     slug: string;
@@ -110,6 +111,7 @@ function mapDbWebcam(r: {
     description: r.description,
     bestTime: r.bestTime,
     reviewStatus: r.reviewStatus,
+    isFeatured: Boolean(r.isFeatured),
     country: {
       name: r.city.country.name,
       slug: r.city.country.slug,
@@ -147,6 +149,7 @@ function mapDbWebcam(r: {
 function isFixedLocationWebcam(w: PublicWebcam): boolean {
   if (w.country.slug.toLowerCase() === "international") return false;
   if (w.city.lat === 0 && w.city.lng === 0) return false;
+  if (w.stream?.mediaType && w.stream.mediaType !== "LIVE_VIDEO") return false;
   return true;
 }
 
@@ -168,6 +171,7 @@ export async function listApprovedWebcams(filters?: {
             some: {
               isPrimary: true,
               status: "LIVE",
+              mediaType: "LIVE_VIDEO",
             },
           },
           city: {
@@ -253,6 +257,7 @@ export async function listApprovedWebcamsPage(filters?: {
           some: {
             isPrimary: true,
             status: "LIVE" as const,
+            mediaType: "LIVE_VIDEO" as const,
           },
         },
         city: {
@@ -332,6 +337,62 @@ export async function listApprovedWebcamsPage(filters?: {
   };
 }
 
+export async function listFeaturedWebcams(limit = 6): Promise<PublicWebcam[]> {
+  if (isDbConfigured()) {
+    try {
+      const rows = await prisma.webcam.findMany({
+        where: {
+          isFeatured: true,
+          reviewStatus: "APPROVED",
+          streams: {
+            some: {
+              isPrimary: true,
+              status: "LIVE",
+              mediaType: "LIVE_VIDEO",
+            },
+          },
+          city: {
+            country: { slug: { not: "international" } },
+            NOT: { AND: [{ lat: 0 }, { lng: 0 }] },
+          },
+        },
+        include: {
+          city: { include: { country: true } },
+          provider: true,
+          categories: { include: { category: true } },
+          streams: {
+            where: { isPrimary: true, status: "LIVE" },
+            orderBy: { lastCheckedAt: "desc" },
+            take: 1,
+          },
+        },
+        orderBy: { updatedAt: "desc" },
+        take: limit,
+      });
+
+      if (rows.length > 0) {
+        return await enrichWeather(rows.map(mapDbWebcam));
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  const featuredMem = memStore.webcams.filter(
+    (w) =>
+      w.isFeatured &&
+      (!w.reviewStatus || w.reviewStatus === "APPROVED") &&
+      w.stream?.status === "LIVE" &&
+      isFixedLocationWebcam(w)
+  );
+  if (featuredMem.length > 0) {
+    return enrichWeather(featuredMem.slice(0, limit));
+  }
+
+  const fallback = await listApprovedWebcamsPage({ page: 1, pageSize: limit });
+  return fallback.items;
+}
+
 export async function getWebcamBySlug(slug: string): Promise<PublicWebcam | null> {
   if (isDbConfigured()) {
     try {
@@ -343,6 +404,7 @@ export async function getWebcamBySlug(slug: string): Promise<PublicWebcam | null
             some: {
               isPrimary: true,
               status: "LIVE",
+              mediaType: "LIVE_VIDEO",
             },
           },
           city: {
@@ -1343,6 +1405,47 @@ export async function rejectCandidatesBatch(ids: string[]) {
     if (await rejectCandidate(id)) rejected += 1;
   }
   return { rejected };
+}
+
+export async function toggleWebcamFeatured(slug: string) {
+  if (isDbConfigured()) {
+    try {
+      const cam = await prisma.webcam.findUnique({ where: { slug } });
+      if (!cam) return null;
+      const nextFeatured = !cam.isFeatured;
+      const [updated] = await prisma.$transaction([
+        prisma.webcam.update({
+          where: { slug },
+          data: { isFeatured: nextFeatured },
+        }),
+        prisma.auditLog.create({
+          data: {
+            actor: "admin@livecam",
+            action: nextFeatured ? "PINNED_FEATURED" : "UNPINNED_FEATURED",
+            targetType: "webcam",
+            targetId: cam.title,
+          },
+        }),
+      ]);
+      return updated;
+    } catch {
+      // Fallback
+    }
+  }
+
+  const cam = memStore.webcams.find((w) => w.slug === slug);
+  if (!cam) return null;
+  cam.isFeatured = !cam.isFeatured;
+  memStore.auditLogs.unshift({
+    id: `log-${Date.now()}`,
+    actor: "admin@livecam",
+    action: cam.isFeatured ? "PINNED_FEATURED" : "UNPINNED_FEATURED",
+    targetType: "webcam",
+    targetId: cam.title,
+    detail: null,
+    createdAt: "Just now",
+  });
+  return cam;
 }
 
 export async function toggleWebcamSuspend(slug: string) {

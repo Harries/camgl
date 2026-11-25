@@ -41,6 +41,7 @@ export interface PublicWebcam {
   weatherSummary: string;
   mapX: number;
   mapY: number;
+  isFeatured?: boolean;
 }
 
 export interface AdminCandidate {

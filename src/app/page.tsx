@@ -1,15 +1,18 @@
 import Link from "next/link";
-import { listApprovedWebcamsPage, listCategories, listCountriesSummary } from "@/lib/repository";
+import {
+  listApprovedWebcamsPage,
+  listCategories,
+  listCountriesSummary,
+  listFeaturedWebcams,
+} from "@/lib/repository";
 import { InfiniteWebcamGrid } from "@/components/InfiniteWebcamGrid";
-import { getWebcamPreviewUrl } from "@/lib/source-badge";
+import { HeroCarousel } from "@/components/HeroCarousel";
 import { getServerLocale } from "@/lib/i18n-server";
 import {
   formatMessage,
   getCategoryLabel,
-  getCityLabel,
   getCountryLabel,
   getMessages,
-  getStreamStatusLabel,
   localizePath,
 } from "@/lib/i18n";
 
@@ -22,7 +25,7 @@ export default async function HomePage({
 }) {
   const [{ category }, locale] = await Promise.all([searchParams, getServerLocale()]);
   const th = getMessages(locale).home;
-  const [pageData, categories, countries] = await Promise.all([
+  const [pageData, categories, countries, featuredSlides] = await Promise.all([
     listApprovedWebcamsPage({
       ...(category ? { category } : {}),
       page: 1,
@@ -30,54 +33,19 @@ export default async function HomePage({
     }),
     listCategories(),
     listCountriesSummary(),
+    listFeaturedWebcams(6),
   ]);
 
   const webcams = pageData.items;
   const totalWebcams = pageData.total;
-  const featured = webcams[0];
-  const featuredPreview = getWebcamPreviewUrl(featured?.stream);
 
   return (
     <div className="space-y-8">
-      {/* Hero Spotlight */}
-      {featured && (
+      {/* Hero Spotlight Carousel */}
+      {featuredSlides.length > 0 && (
         <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
           <div className="grid grid-cols-1 lg:grid-cols-12">
-            <Link
-              href={localizePath(`/webcams/${featured.slug}`, locale)}
-              className="lg:col-span-7 relative min-h-[260px] sm:min-h-[320px] bg-gradient-to-br from-slate-900 via-blue-950 to-slate-800 p-6 flex flex-col justify-between text-white group overflow-hidden"
-            >
-              {featuredPreview && (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={featuredPreview}
-                    alt={featured.title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40" />
-                </>
-              )}
-              <div className="relative z-10 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-600 text-white">
-                  <span className="w-2 h-2 rounded-full bg-white live-dot" />
-                  {getStreamStatusLabel(locale, featured.stream?.status ?? "LIVE")}
-                </span>
-              </div>
-              <div className="relative z-10 flex items-end justify-between gap-4">
-                <div>
-                  <div className="text-xs text-slate-300">
-                    {featured.country.flag}{" "}
-                    {getCountryLabel(locale, featured.country.slug, featured.country.name, featured.country.isoCode)} ·{" "}
-                    {getCityLabel(locale, featured.city.slug, featured.city.name)}
-                  </div>
-                  <h1 className="text-xl sm:text-2xl font-bold mt-1">{featured.title}</h1>
-                </div>
-                <span className="px-3.5 py-2 rounded-lg text-xs font-medium bg-white text-slate-900 group-hover:scale-105 transition-transform shrink-0 shadow">
-                  {th.watchLive}
-                </span>
-              </div>
-            </Link>
+            <HeroCarousel slides={featuredSlides} />
 
             <div className="lg:col-span-5 p-6 flex flex-col justify-between gap-5 bg-white dark:bg-slate-900">
               <div className="space-y-3">

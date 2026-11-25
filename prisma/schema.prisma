@@ -89,6 +89,7 @@ model Webcam {
   lng          Float
   reviewStatus ReviewStatus     @default(PENDING) @map("review_status")
   visibility   String           @default("PUBLIC")
+  isFeatured   Boolean          @default(false) @map("is_featured")
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @updatedAt @map("updated_at")
 

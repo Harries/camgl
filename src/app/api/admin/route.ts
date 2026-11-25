@@ -13,6 +13,7 @@ import {
   resolveContactMessage,
   runHealthCheckBatch,
   syncAllSourceCandidates,
+  toggleWebcamFeatured,
   toggleWebcamSuspend,
   updateWebcamDetails,
   upsertCategoryAdmin,
@@ -63,6 +64,11 @@ export async function POST(request: Request) {
       }
       case "suspend": {
         const cam = await toggleWebcamSuspend(String(body.slug));
+        if (!cam) return NextResponse.json({ error: "Webcam not found" }, { status: 404 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "toggleFeatured": {
+        const cam = await toggleWebcamFeatured(String(body.slug));
         if (!cam) return NextResponse.json({ error: "Webcam not found" }, { status: 404 });
         return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }

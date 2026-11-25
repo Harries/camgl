@@ -880,6 +880,18 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                               <td className="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
                                 <button
                                   type="button"
+                                  disabled={busy}
+                                  onClick={() => runAction({ action: "toggleFeatured", slug: w.slug })}
+                                  className={`px-2.5 py-1 rounded-md border ${
+                                    w.isFeatured
+                                      ? "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                                      : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                  }`}
+                                >
+                                  {w.isFeatured ? "★ Pinned" : "☆ Pin"}
+                                </button>
+                                <button
+                                  type="button"
                                   onClick={() => openEditModal(w)}
                                   className="px-2.5 py-1 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-900 dark:text-blue-400 dark:hover:bg-blue-950/50"
                                 >
