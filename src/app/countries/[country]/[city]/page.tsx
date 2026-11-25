@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { listApprovedWebcams } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
 import { getDaylightInfo } from "@/lib/suncalc";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, buildAlternates } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n-server";
 import { formatMessage, getCityLabel, getCountryLabel, getMessages } from "@/lib/i18n";
 
@@ -26,7 +26,7 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical },
+    alternates: buildAlternates(canonical),
     openGraph: {
       title: `${title} | LiveCam Global`,
       description,

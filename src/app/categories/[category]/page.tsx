@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { listApprovedWebcams, listCategories } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
+import { buildAlternates } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n-server";
 import { formatMessage, getCategoryLabel, getMessages } from "@/lib/i18n";
 
@@ -24,7 +25,7 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical },
+    alternates: buildAlternates(canonical),
     openGraph: {
       title: `${title} | LiveCam Global`,
       description,

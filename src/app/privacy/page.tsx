@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getServerLocale } from "@/lib/i18n-server";
 import { getMessages } from "@/lib/i18n";
+import { buildAlternates } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | LiveCam Global",
   description:
     "Learn how LiveCam Global handles privacy, public scenic webcam embeds, theme preferences, and partner submissions.",
-  alternates: { canonical: "/privacy" },
+  alternates: buildAlternates("/privacy"),
 };
 
 export default async function PrivacyPage() {

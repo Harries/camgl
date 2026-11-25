@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { listApprovedWebcams, listCategories } from "@/lib/repository";
 import { WorldExplorerClient } from "@/components/WorldExplorerClient";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, buildAlternates } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n-server";
 import { formatMessage, getCategoryLabel, getCityLabel, getCountryLabel, getMessages } from "@/lib/i18n";
 
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     "global webcam map",
     "live scenic webcams",
   ],
-  alternates: { canonical: "/countries" },
+  alternates: buildAlternates("/countries"),
   openGraph: {
     title: "Live Webcams by Country & City — Global Directory & Map | LiveCam Global",
     description:

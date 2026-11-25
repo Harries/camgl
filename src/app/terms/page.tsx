@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getServerLocale } from "@/lib/i18n-server";
 import { getMessages } from "@/lib/i18n";
+import { buildAlternates } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Terms of Service | LiveCam Global",
   description:
     "Terms of Service governing the use of LiveCam Global, official webcam embeds, partner submissions, and content attribution.",
-  alternates: { canonical: "/terms" },
+  alternates: buildAlternates("/terms"),
 };
 
 export default async function TermsPage() {

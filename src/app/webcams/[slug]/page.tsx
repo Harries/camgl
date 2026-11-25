@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { getWebcamBySlug, listApprovedWebcamsPage } from "@/lib/repository";
 import { WebcamPlayer } from "@/components/WebcamPlayer";
 import { getDaylightInfo } from "@/lib/suncalc";
-import { absoluteUrl, getYouTubeThumbnail, withOutboundSource } from "@/lib/seo";
+import { absoluteUrl, buildAlternates, getYouTubeThumbnail, withOutboundSource } from "@/lib/seo";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
 import { WebcamThumbnail } from "@/components/WebcamThumbnail";
 import { getServerLocale } from "@/lib/i18n-server";
@@ -33,7 +33,7 @@ export async function generateMetadata({
       `${webcam.country.name} webcam`,
       ...webcam.categories.map((c) => `${c.name.toLowerCase()} webcam`),
     ],
-    alternates: { canonical },
+    alternates: buildAlternates(canonical),
     openGraph: {
       type: "video.other",
       title,

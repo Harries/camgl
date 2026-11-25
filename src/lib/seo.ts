@@ -16,6 +16,21 @@ export function absoluteUrl(path = "/"): string {
   return `${base}${normalized}`;
 }
 
+export function buildAlternates(path = "/") {
+  const normalized = path === "/" ? "/" : path.startsWith("/") ? path : `/${path}`;
+  return {
+    canonical: normalized,
+    languages: {
+      "x-default": normalized,
+      en: normalized,
+      zh: `${normalized}?lang=zh`,
+      ja: `${normalized}?lang=ja`,
+      es: `${normalized}?lang=es`,
+      fr: `${normalized}?lang=fr`,
+    },
+  };
+}
+
 export function getYouTubeThumbnail(externalId?: string | null): string | undefined {
   if (!externalId || externalId.length !== 11) return undefined;
   return `https://i.ytimg.com/vi/${externalId}/hqdefault.jpg`;

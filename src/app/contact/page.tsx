@@ -4,12 +4,13 @@ import { Mail, ShieldCheck, Video, Wrench } from "lucide-react";
 import { ContactFormClient } from "@/components/ContactFormClient";
 import { getServerLocale } from "@/lib/i18n-server";
 import { getMessages } from "@/lib/i18n";
+import { buildAlternates } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Contact Us | LiveCam Global",
   description:
     "Contact LiveCam Global for webcam partnerships, stream removal or privacy requests, and technical support.",
-  alternates: { canonical: "/contact" },
+  alternates: buildAlternates("/contact"),
 };
 
 export default async function ContactPage() {

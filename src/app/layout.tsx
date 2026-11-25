@@ -3,7 +3,7 @@ import "./globals.css";
 import { SiteShell } from "@/components/SiteShell";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { I18nProvider } from "@/components/I18nProvider";
-import { getSiteUrl } from "@/lib/seo";
+import { buildAlternates, getSiteUrl } from "@/lib/seo";
 
 const siteUrl = getSiteUrl();
 
@@ -25,9 +25,7 @@ export const metadata: Metadata = {
     "beach webcam",
     "weather cam",
   ],
-  alternates: {
-    canonical: "/",
-  },
+  alternates: buildAlternates("/"),
   openGraph: {
     type: "website",
     siteName: "LiveCam Global",
