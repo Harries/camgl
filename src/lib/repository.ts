@@ -150,6 +150,12 @@ export async function listApprovedWebcams(filters?: {
       const rows = await prisma.webcam.findMany({
         where: {
           reviewStatus: "APPROVED",
+          streams: {
+            some: {
+              isPrimary: true,
+              status: "LIVE",
+            },
+          },
           ...(filters?.country ? { city: { country: { slug: filters.country } } } : {}),
           ...(filters?.city ? { city: { slug: filters.city } } : {}),
           ...(filters?.category
@@ -182,6 +188,7 @@ export async function listApprovedWebcams(filters?: {
 
   const list = memStore.webcams.filter((w) => {
     if (w.reviewStatus && w.reviewStatus !== "APPROVED") return false;
+    if (w.stream?.status !== "LIVE") return false;
     if (filters?.country && w.country.slug !== filters.country) return false;
     if (filters?.city && w.city.slug !== filters.city) return false;
     if (filters?.category && !w.categories.some((c) => c.slug === filters.category)) return false;
