@@ -33,18 +33,25 @@ export default function OpenGraphImage() {
           <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
             <svg width="60" height="60" viewBox="0 0 64 64" fill="none">
               <defs>
-                <linearGradient id="og-bg" x1="6" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#0EA5E9" />
-                  <stop offset="55%" stopColor="#2563EB" />
-                  <stop offset="100%" stopColor="#4338CA" />
+                <linearGradient id="og-body" x1="6" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#0F172A" />
+                  <stop offset="55%" stopColor="#1E3A8A" />
+                  <stop offset="100%" stopColor="#0284C7" />
+                </linearGradient>
+                <linearGradient id="og-glass" x1="22" y1="22" x2="42" y2="42" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#38BDF8" />
+                  <stop offset="100%" stopColor="#1D4ED8" />
                 </linearGradient>
               </defs>
-              <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#og-bg)" />
-              <circle cx="32" cy="32" r="16" stroke="#FFFFFF" strokeWidth="2.6" />
-              <ellipse cx="32" cy="32" rx="7.5" ry="16" stroke="#FFFFFF" strokeOpacity="0.72" strokeWidth="2" />
-              <path d="M16.5 32H47.5" stroke="#FFFFFF" strokeOpacity="0.72" strokeWidth="2" />
-              <circle cx="32" cy="32" r="4.2" fill="#FFFFFF" />
-              <circle cx="48" cy="16" r="6" fill="#EF4444" stroke="#FFFFFF" strokeWidth="2.2" />
+              <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#og-body)" />
+              <path d="M15 22V17C15 15.8954 15.8954 15 17 15H22" stroke="#E0F2FE" strokeWidth="2.4" strokeLinecap="round" />
+              <path d="M15 42V47C15 48.1046 15.8954 49 17 49H22" stroke="#E0F2FE" strokeWidth="2.4" strokeLinecap="round" />
+              <path d="M42 49H47C48.1046 49 49 48.1046 49 47V42" stroke="#E0F2FE" strokeWidth="2.4" strokeLinecap="round" />
+              <circle cx="32" cy="32" r="12.5" stroke="#FFFFFF" strokeWidth="2.6" />
+              <circle cx="32" cy="32" r="8.2" fill="url(#og-glass)" />
+              <circle cx="32" cy="32" r="3.4" fill="#0F172A" />
+              <circle cx="29" cy="28.5" r="2.1" fill="#FFFFFF" fillOpacity="0.85" />
+              <circle cx="47.5" cy="16.5" r="4.8" fill="#EF4444" stroke="#FFFFFF" strokeWidth="1.8" />
             </svg>
             <div style={{ display: "flex", flexDirection: "column" }}>
               <div style={{ fontSize: "28px", fontWeight: 700, letterSpacing: "-0.02em" }}>
