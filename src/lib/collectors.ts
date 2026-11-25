@@ -237,16 +237,19 @@ export async function collectFromWindy(): Promise<CollectedCandidateInput[]> {
       seen.add(w.webcamId);
       const embed = w.player?.live || w.player?.day;
       if (!embed) continue;
+      const lat = w.location?.latitude ?? 0;
+      const lng = w.location?.longitude ?? 0;
+      if (!w.location?.country || (lat === 0 && lng === 0)) continue;
       items.push({
         source: "Windy API v3",
         sourceType: "official_embed",
         mediaType: "LIVE_VIDEO",
         externalId: `windy-${w.webcamId}`,
         title: w.title,
-        countryName: w.location?.country || "International",
+        countryName: w.location.country,
         cityName: w.location?.city || "Unknown",
-        lat: w.location?.latitude ?? 0,
-        lng: w.location?.longitude ?? 0,
+        lat,
+        lng,
         categorySlug: w.categories?.[0]?.id || "nature",
         embedUrl: embed,
         sourceUrl: w.urls?.detail || embed,
@@ -338,7 +341,11 @@ export async function collectAndProbeAllSources(): Promise<
     collectFromYouTube(),
   ]);
 
-  const combined = [...windyItems, ...ytItems, ...PUBLIC_FEED_CATALOG];
+  const combined = [...windyItems, ...ytItems, ...PUBLIC_FEED_CATALOG].filter(
+    (item) =>
+      item.countryName.toLowerCase() !== "international" &&
+      !(item.lat === 0 && item.lng === 0)
+  );
   const probed: Array<Omit<AdminCandidate, "id" | "createdAt" | "reviewStatus">> = [];
   const CHUNK_SIZE = 20;
 

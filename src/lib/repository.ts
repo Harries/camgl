@@ -144,12 +144,21 @@ function mapDbWebcam(r: {
   };
 }
 
+function isFixedLocationWebcam(w: PublicWebcam): boolean {
+  if (w.country.slug.toLowerCase() === "international") return false;
+  if (w.city.lat === 0 && w.city.lng === 0) return false;
+  return true;
+}
+
 export async function listApprovedWebcams(filters?: {
   country?: string;
   city?: string;
   category?: string;
   q?: string;
 }): Promise<PublicWebcam[]> {
+  if (filters?.country?.toLowerCase() === "international") {
+    return [];
+  }
   if (isDbConfigured()) {
     try {
       const rows = await prisma.webcam.findMany({
@@ -161,8 +170,13 @@ export async function listApprovedWebcams(filters?: {
               status: "LIVE",
             },
           },
-          ...(filters?.country ? { city: { country: { slug: filters.country } } } : {}),
-          ...(filters?.city ? { city: { slug: filters.city } } : {}),
+          city: {
+            country: {
+              slug: filters?.country ? filters.country : { not: "international" },
+            },
+            ...(filters?.city ? { slug: filters.city } : {}),
+            NOT: { AND: [{ lat: 0 }, { lng: 0 }] },
+          },
           ...(filters?.category
             ? { categories: { some: { category: { slug: filters.category } } } }
             : {}),
@@ -198,6 +212,7 @@ export async function listApprovedWebcams(filters?: {
   const list = memStore.webcams.filter((w) => {
     if (w.reviewStatus && w.reviewStatus !== "APPROVED") return false;
     if (w.stream?.status !== "LIVE") return false;
+    if (!isFixedLocationWebcam(w)) return false;
     if (filters?.country && w.country.slug !== filters.country) return false;
     if (filters?.city && w.city.slug !== filters.city) return false;
     if (filters?.category && !w.categories.some((c) => c.slug === filters.category)) return false;
@@ -226,6 +241,10 @@ export async function listApprovedWebcamsPage(filters?: {
   const pageSize = Math.min(48, Math.max(1, filters?.pageSize ?? 12));
   const skip = (page - 1) * pageSize;
 
+  if (filters?.country?.toLowerCase() === "international") {
+    return { items: [], total: 0, hasMore: false };
+  }
+
   if (isDbConfigured()) {
     try {
       const where = {
@@ -236,8 +255,13 @@ export async function listApprovedWebcamsPage(filters?: {
             status: "LIVE" as const,
           },
         },
-        ...(filters?.country ? { city: { country: { slug: filters.country } } } : {}),
-        ...(filters?.city ? { city: { slug: filters.city } } : {}),
+        city: {
+          country: {
+            slug: filters?.country ? filters.country : { not: "international" },
+          },
+          ...(filters?.city ? { slug: filters.city } : {}),
+          NOT: { AND: [{ lat: 0 }, { lng: 0 }] },
+        },
         ...(filters?.category
           ? { categories: { some: { category: { slug: filters.category } } } }
           : {}),
@@ -286,6 +310,7 @@ export async function listApprovedWebcamsPage(filters?: {
   const all = memStore.webcams.filter((w) => {
     if (w.reviewStatus && w.reviewStatus !== "APPROVED") return false;
     if (w.stream?.status !== "LIVE") return false;
+    if (!isFixedLocationWebcam(w)) return false;
     if (filters?.country && w.country.slug !== filters.country) return false;
     if (filters?.city && w.city.slug !== filters.city) return false;
     if (filters?.category && !w.categories.some((c) => c.slug === filters.category)) return false;
@@ -320,6 +345,10 @@ export async function getWebcamBySlug(slug: string): Promise<PublicWebcam | null
               status: "LIVE",
             },
           },
+          city: {
+            country: { slug: { not: "international" } },
+            NOT: { AND: [{ lat: 0 }, { lng: 0 }] },
+          },
         },
         include: {
           city: { include: { country: true } },
@@ -344,7 +373,8 @@ export async function getWebcamBySlug(slug: string): Promise<PublicWebcam | null
     (w) =>
       w.slug === slug &&
       (!w.reviewStatus || w.reviewStatus === "APPROVED") &&
-      w.stream?.status === "LIVE"
+      w.stream?.status === "LIVE" &&
+      isFixedLocationWebcam(w)
   );
   if (!found) return null;
   const [enriched] = await enrichWeather([found]);
