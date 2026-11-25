@@ -35,6 +35,7 @@ export default async function CountriesPage() {
     getServerLocale(),
   ]);
   const tw = getMessages(locale).webcam;
+  const tco = getMessages(locale).countries;
 
   // Build hierarchical Country -> Cities directory for SSR SEO links
   const directoryMap = new Map<
@@ -121,21 +122,25 @@ export default async function CountriesPage() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
           <div>
             <div className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">
-              Global Webcam Directory
+              {tco.directoryEyebrow}
             </div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">
-              Browse Live Webcams by Country &amp; City
+              {tco.directoryTitle}
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Explore {webcams.length} verified live streams across {directory.length} countries and {totalCities} cities with real-time local weather and daylight context.
+              {formatMessage(tco.directorySubtitle, {
+                cams: webcams.length,
+                countries: directory.length,
+                cities: totalCities,
+              })}
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 shrink-0">
             <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 font-medium">
-              {directory.length} Countries
+              {formatMessage(tco.countriesBadge, { count: directory.length })}
             </span>
             <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 font-medium">
-              {totalCities} Cities
+              {formatMessage(tco.citiesBadge, { count: totalCities })}
             </span>
           </div>
         </div>
@@ -160,7 +165,7 @@ export default async function CountriesPage() {
                   href={`/countries/${country.slug}`}
                   className="text-xs px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 shrink-0 tabular-nums"
                 >
-                  {country.webcamCount} {country.webcamCount === 1 ? "cam" : "cams"} →
+                  {formatMessage(tco.camCount, { count: country.webcamCount })} →
                 </Link>
               </div>
 

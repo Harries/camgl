@@ -5,12 +5,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { PublicWebcam } from "@/lib/types";
 import { RealMap } from "./RealMap";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
-import { getCategoryLabel } from "@/lib/i18n";
+import { formatMessage, getCategoryLabel } from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
 import { WebcamThumbnail } from "./WebcamThumbnail";
 
 export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
-  const { locale } = useI18n();
+  const { locale, messages } = useI18n();
+  const tco = messages.countries;
+  const tg = messages.grid;
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedSlug, setSelectedSlug] = useState<string>(webcams[0]?.slug ?? "");
@@ -152,7 +154,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
         <div>
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
             <button onClick={resetAll} className="hover:underline text-slate-700 dark:text-slate-300 font-medium">
-              World Explorer
+              {tco.worldExplorer}
             </button>
             {selectedCountry && (
               <>
@@ -175,10 +177,10 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
             )}
           </div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-            Explore by Map, Country &amp; City
+            {tco.heroTitle}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Zoom, pan, or click any map marker, country, or city to filter live streams.
+            {tco.heroSubtitle}
           </p>
         </div>
 
@@ -202,13 +204,13 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
       {/* Full-Width Real Map */}
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden flex flex-col shadow-sm">
         <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400">
-          <span>MapLibre GL · {filtered.length} matching cameras</span>
+          <span>{formatMessage(tco.matchingCameras, { count: filtered.length })}</span>
           <span className="inline-flex items-center gap-3 text-slate-600 dark:text-slate-300">
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Live
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> {tco.live}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Selected
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500" /> {tco.selected}
             </span>
           </span>
         </div>
@@ -244,7 +246,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
             href={`/webcams/${activePin.slug}`}
             className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 text-center shadow-sm"
           >
-            Open Live Stream →
+            {tco.openLiveStream}
           </Link>
         </div>
       )}
@@ -253,14 +255,14 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Countries ({countries.length})
+            {formatMessage(tco.countriesTitle, { count: countries.length })}
           </h2>
           {selectedCountry && (
             <button
               onClick={resetAll}
               className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
             >
-              Show all countries
+              {tco.showAllCountries}
             </button>
           )}
         </div>
@@ -292,14 +294,16 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Cities {selectedCountry ? `in ${selectedCountry.replace(/-/g, " ")}` : "Worldwide"}
+            {selectedCountry
+              ? formatMessage(tco.citiesIn, { country: selectedCountry.replace(/-/g, " ") })
+              : tco.citiesWorldwide}
           </h2>
           {(selectedCountry || selectedCity || catFilter !== "all") && (
             <button
               onClick={resetAll}
               className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
             >
-              Reset all filters
+              {tco.resetFilters}
             </button>
           )}
         </div>
@@ -334,7 +338,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Matching Live Webcams ({filtered.length})
+            {formatMessage(tco.matchingWebcams, { count: filtered.length })}
           </h2>
           {selectedCountry && (
             <Link
@@ -345,7 +349,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
               }
               className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
             >
-              Open SEO directory page →
+              {tco.openSeoPage}
             </Link>
           )}
         </div>
@@ -395,12 +399,12 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
               onClick={() => setVisibleCount((prev) => Math.min(filtered.length, prev + 12))}
               className="px-5 py-2 rounded-full text-xs font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
             >
-              Load More ({visibleWebcams.length} / {filtered.length})
+              {formatMessage(tg.loadMore, { loaded: visibleWebcams.length, total: filtered.length })}
             </button>
           ) : (
             filtered.length > 0 && (
               <div className="text-xs text-slate-400 dark:text-slate-500">
-                Showing all {filtered.length} matching webcams
+                {formatMessage(tg.showingAll, { count: filtered.length })}
               </div>
             )
           )}

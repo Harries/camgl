@@ -10,50 +10,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/terms" },
 };
 
-const SECTIONS = [
-  {
-    title: "1. Acceptance of Terms",
-    body: [
-      "By accessing or using LiveCam Global (camgl.com), you agree to comply with these Terms of Service. If you do not agree with any part of these terms, please discontinue use of the site.",
-    ],
-  },
-  {
-    title: "2. Nature of the Service",
-    body: [
-      "LiveCam Global provides an informational directory, interactive world map, and official embed viewer for publicly available live scenic webcams worldwide.",
-      "All video streams, snapshots, and trademarks remain the intellectual property of their respective camera operators, tourism boards, and broadcasters. LiveCam Global provides attribution and links back to official sources where available.",
-    ],
-  },
-  {
-    title: "3. Partner & Operator Submissions",
-    body: [
-      "When submitting a webcam via our submission form (/submit), you represent and warrant that:",
-      "• The camera displays a public scenic, weather, wildlife, transit, or landmark view and does not invade private spaces or sensitive areas.",
-      "• You own the stream or hold authority to permit public embedding on third-party directories.",
-      "• All submitted title, location, description, and contact details are accurate.",
-      "LiveCam Global reserves the right to approve, edit metadata for clarity, or remove any listing at any time.",
-    ],
-  },
-  {
-    title: "4. Acceptable Use",
-    body: [
-      "You agree not to scrape, mirror, overload, or interfere with LiveCam Global's APIs, health-check endpoints, or admin interfaces, and not to bypass technical restrictions enforced by upstream stream providers.",
-    ],
-  },
-  {
-    title: "5. Availability & Disclaimers",
-    body: [
-      "Live streams and local weather data are provided on an \"as-is\" and \"as-available\" basis. Because streams originate from external providers around the world, temporary outages, geo-restrictions, or stream changes may occur without notice.",
-    ],
-  },
-  {
-    title: "6. Copyright & Removal Requests",
-    body: [
-      "If you are a rights holder or camera operator and wish to update attribution or have a stream removed from LiveCam Global, please contact us with the listing URL and verification details.",
-    ],
-  },
-];
-
 export default async function TermsPage() {
   const locale = await getServerLocale();
   const tl = getMessages(locale).legal;
@@ -73,7 +29,7 @@ export default async function TermsPage() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-6 shadow-sm">
-        {SECTIONS.map((section) => (
+        {tl.termsSections.map((section) => (
           <section key={section.title} className="space-y-2">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               {section.title}

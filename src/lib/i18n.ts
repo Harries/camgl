@@ -107,8 +107,10 @@ export interface Messages {
     formTitle: string;
     formSubtitle: string;
     yourName: string;
+    namePlaceholder: string;
     yourEmail: string;
     subject: string;
+    subjectPlaceholder: string;
     message: string;
     messagePlaceholder: string;
     sending: string;
@@ -129,6 +131,8 @@ export interface Messages {
     readTerms: string;
     contactUs: string;
     readPrivacy: string;
+    privacySections: { title: string; body: string[] }[];
+    termsSections: { title: string; body: string[] }[];
   };
   player: {
     unavailableTitle: string;
@@ -175,6 +179,28 @@ export interface Messages {
     faq3A: string;
     faq4Q: string;
     faq4A: string;
+  };
+  countries: {
+    worldExplorer: string;
+    heroTitle: string;
+    heroSubtitle: string;
+    matchingCameras: string;
+    live: string;
+    selected: string;
+    openLiveStream: string;
+    countriesTitle: string;
+    showAllCountries: string;
+    citiesIn: string;
+    citiesWorldwide: string;
+    resetFilters: string;
+    matchingWebcams: string;
+    openSeoPage: string;
+    directoryEyebrow: string;
+    directoryTitle: string;
+    directorySubtitle: string;
+    countriesBadge: string;
+    citiesBadge: string;
+    camCount: string;
   };
   categories: Record<string, string>;
 }
@@ -271,8 +297,10 @@ const en: Messages = {
     formSubtitle:
       "Fill out the form below and our team will review your inquiry in the admin console.",
     yourName: "Your Name *",
+    namePlaceholder: "e.g., Alex Morgan",
     yourEmail: "Contact Email *",
     subject: "Subject *",
+    subjectPlaceholder: "Partnership, stream takedown, feedback, or technical issue",
     message: "Message *",
     messagePlaceholder: "Please include the webcam URL (if applicable) and any details...",
     sending: "Sending...",
@@ -297,6 +325,83 @@ const en: Messages = {
     readTerms: "Read Terms of Service",
     contactUs: "Contact Us",
     readPrivacy: "Read Privacy Policy",
+    privacySections: [
+      {
+        title: "1. Public Scenic Streams Only",
+        body: [
+          "LiveCam Global (camgl.com) is a curated directory of publicly accessible scenic webcams—including beaches, city skylines, mountains, ports, wildlife habitats, and transit landmarks.",
+          "We do not host private surveillance cameras, residential feeds, or unauthorized streams. Every camera is reviewed prior to publication for public-view appropriateness and operator attribution.",
+        ],
+      },
+      {
+        title: "2. Information We Collect",
+        body: [
+          "Browsing LiveCam Global does not require an account or login. We store only minimal functional preferences—such as your light/dark theme and language selection in browser storage.",
+          "If you submit a webcam through our Partner & Operator Portal (/submit), we collect the contact email and operator details you provide solely to verify stream authorization and communicate review status. Contact emails are never exposed in public pages or public APIs.",
+          "If you send an inquiry via /contact or submit a stream report, we store the submitted fields to respond to your request and maintain directory accuracy.",
+        ],
+      },
+      {
+        title: "3. Third-Party Embeds & External Services",
+        body: [
+          "Live video streams are delivered directly from official third-party broadcasters and embed providers—such as YouTube (via privacy-enhanced youtube-nocookie.com embeds), Windy, HLS stream hosts, or official tourism/operator portals.",
+          "Real-time local weather summaries displayed alongside webcams are fetched using public city coordinates via Open-Meteo without sending any personal user data.",
+        ],
+      },
+      {
+        title: "4. Cookies, Analytics & Retention",
+        body: [
+          "We minimize cookie usage and do not sell personal data to third parties. Standard hosting logs may temporarily record anonymized request metadata for security and uptime monitoring.",
+          "You may request update or deletion of your contact information at any time.",
+        ],
+      },
+      {
+        title: "5. Privacy & Takedown Requests",
+        body: [
+          "If you operate a listed camera or believe a stream raises a privacy concern, please reach out to us with the webcam URL so we can review or remove it promptly.",
+        ],
+      },
+    ],
+    termsSections: [
+      {
+        title: "1. Acceptance of Terms",
+        body: [
+          "By accessing or using LiveCam Global (camgl.com), you agree to comply with these Terms of Service. If you do not agree with any part of these terms, please discontinue use of the site.",
+        ],
+      },
+      {
+        title: "2. Nature of the Service",
+        body: [
+          "LiveCam Global provides an informational directory, interactive world map, and official embed viewer for publicly available live scenic webcams worldwide.",
+          "All video streams, snapshots, and trademarks remain the intellectual property of their respective camera operators, tourism boards, and broadcasters.",
+        ],
+      },
+      {
+        title: "3. Partner & Operator Submissions",
+        body: [
+          "When submitting a webcam via /submit, you represent that the camera displays a public scenic view (no private surveillance), and that you hold authority to permit public embedding.",
+          "LiveCam Global reserves the right to approve, edit metadata for clarity, or remove any listing at any time.",
+        ],
+      },
+      {
+        title: "4. Acceptable Use",
+        body: [
+          "You agree not to scrape, mirror, overload, or interfere with LiveCam Global's APIs or admin interfaces, and not to bypass technical restrictions enforced by upstream stream providers.",
+        ],
+      },
+      {
+        title: "5. Availability & Disclaimers",
+        body: [
+          "Live streams and local weather data are provided on an \"as-is\" and \"as-available\" basis. Temporary upstream outages or geo-restrictions may occur without notice.",
+        ],
+      },
+      {
+        title: "6. Copyright & Removal Requests",
+        body: [
+          "If you are a rights holder or camera operator and wish to update attribution or have a stream removed, please contact us with the listing URL and verification details.",
+        ],
+      },
+    ],
   },
   player: {
     unavailableTitle: "Stream player unavailable",
@@ -349,6 +454,29 @@ const en: Messages = {
     faq4Q: "Is this {city} live webcam free to watch?",
     faq4A:
       "Yes. All public scenic webcams on LiveCam Global are free to watch with no registration required, embedded from official or public-domain sources.",
+  },
+  countries: {
+    worldExplorer: "World Explorer",
+    heroTitle: "Explore by Map, Country & City",
+    heroSubtitle: "Zoom, pan, or click any map marker, country, or city to filter live streams.",
+    matchingCameras: "MapLibre GL · {count} matching cameras",
+    live: "Live",
+    selected: "Selected",
+    openLiveStream: "Open Live Stream →",
+    countriesTitle: "Countries ({count})",
+    showAllCountries: "Show all countries",
+    citiesIn: "Cities in {country}",
+    citiesWorldwide: "Cities Worldwide",
+    resetFilters: "Reset all filters",
+    matchingWebcams: "Matching Live Webcams ({count})",
+    openSeoPage: "Open SEO directory page →",
+    directoryEyebrow: "Global Webcam Directory",
+    directoryTitle: "Browse Live Webcams by Country & City",
+    directorySubtitle:
+      "Explore {cams} verified live streams across {countries} countries and {cities} cities with real-time local weather and daylight context.",
+    countriesBadge: "{count} Countries",
+    citiesBadge: "{count} Cities",
+    camCount: "{count} cams",
   },
   categories: {
     all: "All",
@@ -449,8 +577,10 @@ const zh: Messages = {
     formTitle: "在线发送消息",
     formSubtitle: "填写下方表单，我们的管理员将在后台查看并回复您的邮箱。",
     yourName: "您的姓名 *",
+    namePlaceholder: "例如：张三",
     yourEmail: "联系邮箱 *",
     subject: "主题 *",
+    subjectPlaceholder: "商务合作、视频下架、意见反馈或技术问题",
     message: "留言内容 *",
     messagePlaceholder: "请附上相关摄像头链接（如有）以及具体说明...",
     sending: "发送中...",
@@ -472,6 +602,83 @@ const zh: Messages = {
     readTerms: "阅读服务条款",
     contactUs: "联系我们",
     readPrivacy: "阅读隐私政策",
+    privacySections: [
+      {
+        title: "1. 仅收录公开风景直播流",
+        body: [
+          "LiveCam Global（camgl.com）是一个精选全球公开风景实时摄像头的目录平台，涵盖海滩、城市天际线、山峰、港口、野生动物栖息地与交通地标等。",
+          "我们不收录私人监控摄像头、住宅画面或任何未授权视频流。所有摄像头在发布前均会经过公开景别与来源归属审核。",
+        ],
+      },
+      {
+        title: "2. 我们收集的信息",
+        body: [
+          "浏览 LiveCam Global 无需注册或登录账号。我们仅在浏览器本地保存最基础的功能偏好（如浅色/深色主题与界面语言选择）。",
+          "当您通过 /submit 提交摄像头时，我们仅收集您填写的联系邮箱与运营商信息用于核验授权及沟通审核结果，联系邮箱绝不会在公开页面或公开 API 中暴露。",
+          "当您通过 /contact 发送留言或提交视频反馈时，我们会保存提交的内容以便处理您的请求并维护目录准确性。",
+        ],
+      },
+      {
+        title: "3. 第三方播放器与外部服务",
+        body: [
+          "实时视频流直接由官方第三方广播方或嵌入平台提供（如采用隐私增强模式 youtube-nocookie.com 的 YouTube 嵌入、Windy、HLS 流媒体源或官方旅游门户）。",
+          "页面展示的当地实时天气摘要基于城市公开经纬度通过 Open-Meteo 获取，不会发送任何个人隐私数据。",
+        ],
+      },
+      {
+        title: "4. Cookie 与数据保留",
+        body: [
+          "我们尽量减少 Cookie 使用，且绝不向第三方出售个人数据。托管服务仅可能出于安全防护与可用性监控临时记录匿名请求日志。",
+          "您可随时联系我们申请更新或删除您的联系信息。",
+        ],
+      },
+      {
+        title: "5. 隐私与下架申请",
+        body: [
+          "如果您是已收录摄像头的运营方，或认为某路画面涉及隐私问题，请携带摄像头页面链接联系我们，我们将尽快核查或下架。",
+        ],
+      },
+    ],
+    termsSections: [
+      {
+        title: "1. 条款接受",
+        body: [
+          "访问或使用 LiveCam Global（camgl.com）即表示您同意遵守本服务条款。如果您不同意其中任何内容，请停止使用本网站。",
+        ],
+      },
+      {
+        title: "2. 服务性质",
+        body: [
+          "LiveCam Global 为全球公开可用的风景实时摄像头提供信息目录、交互式地图与官方嵌入观看入口。",
+          "所有视频流、快照及商标的知识产权均归原摄像头运营商、旅游机构或广播方所有。",
+        ],
+      },
+      {
+        title: "3. 合作伙伴提交规范",
+        body: [
+          "通过 /submit 提交摄像头时，您需确保画面为公开风景（不含私人监控或敏感区域），且您有权许可公开嵌入展示。",
+          "LiveCam Global 保留对收录内容进行审核、为清晰度微调元信息或随时下架的权利。",
+        ],
+      },
+      {
+        title: "4. 合理使用",
+        body: [
+          "您同意不恶意抓取、镜像、过载攻击或干扰 LiveCam Global 的 API 与管理后台，也不绕过上游视频流服务商的技术限制。",
+        ],
+      },
+      {
+        title: "5. 可用性与免责声明",
+        body: [
+          "实时视频流与当地天气数据按“现状”和“可用”基础提供。由于视频源来自世界各地第三方，可能随时出现临时断流或地区访问限制。",
+        ],
+      },
+      {
+        title: "6. 版权与移除请求",
+        body: [
+          "如果您是版权方或摄像头运营者，希望更新来源署名或移除特定摄像头，请附带页面链接与权属说明联系我们。",
+        ],
+      },
+    ],
   },
   player: {
     unavailableTitle: "播放器暂不可用",
@@ -521,6 +728,28 @@ const zh: Messages = {
     faq3A: "该摄像头采用 {format}（{mediaType}）格式，由 {provider} 提供，系统会自动巡检可用性。",
     faq4Q: "观看 {city} 的这个实景摄像头需要付费或注册吗？",
     faq4A: "不需要。LiveCam Global 上的所有公开风景摄像头均免费免注册观看，视频均来自官方或公开授权嵌入源。",
+  },
+  countries: {
+    worldExplorer: "全球地图探索",
+    heroTitle: "按地图、国家与城市探索",
+    heroSubtitle: "缩放、拖动地图，或点击任意标记、国家或城市即可筛选实时摄像头。",
+    matchingCameras: "MapLibre GL · 共 {count} 个匹配摄像头",
+    live: "直播中",
+    selected: "已选中",
+    openLiveStream: "观看实时画面 →",
+    countriesTitle: "国家/地区 ({count})",
+    showAllCountries: "显示全部国家",
+    citiesIn: "{country} 的城市",
+    citiesWorldwide: "全球城市",
+    resetFilters: "重置全部筛选",
+    matchingWebcams: "匹配的实时摄像头 ({count})",
+    openSeoPage: "打开地区专题页 →",
+    directoryEyebrow: "全球摄像头目录",
+    directoryTitle: "按国家与城市浏览实时摄像头",
+    directorySubtitle: "浏览覆盖 {countries} 个国家、{cities} 座城市的 {cams} 路已验证实景直播，附带当地实时天气与日照信息。",
+    countriesBadge: "{count} 个国家",
+    citiesBadge: "{count} 座城市",
+    camCount: "{count} 路",
   },
   categories: {
     all: "全部",
@@ -621,8 +850,10 @@ const ja: Messages = {
     formTitle: "メッセージを送信",
     formSubtitle: "以下のフォームにご記入ください。担当者が管理画面で確認のうえ返信いたします。",
     yourName: "お名前 *",
+    namePlaceholder: "例：山田 太郎",
     yourEmail: "メールアドレス *",
     subject: "件名 *",
+    subjectPlaceholder: "提携のご相談、配信削除依頼、フィードバックなど",
     message: "お問い合わせ内容 *",
     messagePlaceholder: "該当するカメラURLや詳細をご記入ください...",
     sending: "送信中...",
@@ -643,6 +874,55 @@ const ja: Messages = {
     readTerms: "利用規約を読む",
     contactUs: "お問い合わせ",
     readPrivacy: "プライバシーポリシーを読む",
+    privacySections: [
+      {
+        title: "1. 公開風景ライブ配信のみを掲載",
+        body: [
+          "LiveCam Global（camgl.com）は、ビーチ、街並み、山岳、港湾、野生動物など公開されている風景ライブカメラのディレクトリです。",
+          "私的な監視カメラや無許可配信は掲載せず、公開前に適切な公開風景と運営元の表記を確認しています。",
+        ],
+      },
+      {
+        title: "2. 収集する情報",
+        body: [
+          "閲覧にアカウント登録は不要です。テーマ設定や表示言語など最小限の機能設定のみブラウザに保存します。",
+          "/submit や /contact からご入力いただいた連絡先やお問い合わせ内容は、審査・返信および掲載品質の維持のためにのみ使用し、公開ページには表示しません。",
+        ],
+      },
+      {
+        title: "3. 第三者の埋め込みと外部サービス",
+        body: [
+          "映像配信は YouTube（youtube-nocookie.com）、Windy、HLS 配信元などの公式プレーヤーを通じて直接提供されます。",
+          "現地の天気情報は都市の公開座標をもとに Open-Meteo から取得しており、個人情報は送信されません。",
+        ],
+      },
+      {
+        title: "4. プライバシー・削除依頼",
+        body: [
+          "掲載カメラの運営者様やプライバシーに関する削除をご希望の場合は、該当URLを添えてお問い合わせください。速やかに対応いたします。",
+        ],
+      },
+    ],
+    termsSections: [
+      {
+        title: "1. 規約への同意",
+        body: [
+          "LiveCam Global（camgl.com）を利用することで、本利用規約に同意したものとみなされます。",
+        ],
+      },
+      {
+        title: "2. サービスの性質",
+        body: [
+          "当サイトは公開ライブカメラのディレクトリおよび公式埋め込みビューアを提供します。映像・商標等の権利は各運営元に帰属します。",
+        ],
+      },
+      {
+        title: "3. 投稿ガイドラインと免責事項",
+        body: [
+          "/submit からの申請は公開風景カメラかつ埋め込み許可のあるものに限ります。配信状況は外部提供元に依存するため、一時的な停止や地域制限が生じる場合があります。",
+        ],
+      },
+    ],
   },
   player: {
     unavailableTitle: "プレーヤーを利用できません",
@@ -692,6 +972,28 @@ const ja: Messages = {
     faq3A: "{provider} 提供の {format}（{mediaType}）形式で配信されており、稼働状況は自動監視されています。",
     faq4Q: "この {city} のライブカメラは無料で視聴できますか？",
     faq4A: "はい。LiveCam Global の公開風景カメラは登録不要で無料視聴できます。",
+  },
+  countries: {
+    worldExplorer: "ワールドエクスプローラー",
+    heroTitle: "地図・国・都市から探す",
+    heroSubtitle: "地図のピン、国、または都市をクリックしてライブ配信を絞り込めます。",
+    matchingCameras: "MapLibre GL · {count} 件のカメラが一致",
+    live: "ライブ",
+    selected: "選択中",
+    openLiveStream: "ライブ配信を開く →",
+    countriesTitle: "国・地域 ({count})",
+    showAllCountries: "すべての国を表示",
+    citiesIn: "{country} の都市",
+    citiesWorldwide: "世界の都市",
+    resetFilters: "フィルターをリセット",
+    matchingWebcams: "一致するライブカメラ ({count})",
+    openSeoPage: "地域ディレクトリページを開く →",
+    directoryEyebrow: "グローバル・ウェブカメラディレクトリ",
+    directoryTitle: "国・都市別のライブカメラ一覧",
+    directorySubtitle: "{countries} か国・{cities} 都市の {cams} 件の認証済みライブ配信を現地の天気・時刻とともに探索できます。",
+    countriesBadge: "{count} か国",
+    citiesBadge: "{count} 都市",
+    camCount: "{count} 件",
   },
   categories: {
     all: "すべて",
@@ -792,8 +1094,10 @@ const es: Messages = {
     formTitle: "Envíanos un Mensaje",
     formSubtitle: "Completa el formulario y nuestro equipo revisará tu consulta en el panel.",
     yourName: "Tu Nombre *",
+    namePlaceholder: "ej., Alex Morgan",
     yourEmail: "Correo Electrónico *",
     subject: "Asunto *",
+    subjectPlaceholder: "Alianza, retiro de transmisión, comentario o soporte",
     message: "Mensaje *",
     messagePlaceholder: "Incluye la URL de la cámara (si aplica) y los detalles...",
     sending: "Enviando...",
@@ -814,6 +1118,40 @@ const es: Messages = {
     readTerms: "Leer Términos",
     contactUs: "Contáctanos",
     readPrivacy: "Leer Privacidad",
+    privacySections: [
+      {
+        title: "1. Solo Transmisiones Escénicas Públicas",
+        body: [
+          "LiveCam Global (camgl.com) es un directorio de cámaras públicas panorámicas (playas, ciudades, montañas, puertos y fauna). No alojamos cámaras privadas de vigilancia.",
+        ],
+      },
+      {
+        title: "2. Información que Recopilamos",
+        body: [
+          "No necesitas cuenta para navegar. Solo guardamos tu preferencia de tema e idioma en el navegador, y los datos enviados voluntariamente en /submit o /contact para responderte.",
+        ],
+      },
+      {
+        title: "3. Reproductores Externos y Privacidad",
+        body: [
+          "Los videos se reproducen desde proveedores oficiales (YouTube youtube-nocookie.com, Windy, HLS) y el clima proviene de Open-Meteo usando coordenadas públicas. Contáctanos si deseas retirar una cámara.",
+        ],
+      },
+    ],
+    termsSections: [
+      {
+        title: "1. Aceptación y Naturaleza del Servicio",
+        body: [
+          "Al usar LiveCam Global aceptas estos términos. Todas las transmisiones y marcas pertenecen a sus respectivos operadores y emisoras.",
+        ],
+      },
+      {
+        title: "2. Envíos y Disponibilidad",
+        body: [
+          "Los envíos en /submit deben ser vistas públicas autorizadas. Las transmisiones se ofrecen tal cual y pueden sufrir interrupciones externas.",
+        ],
+      },
+    ],
   },
   player: {
     unavailableTitle: "Reproductor no disponible",
@@ -864,6 +1202,28 @@ const es: Messages = {
     faq3A: "Transmite vía {format} ({mediaType}) provisto por {provider}, con monitoreo automático.",
     faq4Q: "¿Es gratis ver esta cámara en vivo de {city}?",
     faq4A: "Sí, todas las cámaras públicas en LiveCam Global son gratuitas y sin registro.",
+  },
+  countries: {
+    worldExplorer: "Explorador Mundial",
+    heroTitle: "Explorar por Mapa, País y Ciudad",
+    heroSubtitle: "Haz zoom o pulsa en cualquier marcador, país o ciudad para filtrar transmisiones en vivo.",
+    matchingCameras: "MapLibre GL · {count} cámaras coincidentes",
+    live: "En vivo",
+    selected: "Seleccionada",
+    openLiveStream: "Abrir Transmisión →",
+    countriesTitle: "Países ({count})",
+    showAllCountries: "Mostrar todos los países",
+    citiesIn: "Ciudades en {country}",
+    citiesWorldwide: "Ciudades del Mundo",
+    resetFilters: "Restablecer filtros",
+    matchingWebcams: "Cámaras en Vivo ({count})",
+    openSeoPage: "Abrir página del directorio →",
+    directoryEyebrow: "Directorio Global de Cámaras",
+    directoryTitle: "Explorar Cámaras por País y Ciudad",
+    directorySubtitle: "Explora {cams} transmisiones verificadas en {countries} países y {cities} ciudades con clima y luz solar en tiempo real.",
+    countriesBadge: "{count} Países",
+    citiesBadge: "{count} Ciudades",
+    camCount: "{count} cám.",
   },
   categories: {
     all: "Todas",
@@ -964,8 +1324,10 @@ const fr: Messages = {
     formTitle: "Envoyer un Message",
     formSubtitle: "Remplissez le formulaire ci-dessous et notre équipe vous répondra rapidement.",
     yourName: "Votre Nom *",
+    namePlaceholder: "ex. : Alex Morgan",
     yourEmail: "Votre E-mail *",
     subject: "Sujet *",
+    subjectPlaceholder: "Partenariat, retrait de flux, avis ou support technique",
     message: "Message *",
     messagePlaceholder: "Indiquez l'URL de la webcam (si applicable) et les détails...",
     sending: "Envoi...",
@@ -986,6 +1348,40 @@ const fr: Messages = {
     readTerms: "Lire les Conditions",
     contactUs: "Nous Contacter",
     readPrivacy: "Lire la Confidentialité",
+    privacySections: [
+      {
+        title: "1. Flux Panoramiques Publics Uniquement",
+        body: [
+          "LiveCam Global (camgl.com) référence uniquement des webcams panoramiques publiques (plages, villes, montagnes, ports, faune). Aucune caméra de surveillance privée n'est hébergée.",
+        ],
+      },
+      {
+        title: "2. Données Collectées",
+        body: [
+          "Aucune inscription requise. Nous mémorisons seulement votre thème et votre langue, ainsi que les informations transmises via /submit ou /contact pour traiter votre demande.",
+        ],
+      },
+      {
+        title: "3. Lecteurs Tiers & Retrait",
+        body: [
+          "Les flux proviennent directement des diffuseurs officiels (YouTube youtube-nocookie.com, Windy, HLS) et la météo via Open-Meteo. Contactez-nous pour toute demande de retrait.",
+        ],
+      },
+    ],
+    termsSections: [
+      {
+        title: "1. Acceptation et Propriété",
+        body: [
+          "En utilisant LiveCam Global, vous acceptez ces conditions. Tous les flux vidéo et marques restent la propriété de leurs opérateurs respectifs.",
+        ],
+      },
+      {
+        title: "2. Soumissions et Disponibilité",
+        body: [
+          "Toute soumission via /submit doit concerner une vue publique autorisée. Les flux sont fournis en l'état et peuvent subir des coupures externes.",
+        ],
+      },
+    ],
   },
   player: {
     unavailableTitle: "Lecteur indisponible",
@@ -1036,6 +1432,28 @@ const fr: Messages = {
     faq3A: "Ce flux utilise {format} ({mediaType}) fourni par {provider}, surveillé automatiquement.",
     faq4Q: "Cette webcam de {city} est-elle gratuite ?",
     faq4A: "Oui, toutes les webcams panoramiques publiques sur LiveCam Global sont gratuites et sans inscription.",
+  },
+  countries: {
+    worldExplorer: "Explorateur Mondial",
+    heroTitle: "Explorer par Carte, Pays & Ville",
+    heroSubtitle: "Zoomez ou cliquez sur un marqueur, un pays ou une ville pour filtrer les flux en direct.",
+    matchingCameras: "MapLibre GL · {count} caméras correspondantes",
+    live: "En direct",
+    selected: "Sélectionnée",
+    openLiveStream: "Voir le Direct →",
+    countriesTitle: "Pays ({count})",
+    showAllCountries: "Afficher tous les pays",
+    citiesIn: "Villes en {country}",
+    citiesWorldwide: "Villes du Monde",
+    resetFilters: "Réinitialiser les filtres",
+    matchingWebcams: "Webcams en Direct ({count})",
+    openSeoPage: "Ouvrir la page du répertoire →",
+    directoryEyebrow: "Répertoire Mondial de Webcams",
+    directoryTitle: "Parcourir les Webcams par Pays & Ville",
+    directorySubtitle: "Explorez {cams} flux vérifiés dans {countries} pays et {cities} villes avec météo locale et ensoleillement en direct.",
+    countriesBadge: "{count} Pays",
+    citiesBadge: "{count} Villes",
+    camCount: "{count} cams",
   },
   categories: {
     all: "Toutes",

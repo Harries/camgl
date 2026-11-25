@@ -90,7 +90,7 @@ export function ContactFormClient() {
             type="text"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="e.g., Alex Morgan"
+            placeholder={tc.namePlaceholder}
             className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-slate-800"
           />
         </label>
@@ -114,7 +114,7 @@ export function ContactFormClient() {
           type="text"
           value={form.subject}
           onChange={(e) => setForm({ ...form, subject: e.target.value })}
-          placeholder="Partnership, stream takedown, feedback, or technical issue"
+          placeholder={tc.subjectPlaceholder}
           className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-slate-800"
         />
       </label>
