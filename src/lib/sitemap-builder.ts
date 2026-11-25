@@ -144,3 +144,20 @@ ${urlNodes}
 </urlset>
 `;
 }
+
+export function buildSitemapIndexXml(): string {
+  const baseUrl = getSiteUrl();
+  const lastmod = new Date().toISOString();
+  const sitemaps = SUPPORTED_LOCALES.map(
+    (loc) => `  <sitemap>
+    <loc>${escapeXml(`${baseUrl}/sitemap-${loc}.xml`)}</loc>
+    <lastmod>${lastmod}</lastmod>
+  </sitemap>`
+  ).join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${sitemaps}
+</sitemapindex>
+`;
+}
