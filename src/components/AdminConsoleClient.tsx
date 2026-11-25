@@ -25,6 +25,7 @@ import type {
   PublicWebcam,
 } from "@/lib/types";
 import { getSourceTypeMeta } from "@/lib/source-badge";
+import { withOutboundSource } from "@/lib/seo";
 
 interface AdminData {
   webcams: (PublicWebcam & { reviewStatus?: string })[];
@@ -387,9 +388,9 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                               <td className="px-3 py-3">
                                 <div className="font-medium text-slate-900 dark:text-white">{c.title}</div>
                                 <a
-                                  href={c.sourceUrl}
+                                  href={withOutboundSource(c.sourceUrl)}
                                   target="_blank"
-                                  rel="noopener noreferrer"
+                                  rel="noopener"
                                   className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                                 >
                                   Preview Source ↗

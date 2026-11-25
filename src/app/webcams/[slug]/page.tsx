@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { getWebcamBySlug, listApprovedWebcams } from "@/lib/repository";
 import { WebcamPlayer } from "@/components/WebcamPlayer";
 import { getDaylightInfo } from "@/lib/suncalc";
-import { absoluteUrl, getYouTubeThumbnail } from "@/lib/seo";
+import { absoluteUrl, getYouTubeThumbnail, withOutboundSource } from "@/lib/seo";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
 import { WebcamThumbnail } from "@/components/WebcamThumbnail";
 
@@ -341,9 +341,9 @@ export default async function WebcamDetailPage({
                 <div className="text-slate-500 dark:text-slate-400">Original Source</div>
                 {webcam.stream?.sourceUrl ? (
                   <a
-                    href={webcam.stream.sourceUrl}
+                    href={withOutboundSource(webcam.stream.sourceUrl)}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel="noopener"
                     className="font-semibold text-blue-600 dark:text-blue-400 hover:underline mt-0.5 inline-block truncate max-w-full"
                   >
                     Open Source ↗

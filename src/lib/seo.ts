@@ -20,3 +20,18 @@ export function getYouTubeThumbnail(externalId?: string | null): string | undefi
   if (!externalId || externalId.length !== 11) return undefined;
   return `https://i.ytimg.com/vi/${externalId}/hqdefault.jpg`;
 }
+
+export function withOutboundSource(rawUrl: string): string {
+  try {
+    const url = new URL(rawUrl);
+    if (!url.searchParams.has("utm_source")) {
+      url.searchParams.set("utm_source", "camgl.com");
+    }
+    if (!url.searchParams.has("utm_medium")) {
+      url.searchParams.set("utm_medium", "referral");
+    }
+    return url.toString();
+  } catch {
+    return rawUrl;
+  }
+}

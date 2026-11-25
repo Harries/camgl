@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Play, ExternalLink, AlertTriangle, RefreshCw } from "lucide-react";
 import { getWebcamPreviewUrl } from "@/lib/source-badge";
+import { withOutboundSource } from "@/lib/seo";
 
 export function WebcamPlayer({
   title,
@@ -93,9 +94,9 @@ export function WebcamPlayer({
             This stream may be temporarily offline, geo-restricted, or blocked from embedding in your region.
           </p>
           <a
-            href={sourceUrl}
+            href={withOutboundSource(sourceUrl)}
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener"
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
           >
             Watch on Original Source <ExternalLink className="w-3.5 h-3.5" />
