@@ -13,10 +13,10 @@ import {
   ChevronRight,
   RefreshCw,
   ExternalLink,
-  ShieldCheck,
   LogOut,
   Search,
 } from "lucide-react";
+import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
 import { AdminCharts } from "./AdminCharts";
 import type {
@@ -273,9 +273,7 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
         <div>
           {/* Sidebar Header */}
           <div className={`h-16 px-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
-            <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-blue-600 text-white flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
+            <BrandLogo className="w-8 h-8 shrink-0 drop-shadow-sm" />
             {!collapsed && (
               <div className="min-w-0">
                 <div className="text-sm font-bold text-slate-900 dark:text-white truncate">LiveCam Admin</div>
