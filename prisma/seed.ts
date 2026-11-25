@@ -53,6 +53,17 @@ async function main() {
     });
 
     if (cam.stream) {
+      await prisma.stream.deleteMany({
+        where: {
+          webcamId: webcam.id,
+          NOT: {
+            AND: [
+              { sourceType: cam.stream.sourceType },
+              { externalId: cam.stream.externalId },
+            ],
+          },
+        },
+      });
       await prisma.stream.upsert({
         where: { sourceType_externalId: { sourceType: cam.stream.sourceType, externalId: cam.stream.externalId } },
         update: {

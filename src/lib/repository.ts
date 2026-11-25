@@ -175,7 +175,11 @@ export async function listApprovedWebcams(filters?: {
           city: { include: { country: true } },
           provider: true,
           categories: { include: { category: true } },
-          streams: { where: { isPrimary: true }, take: 1 },
+          streams: {
+            where: { isPrimary: true, status: "LIVE" },
+            orderBy: { lastCheckedAt: "desc" },
+            take: 1,
+          },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -414,7 +418,11 @@ export async function getAdminDashboardData() {
             city: { include: { country: true } },
             provider: true,
             categories: { include: { category: true } },
-            streams: { where: { isPrimary: true }, take: 1 },
+            streams: {
+              where: { isPrimary: true },
+              orderBy: { lastCheckedAt: "desc" },
+              take: 1,
+            },
           },
           orderBy: { createdAt: "desc" },
         }),
