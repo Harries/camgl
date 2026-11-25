@@ -235,8 +235,12 @@ export async function collectFromWindy(): Promise<CollectedCandidateInput[]> {
     for (const w of pages.flat()) {
       if (seen.has(w.webcamId)) continue;
       seen.add(w.webcamId);
-      const embed = w.player?.live || w.player?.day;
+      const embed = w.player?.day || w.player?.live;
       if (!embed) continue;
+      const normalizedEmbed = embed.replace(
+        /^(https:\/\/webcams\.windy\.com\/webcams\/public\/embed\/player\/\d+)\/live(\?.*)?$/i,
+        "$1/day$2"
+      );
       const lat = w.location?.latitude ?? 0;
       const lng = w.location?.longitude ?? 0;
       if (!w.location?.country || (lat === 0 && lng === 0)) continue;
@@ -251,11 +255,11 @@ export async function collectFromWindy(): Promise<CollectedCandidateInput[]> {
         lat,
         lng,
         categorySlug: w.categories?.[0]?.id || "nature",
-        embedUrl: embed,
-        sourceUrl: w.urls?.detail || embed,
-        licenseNote: w.player?.live
-          ? "Windy API v3 Live Player"
-          : "Windy API v3 Daylight Player",
+        embedUrl: normalizedEmbed,
+        sourceUrl: w.urls?.detail || normalizedEmbed,
+        licenseNote: w.player?.day
+          ? "Windy API v3 Daylight Player"
+          : "Windy API v3 Live Player",
         privacyNote: "Pass · Windy Verified",
       });
     }

@@ -213,10 +213,15 @@ export function WebcamPlayer({
     );
   }
 
+  const normalizedEmbedUrl = embedUrl.replace(
+    /^(https:\/\/webcams\.windy\.com\/webcams\/public\/embed\/player\/\d+)\/live(\?.*)?$/i,
+    "$1/day$2"
+  );
+
   const iframeSrc =
     sourceType === "youtube"
-      ? `${embedUrl}${embedUrl.includes("?") ? "&" : "?"}autoplay=1&mute=1&rel=0&playsinline=1`
-      : embedUrl;
+      ? `${normalizedEmbedUrl}${normalizedEmbedUrl.includes("?") ? "&" : "?"}autoplay=1&mute=1&rel=0&playsinline=1`
+      : normalizedEmbedUrl;
 
   return (
     <div className={frameClass}>
