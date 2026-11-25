@@ -516,6 +516,43 @@ export async function approveCandidate(id: string) {
       const cand = await prisma.candidate.findUnique({ where: { id } });
       if (!cand) return null;
 
+      // If this stream is already in the database, mark candidate approved and ensure webcam is live
+      const existingStream = await prisma.stream.findUnique({
+        where: {
+          sourceType_externalId: {
+            sourceType: cand.sourceType,
+            externalId: cand.externalId,
+          },
+        },
+        include: { webcam: true },
+      });
+
+      if (existingStream) {
+        await prisma.$transaction([
+          prisma.webcam.update({
+            where: { id: existingStream.webcamId },
+            data: { reviewStatus: "APPROVED" },
+          }),
+          prisma.stream.update({
+            where: { id: existingStream.id },
+            data: { status: "LIVE", lastCheckedAt: new Date() },
+          }),
+          prisma.candidate.update({
+            where: { id },
+            data: { reviewStatus: "APPROVED" },
+          }),
+          prisma.auditLog.create({
+            data: {
+              actor: "admin@livecam",
+              action: "APPROVED_EXISTING",
+              targetType: "webcam",
+              targetId: existingStream.webcam.title,
+            },
+          }),
+        ]);
+        return existingStream.webcam;
+      }
+
       const countrySlug = slugify(cand.countryName) || "international";
       const citySlug = slugify(cand.cityName) || "city";
       const webcamSlug = `${slugify(cand.title)}-${Date.now().toString(36)}`;
@@ -729,7 +766,17 @@ export async function syncAllSourceCandidates() {
   if (isDbConfigured()) {
     try {
       const now = new Date();
-      for (const item of items) {
+      const existingStreams = await prisma.stream.findMany({
+        select: { sourceType: true, externalId: true },
+      });
+      const existingKeys = new Set(
+        existingStreams.map((s) => `${s.sourceType}:${s.externalId}`)
+      );
+      const newItems = items.filter(
+        (item) => !existingKeys.has(`${item.sourceType}:${item.externalId}`)
+      );
+
+      for (const item of newItems) {
         await prisma.candidate.upsert({
           where: { source_externalId: { source: item.source, externalId: item.externalId } },
           update: {

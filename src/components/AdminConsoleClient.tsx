@@ -42,6 +42,7 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
   const [tab, setTab] = useState<"dashboard" | "review" | "webcams" | "jobs" | "reports">("dashboard");
   const [collapsed, setCollapsed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   async function handleLogout() {
     await fetch("/api/admin/auth", { method: "DELETE" });
@@ -50,16 +51,21 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
 
   async function runAction(payload: Record<string, string>) {
     setBusy(true);
+    setActionError(null);
     try {
       const res = await fetch("/api/admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.data) setData(json.data);
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json.data) {
+        setData(json.data);
+      } else {
+        setActionError(json.error || `Request failed (${res.status})`);
       }
+    } catch {
+      setActionError("Network error while executing action");
     } finally {
       setBusy(false);
     }
@@ -223,6 +229,18 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
 
         {/* Content Area */}
         <div className="p-6 space-y-6">
+          {actionError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400 px-4 py-3 text-sm flex items-center justify-between">
+              <span>{actionError}</span>
+              <button
+                type="button"
+                onClick={() => setActionError(null)}
+                className="text-xs underline ml-4"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
           {/* Dedicated Dashboard Tab */}
           {tab === "dashboard" && (
             <div className="space-y-6">
