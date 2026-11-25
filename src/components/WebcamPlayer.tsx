@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ExternalLink, AlertTriangle, RefreshCw } from "lucide-react";
 import { getWebcamPreviewUrl } from "@/lib/source-badge";
 import { withOutboundSource } from "@/lib/seo";
+import { useI18n } from "./I18nProvider";
 
 export function WebcamPlayer({
   title,
@@ -24,6 +25,8 @@ export function WebcamPlayer({
   const [hasError, setHasError] = useState(false);
   const [snapTick, setSnapTick] = useState(() => Date.now());
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const { messages } = useI18n();
+  const tp = messages.player;
 
   const isHls = sourceType === "hls" || embedUrl.toLowerCase().includes(".m3u8");
   const isSnapshot = sourceType === "snapshot" || mediaType === "SNAPSHOT";
@@ -121,9 +124,9 @@ export function WebcamPlayer({
       <div className={frameClass}>
         <div className={`${boxClass} bg-slate-900 text-white flex flex-col items-center justify-center p-6 text-center space-y-3`}>
           <AlertTriangle className="w-8 h-8 text-amber-400" />
-          <div className="text-sm font-semibold">Stream player unavailable</div>
+          <div className="text-sm font-semibold">{tp.unavailableTitle}</div>
           <p className="text-xs text-slate-300 max-w-md">
-            This stream may be temporarily offline, geo-restricted, or blocked from embedding in your region.
+            {tp.unavailableBody}
           </p>
           <a
             href={withOutboundSource(sourceUrl)}
@@ -131,7 +134,7 @@ export function WebcamPlayer({
             rel="noopener"
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
           >
-            Watch on Original Source <ExternalLink className="w-3.5 h-3.5" />
+            {tp.watchOriginal} <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
       </div>
@@ -150,7 +153,7 @@ export function WebcamPlayer({
       )}
       <div className="relative z-10 inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-black/70 text-white text-xs font-medium backdrop-blur">
         <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
-        Connecting live stream...
+        {tp.connecting}
       </div>
     </div>
   );
@@ -194,13 +197,13 @@ export function WebcamPlayer({
           />
           <div className="absolute bottom-3 right-3 z-20 flex items-center gap-2">
             <span className="px-2.5 py-1 rounded-md bg-black/65 text-white text-xs backdrop-blur">
-              Auto-refresh 15s
+              {tp.autoRefresh}
             </span>
             <button
               type="button"
               onClick={() => setSnapTick(Date.now())}
               className="p-1.5 rounded-md bg-black/65 text-white hover:bg-black/85 backdrop-blur cursor-pointer"
-              title="Refresh snapshot"
+              title={tp.refreshSnapshot}
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>

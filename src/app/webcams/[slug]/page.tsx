@@ -7,6 +7,8 @@ import { getDaylightInfo } from "@/lib/suncalc";
 import { absoluteUrl, getYouTubeThumbnail, withOutboundSource } from "@/lib/seo";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
 import { WebcamThumbnail } from "@/components/WebcamThumbnail";
+import { getServerLocale } from "@/lib/i18n-server";
+import { formatMessage, getMessages } from "@/lib/i18n";
 
 export const revalidate = 300;
 
@@ -54,8 +56,9 @@ export default async function WebcamDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const webcam = await getWebcamBySlug(slug);
+  const [webcam, locale] = await Promise.all([getWebcamBySlug(slug), getServerLocale()]);
   if (!webcam) notFound();
+  const tw = getMessages(locale).webcam;
 
   const { items: allWebcams } = await listApprovedWebcamsPage({ page: 1, pageSize: 12 });
   const related = allWebcams
@@ -83,22 +86,43 @@ export default async function WebcamDetailPage({
 
   const faqs = [
     {
-      q: `What is the current weather and local time at ${webcam.title}?`,
-      a: `Local time in ${webcam.city.name}, ${webcam.country.name} (${webcam.city.timezone}) is currently ${localTime} (${isDaylight ? "Daylight" : "Nighttime"}), with live weather conditions of ${webcam.weatherSummary}. Today's sunrise is around ${sunriseLocal} and sunset is around ${sunsetLocal}.`,
+      q: formatMessage(tw.faq1Q, { title: webcam.title }),
+      a: formatMessage(tw.faq1A, {
+        city: webcam.city.name,
+        country: webcam.country.name,
+        timezone: webcam.city.timezone,
+        localTime,
+        phase: isDaylight ? tw.daylight : tw.nighttime,
+        weather: webcam.weatherSummary,
+        sunrise: sunriseLocal,
+        sunset: sunsetLocal,
+      }),
     },
     {
-      q: `When is the best time to watch ${webcam.city.name} live?`,
+      q: formatMessage(tw.faq2Q, { city: webcam.city.name }),
       a: webcam.bestTime
-        ? `${webcam.bestTime} Golden hour typically begins around ${goldenHourLocal} local time.`
-        : `Daylight hours between ${sunriseLocal} and ${sunsetLocal} (${webcam.city.timezone}) offer the clearest visibility, with golden hour around ${goldenHourLocal}.`,
+        ? formatMessage(tw.faq2AWithBest, {
+            bestTime: webcam.bestTime,
+            goldenHour: goldenHourLocal,
+          })
+        : formatMessage(tw.faq2ADefault, {
+            sunrise: sunriseLocal,
+            sunset: sunsetLocal,
+            timezone: webcam.city.timezone,
+            goldenHour: goldenHourLocal,
+          }),
     },
     {
-      q: `What stream format does ${webcam.title} use?`,
-      a: `This webcam streams via ${sourceMeta.label} (${webcam.stream?.mediaType ?? "LIVE_VIDEO"}) provided by ${webcam.provider?.name ?? "an official partner"}. Stream availability is monitored automatically.`,
+      q: formatMessage(tw.faq3Q, { title: webcam.title }),
+      a: formatMessage(tw.faq3A, {
+        format: sourceMeta.label,
+        mediaType: webcam.stream?.mediaType ?? "LIVE_VIDEO",
+        provider: webcam.provider?.name ?? tw.officialPartner,
+      }),
     },
     {
-      q: `Is this ${webcam.city.name} live webcam free to watch?`,
-      a: `Yes. All public scenic webcams on LiveCam Global are free to watch with no registration required, embedded from official or public-domain sources.`,
+      q: formatMessage(tw.faq4Q, { city: webcam.city.name }),
+      a: tw.faq4A,
     },
   ];
 
@@ -178,7 +202,7 @@ export default async function WebcamDetailPage({
       />
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
-          <Link href="/" className="hover:underline">Home</Link>
+          <Link href="/" className="hover:underline">{tw.home}</Link>
           <span>/</span>
           <Link href={`/countries/${webcam.country.slug}`} className="hover:underline">
             {webcam.country.name}
@@ -194,7 +218,7 @@ export default async function WebcamDetailPage({
           <span className="text-slate-900 dark:text-white font-medium">{webcam.title}</span>
         </div>
         <Link href="/" className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium">
-          ← Back to Discover
+          {tw.backToDiscover}
         </Link>
       </div>
 
@@ -225,25 +249,25 @@ export default async function WebcamDetailPage({
 
         <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800 border-t border-slate-200 dark:border-slate-800 text-xs bg-white dark:bg-slate-900">
           <div className="p-3.5">
-            <div className="text-slate-500 dark:text-slate-400">Local Time</div>
+            <div className="text-slate-500 dark:text-slate-400">{tw.localTime}</div>
             <div className="font-semibold text-slate-900 dark:text-white mt-0.5 tabular-nums">
               {isDaylight ? "☀️" : "🌙"} {localTime}
             </div>
           </div>
           <div className="p-3.5">
-            <div className="text-slate-500 dark:text-slate-400">Live Weather</div>
+            <div className="text-slate-500 dark:text-slate-400">{tw.liveWeather}</div>
             <div className="font-semibold text-slate-900 dark:text-white mt-0.5">{webcam.weatherSummary}</div>
           </div>
           <div className="p-3.5">
-            <div className="text-slate-500 dark:text-slate-400">Stream Status</div>
+            <div className="text-slate-500 dark:text-slate-400">{tw.streamStatus}</div>
             <div className="font-semibold text-slate-900 dark:text-white mt-0.5">
               {webcam.stream?.status ?? "UNKNOWN"}
             </div>
           </div>
           <div className="p-3.5">
-            <div className="text-slate-500 dark:text-slate-400">Source Attribution</div>
+            <div className="text-slate-500 dark:text-slate-400">{tw.sourceAttribution}</div>
             <div className="font-semibold text-slate-900 dark:text-white mt-0.5 truncate">
-              {webcam.provider?.name ?? "Official Partner"}
+              {webcam.provider?.name ?? tw.officialPartner}
             </div>
           </div>
         </div>
@@ -253,50 +277,42 @@ export default async function WebcamDetailPage({
         <div className="lg:col-span-8 space-y-6">
           <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              About {webcam.title}
+              {formatMessage(tw.aboutTitle, { title: webcam.title })}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               {webcam.description}
             </p>
             <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              Positioned in{" "}
-              <Link
-                href={`/countries/${webcam.country.slug}/${webcam.city.slug}`}
-                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-              >
-                {webcam.city.name}
-              </Link>
-              ,{" "}
-              <Link
-                href={`/countries/${webcam.country.slug}`}
-                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-              >
-                {webcam.country.name}
-              </Link>{" "}
-              ({latLabel}, {lngLabel}), this live feed lets travelers, weather watchers, and locals check real-time sky conditions, daylight, and activity in the {webcam.city.timezone} timezone.
+              {formatMessage(tw.positionedSummary, {
+                city: webcam.city.name,
+                country: webcam.country.name,
+                lat: latLabel,
+                lng: lngLabel,
+                timezone: webcam.city.timezone,
+              })}
             </p>
             {webcam.bestTime && (
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-sm">
-                <div className="font-medium text-slate-900 dark:text-white mb-1">Best Time to Watch</div>
+                <div className="font-medium text-slate-900 dark:text-white mb-1">{tw.bestTimeToWatch}</div>
                 <div className="text-slate-600 dark:text-slate-300">{webcam.bestTime}</div>
               </div>
             )}
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Categories:</span>
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{tw.categoriesLabel}</span>
               {webcam.categories.map((cat) => (
                 <Link
                   key={cat.slug}
                   href={`/categories/${cat.slug}`}
                   className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 >
-                  {cat.name} Webcams
+                  {formatMessage(tw.categoryWebcams, { name: cat.name })}
                 </Link>
               ))}
               <Link
                 href={`/countries/${webcam.country.slug}`}
                 className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               >
-                {webcam.country.flag} All {webcam.country.name} Cams
+                {webcam.country.flag} {formatMessage(tw.allCountryCams, { country: webcam.country.name })}
               </Link>
             </div>
           </section>
@@ -304,41 +320,41 @@ export default async function WebcamDetailPage({
           {/* Daylight & Location Telemetry */}
           <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Daylight, Coordinates &amp; Stream Details
+              {tw.telemetryTitle}
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
-                <div className="text-slate-500 dark:text-slate-400">Sunrise / Sunset</div>
+                <div className="text-slate-500 dark:text-slate-400">{tw.sunriseSunset}</div>
                 <div className="font-semibold text-slate-900 dark:text-white mt-0.5 tabular-nums">
                   {sunriseLocal} / {sunsetLocal}
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
-                <div className="text-slate-500 dark:text-slate-400">Golden Hour</div>
+                <div className="text-slate-500 dark:text-slate-400">{tw.goldenHour}</div>
                 <div className="font-semibold text-slate-900 dark:text-white mt-0.5 tabular-nums">
                   {goldenHourLocal}
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
-                <div className="text-slate-500 dark:text-slate-400">Coordinates</div>
+                <div className="text-slate-500 dark:text-slate-400">{tw.coordinates}</div>
                 <div className="font-semibold text-slate-900 dark:text-white mt-0.5 tabular-nums">
                   {latLabel}, {lngLabel}
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
-                <div className="text-slate-500 dark:text-slate-400">Timezone</div>
+                <div className="text-slate-500 dark:text-slate-400">{tw.timezone}</div>
                 <div className="font-semibold text-slate-900 dark:text-white mt-0.5">
                   {webcam.city.timezone}
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
-                <div className="text-slate-500 dark:text-slate-400">Stream Format</div>
+                <div className="text-slate-500 dark:text-slate-400">{tw.streamFormat}</div>
                 <div className="font-semibold text-slate-900 dark:text-white mt-0.5">
                   {sourceMeta.label}
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
-                <div className="text-slate-500 dark:text-slate-400">Original Source</div>
+                <div className="text-slate-500 dark:text-slate-400">{tw.originalSource}</div>
                 {webcam.stream?.sourceUrl ? (
                   <a
                     href={withOutboundSource(webcam.stream.sourceUrl)}
@@ -346,10 +362,10 @@ export default async function WebcamDetailPage({
                     rel="noopener"
                     className="font-semibold text-blue-600 dark:text-blue-400 hover:underline mt-0.5 inline-block truncate max-w-full"
                   >
-                    Open Source ↗
+                    {tw.openSource}
                   </a>
                 ) : (
-                  <div className="font-semibold text-slate-900 dark:text-white mt-0.5">Official Feed</div>
+                  <div className="font-semibold text-slate-900 dark:text-white mt-0.5">{tw.officialFeed}</div>
                 )}
               </div>
             </div>
@@ -358,7 +374,7 @@ export default async function WebcamDetailPage({
           {/* SEO FAQ Section */}
           <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Frequently Asked Questions
+              {tw.faqTitle}
             </h2>
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {faqs.map((f) => (
@@ -376,9 +392,9 @@ export default async function WebcamDetailPage({
         <div className="lg:col-span-4 space-y-6">
           <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Nearby &amp; Related</h2>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{tw.nearbyRelated}</h2>
               <Link href="/random" className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium">
-                Random →
+                {tw.random}
               </Link>
             </div>
             <div className="space-y-2.5">

@@ -4,12 +4,12 @@ export type Locale = (typeof SUPPORTED_LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
 export const LOCALE_COOKIE = "camgl_lang";
 
-export const LOCALE_OPTIONS: { code: Locale; label: string; short: string }[] = [
-  { code: "en", label: "English", short: "EN" },
-  { code: "zh", label: "简体中文", short: "中文" },
-  { code: "ja", label: "日本語", short: "日本語" },
-  { code: "es", label: "Español", short: "ES" },
-  { code: "fr", label: "Français", short: "FR" },
+export const LOCALE_OPTIONS: { code: Locale; label: string; short: string; flag: string }[] = [
+  { code: "en", label: "English", short: "EN", flag: "🇺🇸" },
+  { code: "zh", label: "简体中文", short: "中文", flag: "🇨🇳" },
+  { code: "ja", label: "日本語", short: "日本語", flag: "🇯🇵" },
+  { code: "es", label: "Español", short: "ES", flag: "🇪🇸" },
+  { code: "fr", label: "Français", short: "FR", flag: "🇫🇷" },
 ];
 
 export function normalizeLocale(value?: string | null): Locale {
@@ -129,6 +129,52 @@ export interface Messages {
     readTerms: string;
     contactUs: string;
     readPrivacy: string;
+  };
+  player: {
+    unavailableTitle: string;
+    unavailableBody: string;
+    watchOriginal: string;
+    connecting: string;
+    autoRefresh: string;
+    refreshSnapshot: string;
+  };
+  webcam: {
+    home: string;
+    backToDiscover: string;
+    localTime: string;
+    liveWeather: string;
+    streamStatus: string;
+    sourceAttribution: string;
+    officialPartner: string;
+    aboutTitle: string;
+    positionedSummary: string;
+    bestTimeToWatch: string;
+    categoriesLabel: string;
+    categoryWebcams: string;
+    allCountryCams: string;
+    telemetryTitle: string;
+    sunriseSunset: string;
+    goldenHour: string;
+    coordinates: string;
+    timezone: string;
+    streamFormat: string;
+    originalSource: string;
+    openSource: string;
+    officialFeed: string;
+    faqTitle: string;
+    nearbyRelated: string;
+    random: string;
+    daylight: string;
+    nighttime: string;
+    faq1Q: string;
+    faq1A: string;
+    faq2Q: string;
+    faq2AWithBest: string;
+    faq2ADefault: string;
+    faq3Q: string;
+    faq3A: string;
+    faq4Q: string;
+    faq4A: string;
   };
 }
 
@@ -251,6 +297,58 @@ const en: Messages = {
     contactUs: "Contact Us",
     readPrivacy: "Read Privacy Policy",
   },
+  player: {
+    unavailableTitle: "Stream player unavailable",
+    unavailableBody:
+      "This stream may be temporarily offline, geo-restricted, or blocked from embedding in your region.",
+    watchOriginal: "Watch on Original Source",
+    connecting: "Connecting live stream...",
+    autoRefresh: "Auto-refresh 15s",
+    refreshSnapshot: "Refresh snapshot",
+  },
+  webcam: {
+    home: "Home",
+    backToDiscover: "← Back to Discover",
+    localTime: "Local Time",
+    liveWeather: "Live Weather",
+    streamStatus: "Stream Status",
+    sourceAttribution: "Source Attribution",
+    officialPartner: "Official Partner",
+    aboutTitle: "About {title}",
+    positionedSummary:
+      "Positioned in {city}, {country} ({lat}, {lng}), this live feed lets travelers, weather watchers, and locals check real-time sky conditions, daylight, and activity in the {timezone} timezone.",
+    bestTimeToWatch: "Best Time to Watch",
+    categoriesLabel: "Categories:",
+    categoryWebcams: "{name} Webcams",
+    allCountryCams: "All {country} Cams",
+    telemetryTitle: "Daylight, Coordinates & Stream Details",
+    sunriseSunset: "Sunrise / Sunset",
+    goldenHour: "Golden Hour",
+    coordinates: "Coordinates",
+    timezone: "Timezone",
+    streamFormat: "Stream Format",
+    originalSource: "Original Source",
+    openSource: "Open Source ↗",
+    officialFeed: "Official Feed",
+    faqTitle: "Frequently Asked Questions",
+    nearbyRelated: "Nearby & Related",
+    random: "Random →",
+    daylight: "Daylight",
+    nighttime: "Nighttime",
+    faq1Q: "What is the current weather and local time at {title}?",
+    faq1A:
+      "Local time in {city}, {country} ({timezone}) is currently {localTime} ({phase}), with live weather conditions of {weather}. Today's sunrise is around {sunrise} and sunset is around {sunset}.",
+    faq2Q: "When is the best time to watch {city} live?",
+    faq2AWithBest: "{bestTime} Golden hour typically begins around {goldenHour} local time.",
+    faq2ADefault:
+      "Daylight hours between {sunrise} and {sunset} ({timezone}) offer the clearest visibility, with golden hour around {goldenHour}.",
+    faq3Q: "What stream format does {title} use?",
+    faq3A:
+      "This webcam streams via {format} ({mediaType}) provided by {provider}. Stream availability is monitored automatically.",
+    faq4Q: "Is this {city} live webcam free to watch?",
+    faq4A:
+      "Yes. All public scenic webcams on LiveCam Global are free to watch with no registration required, embedded from official or public-domain sources.",
+  },
 };
 
 const zh: Messages = {
@@ -362,6 +460,55 @@ const zh: Messages = {
     contactUs: "联系我们",
     readPrivacy: "阅读隐私政策",
   },
+  player: {
+    unavailableTitle: "播放器暂不可用",
+    unavailableBody: "该直播流可能暂时离线、存在地区限制或禁止在当前环境嵌入播放。",
+    watchOriginal: "前往原官方源观看",
+    connecting: "正在连接实时视频流...",
+    autoRefresh: "每 15 秒自动刷新",
+    refreshSnapshot: "立即刷新画面",
+  },
+  webcam: {
+    home: "首页",
+    backToDiscover: "← 返回发现页",
+    localTime: "当地时间",
+    liveWeather: "实时天气",
+    streamStatus: "信号状态",
+    sourceAttribution: "来源归属",
+    officialPartner: "官方合作伙伴",
+    aboutTitle: "关于 {title}",
+    positionedSummary:
+      "该摄像头位于 {city}（{country}，坐标 {lat}, {lng}），方便旅行者、气象爱好者和当地居民实时查看 {timezone} 时区下的天空状况、日照变化与城市实况。",
+    bestTimeToWatch: "最佳观看时段",
+    categoriesLabel: "所属分类：",
+    categoryWebcams: "{name} 摄像头",
+    allCountryCams: "全部 {country} 摄像头",
+    telemetryTitle: "日照、坐标与视频流详情",
+    sunriseSunset: "日出 / 日落",
+    goldenHour: "黄金时段",
+    coordinates: "地理坐标",
+    timezone: "时区",
+    streamFormat: "流媒体格式",
+    originalSource: "原始来源",
+    openSource: "打开原源 ↗",
+    officialFeed: "官方直播流",
+    faqTitle: "常见问题",
+    nearbyRelated: "附近与相关摄像头",
+    random: "随机漫游 →",
+    daylight: "白天",
+    nighttime: "夜间",
+    faq1Q: "{title} 当前的天气与当地时间是多少？",
+    faq1A:
+      "{city}（{country}，{timezone}）当前时间为 {localTime}（{phase}），实时天气为 {weather}。今日日出约 {sunrise}，日落约 {sunset}。",
+    faq2Q: "什么时候观看 {city} 的实景直播最佳？",
+    faq2AWithBest: "{bestTime} 当地黄金拍摄时段通常从 {goldenHour} 左右开始。",
+    faq2ADefault:
+      "当地时间 {sunrise} 至 {sunset}（{timezone}）的白天光线最清晰，黄金时段约为 {goldenHour}。",
+    faq3Q: "{title} 使用什么直播流格式？",
+    faq3A: "该摄像头采用 {format}（{mediaType}）格式，由 {provider} 提供，系统会自动巡检可用性。",
+    faq4Q: "观看 {city} 的这个实景摄像头需要付费或注册吗？",
+    faq4A: "不需要。LiveCam Global 上的所有公开风景摄像头均免费免注册观看，视频均来自官方或公开授权嵌入源。",
+  },
 };
 
 const ja: Messages = {
@@ -471,6 +618,55 @@ const ja: Messages = {
     readTerms: "利用規約を読む",
     contactUs: "お問い合わせ",
     readPrivacy: "プライバシーポリシーを読む",
+  },
+  player: {
+    unavailableTitle: "プレーヤーを利用できません",
+    unavailableBody: "この配信は一時的にオフライン、地域制限、または埋め込みがブロックされている可能性があります。",
+    watchOriginal: "公式配信元で見る",
+    connecting: "ライブ配信に接続中...",
+    autoRefresh: "15秒ごとに自動更新",
+    refreshSnapshot: "画像を更新",
+  },
+  webcam: {
+    home: "ホーム",
+    backToDiscover: "← 発見へ戻る",
+    localTime: "現地時刻",
+    liveWeather: "現地の天気",
+    streamStatus: "配信ステータス",
+    sourceAttribution: "配信元",
+    officialPartner: "公式パートナー",
+    aboutTitle: "{title} について",
+    positionedSummary:
+      "{city}（{country}、{lat}, {lng}）に設置されており、{timezone} タイムゾーンの空模様、日照状況、街の様子をリアルタイムで確認できます。",
+    bestTimeToWatch: "おすすめの時間帯",
+    categoriesLabel: "カテゴリ：",
+    categoryWebcams: "{name} カメラ",
+    allCountryCams: "{country} のカメラ一覧",
+    telemetryTitle: "日照・座標・配信詳細",
+    sunriseSunset: "日の出 / 日の入り",
+    goldenHour: "ゴールデンアワー",
+    coordinates: "座標",
+    timezone: "タイムゾーン",
+    streamFormat: "配信形式",
+    originalSource: "公式ソース",
+    openSource: "配信元を開く ↗",
+    officialFeed: "公式フィード",
+    faqTitle: "よくある質問",
+    nearbyRelated: "周辺・関連カメラ",
+    random: "ランダム →",
+    daylight: "日中",
+    nighttime: "夜間",
+    faq1Q: "{title} の現在の天気と現地時刻は？",
+    faq1A:
+      "{city}（{country}・{timezone}）の現地時刻は現在 {localTime}（{phase}）、天気は {weather} です。本日の日の出は {sunrise} 頃、日の入りは {sunset} 頃です。",
+    faq2Q: "{city} のライブ映像を見るベストタイムは？",
+    faq2AWithBest: "{bestTime} ゴールデンアワーは現地時間 {goldenHour} 頃に始まります。",
+    faq2ADefault:
+      "日の出（{sunrise}）から日の入り（{sunset}）までの時間帯が最も鮮明で、ゴールデンアワーは {goldenHour} 頃です。",
+    faq3Q: "{title} の配信形式は何ですか？",
+    faq3A: "{provider} 提供の {format}（{mediaType}）形式で配信されており、稼働状況は自動監視されています。",
+    faq4Q: "この {city} のライブカメラは無料で視聴できますか？",
+    faq4A: "はい。LiveCam Global の公開風景カメラは登録不要で無料視聴できます。",
   },
 };
 
@@ -582,6 +778,56 @@ const es: Messages = {
     contactUs: "Contáctanos",
     readPrivacy: "Leer Privacidad",
   },
+  player: {
+    unavailableTitle: "Reproductor no disponible",
+    unavailableBody:
+      "Esta transmisión puede estar temporalmente fuera de línea, restringida por región o bloqueada para inserción.",
+    watchOriginal: "Ver en Fuente Original",
+    connecting: "Conectando transmisión en vivo...",
+    autoRefresh: "Auto-actualización 15s",
+    refreshSnapshot: "Actualizar imagen",
+  },
+  webcam: {
+    home: "Inicio",
+    backToDiscover: "← Volver a Descubrir",
+    localTime: "Hora Local",
+    liveWeather: "Clima en Vivo",
+    streamStatus: "Estado",
+    sourceAttribution: "Fuente",
+    officialPartner: "Socio Oficial",
+    aboutTitle: "Acerca de {title}",
+    positionedSummary:
+      "Ubicada en {city}, {country} ({lat}, {lng}), esta cámara en vivo permite ver el cielo, la luz del día y la actividad en tiempo real en la zona horaria {timezone}.",
+    bestTimeToWatch: "Mejor Hora para Ver",
+    categoriesLabel: "Categorías:",
+    categoryWebcams: "Cámaras de {name}",
+    allCountryCams: "Todas en {country}",
+    telemetryTitle: "Luz Solar, Coordenadas y Detalles",
+    sunriseSunset: "Amanecer / Atardecer",
+    goldenHour: "Hora Dorada",
+    coordinates: "Coordenadas",
+    timezone: "Zona Horaria",
+    streamFormat: "Formato",
+    originalSource: "Fuente Original",
+    openSource: "Abrir Fuente ↗",
+    officialFeed: "Transmisión Oficial",
+    faqTitle: "Preguntas Frecuentes",
+    nearbyRelated: "Cercanas y Relacionadas",
+    random: "Aleatorio →",
+    daylight: "Día",
+    nighttime: "Noche",
+    faq1Q: "¿Cuál es el clima y la hora local actual en {title}?",
+    faq1A:
+      "La hora local en {city}, {country} ({timezone}) es {localTime} ({phase}), con clima {weather}. Hoy amanece sobre las {sunrise} y anochece sobre las {sunset}.",
+    faq2Q: "¿Cuándo es mejor ver {city} en vivo?",
+    faq2AWithBest: "{bestTime} La hora dorada suele comenzar sobre las {goldenHour} hora local.",
+    faq2ADefault:
+      "Entre {sunrise} y {sunset} ({timezone}) ofrece la mejor visibilidad, con la hora dorada alrededor de {goldenHour}.",
+    faq3Q: "¿Qué formato de transmisión usa {title}?",
+    faq3A: "Transmite vía {format} ({mediaType}) provisto por {provider}, con monitoreo automático.",
+    faq4Q: "¿Es gratis ver esta cámara en vivo de {city}?",
+    faq4A: "Sí, todas las cámaras públicas en LiveCam Global son gratuitas y sin registro.",
+  },
 };
 
 const fr: Messages = {
@@ -691,6 +937,56 @@ const fr: Messages = {
     readTerms: "Lire les Conditions",
     contactUs: "Nous Contacter",
     readPrivacy: "Lire la Confidentialité",
+  },
+  player: {
+    unavailableTitle: "Lecteur indisponible",
+    unavailableBody:
+      "Ce flux est peut-être temporairement hors ligne, géo-restreint ou bloqué pour l'intégration.",
+    watchOriginal: "Voir sur la Source Officielle",
+    connecting: "Connexion au flux en direct...",
+    autoRefresh: "Actualisation 15s",
+    refreshSnapshot: "Actualiser l'image",
+  },
+  webcam: {
+    home: "Accueil",
+    backToDiscover: "← Retour à Découvrir",
+    localTime: "Heure Locale",
+    liveWeather: "Météo en Direct",
+    streamStatus: "Statut",
+    sourceAttribution: "Source",
+    officialPartner: "Partenaire Officiel",
+    aboutTitle: "À propos de {title}",
+    positionedSummary:
+      "Située à {city}, {country} ({lat}, {lng}), cette webcam permet d'observer le ciel, la lumière du jour et l'activité en direct dans le fuseau horaire {timezone}.",
+    bestTimeToWatch: "Meilleur Moment",
+    categoriesLabel: "Catégories :",
+    categoryWebcams: "Webcams {name}",
+    allCountryCams: "Toutes en {country}",
+    telemetryTitle: "Ensoleillement, Coordonnées & Flux",
+    sunriseSunset: "Lever / Coucher du soleil",
+    goldenHour: "Heure Dorée",
+    coordinates: "Coordonnées",
+    timezone: "Fuseau Horaire",
+    streamFormat: "Format du Flux",
+    originalSource: "Source Originale",
+    openSource: "Ouvrir la Source ↗",
+    officialFeed: "Flux Officiel",
+    faqTitle: "Questions Fréquentes",
+    nearbyRelated: "À Proximité & Similaires",
+    random: "Aléatoire →",
+    daylight: "Jour",
+    nighttime: "Nuit",
+    faq1Q: "Quelle est la météo et l'heure locale à {title} ?",
+    faq1A:
+      "L'heure locale à {city}, {country} ({timezone}) est {localTime} ({phase}), avec une météo {weather}. Lever du soleil vers {sunrise} et coucher vers {sunset}.",
+    faq2Q: "Quel est le meilleur moment pour regarder {city} en direct ?",
+    faq2AWithBest: "{bestTime} L'heure dorée débute généralement vers {goldenHour} heure locale.",
+    faq2ADefault:
+      "Les heures de jour entre {sunrise} et {sunset} ({timezone}) offrent la meilleure visibilité, avec l'heure dorée vers {goldenHour}.",
+    faq3Q: "Quel format de flux utilise {title} ?",
+    faq3A: "Ce flux utilise {format} ({mediaType}) fourni par {provider}, surveillé automatiquement.",
+    faq4Q: "Cette webcam de {city} est-elle gratuite ?",
+    faq4A: "Oui, toutes les webcams panoramiques publiques sur LiveCam Global sont gratuites et sans inscription.",
   },
 };
 
