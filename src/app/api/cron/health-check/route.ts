@@ -8,6 +8,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const result = runHealthCheckBatch();
+  const result = await runHealthCheckBatch();
   return NextResponse.json({ ok: true, ...result });
 }

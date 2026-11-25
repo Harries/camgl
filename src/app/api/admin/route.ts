@@ -12,7 +12,7 @@ export async function GET() {
   if (!(await isAdminAuthenticated())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  return NextResponse.json(getAdminDashboardData());
+  return NextResponse.json(await getAdminDashboardData());
 }
 
 export async function POST(request: Request) {
@@ -24,23 +24,23 @@ export async function POST(request: Request) {
     const body = await request.json();
     switch (body?.action) {
       case "approve": {
-        const cam = approveCandidate(String(body.id));
+        const cam = await approveCandidate(String(body.id));
         if (!cam) return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
-        return NextResponse.json({ ok: true, data: getAdminDashboardData() });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }
       case "reject": {
-        const ok = rejectCandidate(String(body.id));
+        const ok = await rejectCandidate(String(body.id));
         if (!ok) return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
-        return NextResponse.json({ ok: true, data: getAdminDashboardData() });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }
       case "suspend": {
-        const cam = toggleWebcamSuspend(String(body.slug));
+        const cam = await toggleWebcamSuspend(String(body.slug));
         if (!cam) return NextResponse.json({ error: "Webcam not found" }, { status: 404 });
-        return NextResponse.json({ ok: true, data: getAdminDashboardData() });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }
       case "healthCheck": {
-        runHealthCheckBatch();
-        return NextResponse.json({ ok: true, data: getAdminDashboardData() });
+        await runHealthCheckBatch();
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }
       default:
         return NextResponse.json({ error: "Unsupported action" }, { status: 400 });

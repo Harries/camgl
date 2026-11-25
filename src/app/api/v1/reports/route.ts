@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     if (!body?.webcamId || !body?.type) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-    const report = createReport({
+    const report = await createReport({
       webcamId: String(body.webcamId),
       webcamTitle: String(body.webcamTitle || body.webcamId),
       type: String(body.type),

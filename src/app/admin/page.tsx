@@ -17,6 +17,6 @@ export default async function AdminPage() {
     return <AdminLoginClient />;
   }
 
-  const initialData = getAdminDashboardData();
+  const initialData = await getAdminDashboardData();
   return <AdminConsoleClient initialData={initialData} />;
 }

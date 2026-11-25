@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     if (!body?.title || !body?.location || !body?.sourceUrl || !body?.contact) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-    const created = createSubmission({
+    const created = await createSubmission({
       title: String(body.title),
       category: String(body.category || "City"),
       location: String(body.location),

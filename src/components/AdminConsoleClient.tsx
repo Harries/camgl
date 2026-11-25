@@ -64,6 +64,8 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
   }
 
   const approvedCount = data.webcams.filter((w) => (w.reviewStatus ?? "APPROVED") === "APPROVED").length;
+  const liveCount = data.webcams.filter((w) => w.stream?.status === "LIVE").length;
+  const healthPct = data.webcams.length > 0 ? ((liveCount / data.webcams.length) * 100).toFixed(1) : "0.0";
   const openReports = data.reports.filter((r) => r.status === "OPEN").length;
   const quotaPct = Math.min(Math.round((data.youtubeQuotaUsed / 10000) * 100), 100);
 
@@ -235,8 +237,8 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm">
                   <div className="text-xs text-slate-500 dark:text-slate-400">Stream Health</div>
-                  <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">96.4%</div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Cron every 30m</div>
+                  <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">{healthPct}%</div>
+                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{liveCount}/{data.webcams.length} live</div>
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm">
                   <div className="text-xs text-slate-500 dark:text-slate-400">YouTube Quota</div>
