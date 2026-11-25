@@ -4,7 +4,14 @@ import Link from "next/link";
 import type { PublicWebcam } from "@/lib/types";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
-import { getCategoryLabel, getCityLabel, getCountryLabel, localizePath } from "@/lib/i18n";
+import {
+  getCategoryLabel,
+  getCityLabel,
+  getCountryLabel,
+  getStreamStatusLabel,
+  localizePath,
+  localizeWeatherSummary,
+} from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
 import { WebcamThumbnail } from "./WebcamThumbnail";
 
@@ -28,7 +35,9 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
   );
   const cityLabel = getCityLabel(locale, webcam.city.slug, webcam.city.name);
   const isLive = webcam.stream?.status === "LIVE";
-  const sourceMeta = getSourceTypeMeta(webcam.stream?.sourceType);
+  const sourceMeta = getSourceTypeMeta(webcam.stream?.sourceType, locale);
+  const statusLabel = getStreamStatusLabel(locale, webcam.stream?.status);
+  const weatherLabel = localizeWeatherSummary(webcam.weatherSummary, locale);
 
   return (
     <Link
@@ -52,7 +61,7 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
             }`}
           >
             {isLive && <span className="w-1.5 h-1.5 rounded-full bg-white live-dot" />}
-            {webcam.stream?.status ?? "UNKNOWN"}
+            {statusLabel}
           </span>
           <span className="px-2 py-0.5 rounded-full text-xs bg-black/55 text-white backdrop-blur">
             {primaryCat}
@@ -68,7 +77,7 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
           <span>
             {webcam.country.flag} {countryLabel} · {cityLabel}
           </span>
-          <span>{webcam.weatherSummary}</span>
+          <span>{weatherLabel}</span>
         </div>
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-semibold text-base text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">

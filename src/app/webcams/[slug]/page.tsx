@@ -8,7 +8,17 @@ import { absoluteUrl, buildAlternates, getYouTubeThumbnail, withOutboundSource }
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
 import { WebcamThumbnail } from "@/components/WebcamThumbnail";
 import { getServerLocale } from "@/lib/i18n-server";
-import { formatMessage, getCategoryLabel, getCityLabel, getCountryLabel, getMessages } from "@/lib/i18n";
+import {
+  formatMessage,
+  getCategoryLabel,
+  getCityLabel,
+  getCountryLabel,
+  getMediaTypeLabel,
+  getMessages,
+  getStreamStatusLabel,
+  localizePath,
+  localizeWeatherSummary,
+} from "@/lib/i18n";
 
 export const revalidate = 300;
 
@@ -98,7 +108,36 @@ export default async function WebcamDetailPage({
     webcam.city.timezone
   );
 
-  const sourceMeta = getSourceTypeMeta(webcam.stream?.sourceType);
+  const sourceMeta = getSourceTypeMeta(webcam.stream?.sourceType, locale);
+  const weatherLabel = localizeWeatherSummary(webcam.weatherSummary, locale);
+  const statusLabel = getStreamStatusLabel(locale, webcam.stream?.status);
+  const mediaTypeLabel = getMediaTypeLabel(locale, webcam.stream?.mediaType);
+  const categoriesText = webcam.categories
+    .map((c) => getCategoryLabel(locale, c.slug, c.name))
+    .join(", ");
+  const aboutDescription =
+    locale === "en"
+      ? webcam.description
+      : formatMessage(tw.localizedDescription, {
+          title: webcam.title,
+          city: cityLabel,
+          country: countryLabel,
+          categories: categoriesText,
+          localTime,
+          phase: isDaylight ? tw.daylight : tw.nighttime,
+          weather: weatherLabel,
+        });
+  const bestTimeText =
+    locale === "en"
+      ? webcam.bestTime
+      : webcam.bestTime
+        ? formatMessage(tw.bestTimeDefault, {
+            sunrise: sunriseLocal,
+            sunset: sunsetLocal,
+            timezone: webcam.city.timezone,
+            goldenHour: goldenHourLocal,
+          })
+        : null;
   const latLabel = `${Math.abs(webcam.city.lat).toFixed(4)}° ${webcam.city.lat >= 0 ? "N" : "S"}`;
   const lngLabel = `${Math.abs(webcam.city.lng).toFixed(4)}° ${webcam.city.lng >= 0 ? "E" : "W"}`;
 
@@ -111,30 +150,31 @@ export default async function WebcamDetailPage({
         timezone: webcam.city.timezone,
         localTime,
         phase: isDaylight ? tw.daylight : tw.nighttime,
-        weather: webcam.weatherSummary,
+        weather: weatherLabel,
         sunrise: sunriseLocal,
         sunset: sunsetLocal,
       }),
     },
     {
       q: formatMessage(tw.faq2Q, { city: cityLabel }),
-      a: webcam.bestTime
-        ? formatMessage(tw.faq2AWithBest, {
-            bestTime: webcam.bestTime,
-            goldenHour: goldenHourLocal,
-          })
-        : formatMessage(tw.faq2ADefault, {
-            sunrise: sunriseLocal,
-            sunset: sunsetLocal,
-            timezone: webcam.city.timezone,
-            goldenHour: goldenHourLocal,
-          }),
+      a:
+        locale === "en" && webcam.bestTime
+          ? formatMessage(tw.faq2AWithBest, {
+              bestTime: webcam.bestTime,
+              goldenHour: goldenHourLocal,
+            })
+          : formatMessage(tw.faq2ADefault, {
+              sunrise: sunriseLocal,
+              sunset: sunsetLocal,
+              timezone: webcam.city.timezone,
+              goldenHour: goldenHourLocal,
+            }),
     },
     {
       q: formatMessage(tw.faq3Q, { title: webcam.title }),
       a: formatMessage(tw.faq3A, {
         format: sourceMeta.label,
-        mediaType: webcam.stream?.mediaType ?? "LIVE_VIDEO",
+        mediaType: mediaTypeLabel,
         provider: webcam.provider?.name ?? tw.officialPartner,
       }),
     },
@@ -150,7 +190,7 @@ export default async function WebcamDetailPage({
       "@context": "https://schema.org",
       "@type": "VideoObject",
       name: webcam.title,
-      description: webcam.description,
+      description: aboutDescription,
       ...(thumbnail ? { thumbnailUrl: thumbnail } : {}),
       uploadDate: webcam.stream?.lastCheckedAt ?? new Date().toISOString(),
       ...(webcam.stream
@@ -165,7 +205,7 @@ export default async function WebcamDetailPage({
       },
       contentLocation: {
         "@type": "Place",
-        name: `${webcam.city.name}, ${webcam.country.name}`,
+        name: `${cityLabel}, ${countryLabel}`,
         geo: {
           "@type": "GeoCoordinates",
           latitude: webcam.city.lat,
@@ -177,24 +217,24 @@ export default async function WebcamDetailPage({
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+        { "@type": "ListItem", position: 1, name: tw.home, item: absoluteUrl(localizePath("/", locale)) },
         {
           "@type": "ListItem",
           position: 2,
-          name: webcam.country.name,
-          item: absoluteUrl(`/countries/${webcam.country.slug}`),
+          name: countryLabel,
+          item: absoluteUrl(localizePath(`/countries/${webcam.country.slug}`, locale)),
         },
         {
           "@type": "ListItem",
           position: 3,
-          name: webcam.city.name,
-          item: absoluteUrl(`/countries/${webcam.country.slug}/${webcam.city.slug}`),
+          name: cityLabel,
+          item: absoluteUrl(localizePath(`/countries/${webcam.country.slug}/${webcam.city.slug}`, locale)),
         },
         {
           "@type": "ListItem",
           position: 4,
           name: webcam.title,
-          item: absoluteUrl(`/webcams/${webcam.slug}`),
+          item: absoluteUrl(localizePath(`/webcams/${webcam.slug}`, locale)),
         },
       ],
     },
@@ -220,14 +260,14 @@ export default async function WebcamDetailPage({
       />
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
-          <Link href="/" className="hover:underline">{tw.home}</Link>
+          <Link href={localizePath("/", locale)} className="hover:underline">{tw.home}</Link>
           <span>/</span>
-          <Link href={`/countries/${webcam.country.slug}`} className="hover:underline">
+          <Link href={localizePath(`/countries/${webcam.country.slug}`, locale)} className="hover:underline">
             {countryLabel}
           </Link>
           <span>/</span>
           <Link
-            href={`/countries/${webcam.country.slug}/${webcam.city.slug}`}
+            href={localizePath(`/countries/${webcam.country.slug}/${webcam.city.slug}`, locale)}
             className="hover:underline"
           >
             {cityLabel}
@@ -235,7 +275,7 @@ export default async function WebcamDetailPage({
           <span>/</span>
           <span className="text-slate-900 dark:text-white font-medium">{webcam.title}</span>
         </div>
-        <Link href="/" className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium">
+        <Link href={localizePath("/", locale)} className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium">
           {tw.backToDiscover}
         </Link>
       </div>
@@ -243,13 +283,12 @@ export default async function WebcamDetailPage({
       <div>
         <div className="flex items-center gap-2.5 flex-wrap">
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{webcam.title}</h1>
-          <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium border ${getSourceTypeMeta(webcam.stream?.sourceType).badgeClass}`}>
-            {getSourceTypeMeta(webcam.stream?.sourceType).label}
+          <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium border ${sourceMeta.badgeClass}`}>
+            {sourceMeta.label}
           </span>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          {webcam.country.flag} {cityLabel}, {countryLabel} ·{" "}
-          {webcam.categories.map((c) => getCategoryLabel(locale, c.slug, c.name)).join(", ")}
+          {webcam.country.flag} {cityLabel}, {countryLabel} · {categoriesText}
         </p>
       </div>
 
@@ -274,12 +313,12 @@ export default async function WebcamDetailPage({
           </div>
           <div className="p-3.5">
             <div className="text-slate-500 dark:text-slate-400">{tw.liveWeather}</div>
-            <div className="font-semibold text-slate-900 dark:text-white mt-0.5">{webcam.weatherSummary}</div>
+            <div className="font-semibold text-slate-900 dark:text-white mt-0.5">{weatherLabel}</div>
           </div>
           <div className="p-3.5">
             <div className="text-slate-500 dark:text-slate-400">{tw.streamStatus}</div>
             <div className="font-semibold text-slate-900 dark:text-white mt-0.5">
-              {webcam.stream?.status ?? "UNKNOWN"}
+              {statusLabel}
             </div>
           </div>
           <div className="p-3.5">
@@ -298,7 +337,7 @@ export default async function WebcamDetailPage({
               {formatMessage(tw.aboutTitle, { title: webcam.title })}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              {webcam.description}
+              {aboutDescription}
             </p>
             <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               {formatMessage(tw.positionedSummary, {
@@ -309,10 +348,10 @@ export default async function WebcamDetailPage({
                 timezone: webcam.city.timezone,
               })}
             </p>
-            {webcam.bestTime && (
+            {bestTimeText && (
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-sm">
                 <div className="font-medium text-slate-900 dark:text-white mb-1">{tw.bestTimeToWatch}</div>
-                <div className="text-slate-600 dark:text-slate-300">{webcam.bestTime}</div>
+                <div className="text-slate-600 dark:text-slate-300">{bestTimeText}</div>
               </div>
             )}
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
@@ -320,7 +359,7 @@ export default async function WebcamDetailPage({
               {webcam.categories.map((cat) => (
                 <Link
                   key={cat.slug}
-                  href={`/categories/${cat.slug}`}
+                  href={localizePath(`/categories/${cat.slug}`, locale)}
                   className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 >
                   {formatMessage(tw.categoryWebcams, {
@@ -329,7 +368,7 @@ export default async function WebcamDetailPage({
                 </Link>
               ))}
               <Link
-                href={`/countries/${webcam.country.slug}`}
+                href={localizePath(`/countries/${webcam.country.slug}`, locale)}
                 className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               >
                 {webcam.country.flag} {formatMessage(tw.allCountryCams, { country: countryLabel })}
@@ -413,7 +452,7 @@ export default async function WebcamDetailPage({
           <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{tw.nearbyRelated}</h2>
-              <Link href="/random" className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium">
+              <Link href={localizePath("/random", locale)} className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium">
                 {tw.random}
               </Link>
             </div>
@@ -421,7 +460,7 @@ export default async function WebcamDetailPage({
               {related.map((r) => (
                 <Link
                   key={r.id}
-                  href={`/webcams/${r.slug}`}
+                  href={localizePath(`/webcams/${r.slug}`, locale)}
                   className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   <div className="w-20 h-12 rounded-lg bg-slate-900 overflow-hidden shrink-0">

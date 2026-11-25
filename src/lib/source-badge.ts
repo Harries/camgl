@@ -54,7 +54,28 @@ export function getWebcamPreviewUrl(
   return null;
 }
 
-export function getSourceTypeMeta(sourceType?: string | null): {
+import type { Locale } from "./i18n";
+
+const SNAPSHOT_LABELS: Record<Locale, string> = {
+  en: "Snapshot",
+  zh: "定时抓拍",
+  ja: "スナップショット",
+  es: "Instantánea",
+  fr: "Instantané",
+};
+
+const OFFICIAL_EMBED_LABELS: Record<Locale, string> = {
+  en: "Official Embed",
+  zh: "官方嵌入",
+  ja: "公式埋め込み",
+  es: "Inserción Oficial",
+  fr: "Intégration Officielle",
+};
+
+export function getSourceTypeMeta(
+  sourceType?: string | null,
+  locale: Locale = "en"
+): {
   label: string;
   badgeClass: string;
 } {
@@ -67,13 +88,13 @@ export function getSourceTypeMeta(sourceType?: string | null): {
       };
     case "snapshot":
       return {
-        label: "Snapshot",
+        label: SNAPSHOT_LABELS[locale] ?? SNAPSHOT_LABELS.en,
         badgeClass:
           "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800",
       };
     case "official_embed":
       return {
-        label: "Official Embed",
+        label: OFFICIAL_EMBED_LABELS[locale] ?? OFFICIAL_EMBED_LABELS.en,
         badgeClass:
           "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800",
       };

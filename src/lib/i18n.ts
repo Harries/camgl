@@ -179,6 +179,8 @@ export interface Messages {
     faq3A: string;
     faq4Q: string;
     faq4A: string;
+    localizedDescription: string;
+    bestTimeDefault: string;
   };
   countries: {
     worldExplorer: string;
@@ -477,6 +479,10 @@ const en: Messages = {
     faq4Q: "Is this {city} live webcam free to watch?",
     faq4A:
       "Yes. All public scenic webcams on LiveCam Global are free to watch with no registration required, embedded from official or public-domain sources.",
+    localizedDescription:
+      "Watch {title} live from {city}, {country} ({categories}). Local time is {localTime} ({phase}) with current weather {weather}.",
+    bestTimeDefault:
+      "Daylight hours between {sunrise} and {sunset} ({timezone}) offer the clearest visibility, with golden hour around {goldenHour}.",
   },
   countries: {
     worldExplorer: "World Explorer",
@@ -784,6 +790,10 @@ const zh: Messages = {
     faq3A: "该摄像头采用 {format}（{mediaType}）格式，由 {provider} 提供，系统会自动巡检可用性。",
     faq4Q: "观看 {city} 的这个实景摄像头需要付费或注册吗？",
     faq4A: "不需要。LiveCam Global 上的所有公开风景摄像头均免费免注册观看，视频均来自官方或公开授权嵌入源。",
+    localizedDescription:
+      "来自 {country}{city} 的「{title}」实时风景直播（分类：{categories}）。当前为{phase}（当地时间 {localTime}），实时天气 {weather}，您可免费在线观看并查看日照与气象信息。",
+    bestTimeDefault:
+      "当地时间 {sunrise} 至 {sunset}（{timezone}）的白天光线最清晰，黄金时段约为 {goldenHour}。",
   },
   countries: {
     worldExplorer: "全球地图探索",
@@ -1053,6 +1063,10 @@ const ja: Messages = {
     faq3A: "{provider} 提供の {format}（{mediaType}）形式で配信されており、稼働状況は自動監視されています。",
     faq4Q: "この {city} のライブカメラは無料で視聴できますか？",
     faq4A: "はい。LiveCam Global の公開風景カメラは登録不要で無料視聴できます。",
+    localizedDescription:
+      "{country}・{city} の「{title}」ライブカメラ映像です（カテゴリ：{categories}）。現在の現地時刻は {localTime}（{phase}）、天気は {weather} です。登録不要・無料でリアルタイムの風景や日照状況をご覧いただけます。",
+    bestTimeDefault:
+      "日の出（{sunrise}）から日の入り（{sunset}・{timezone}）までの日中が最も見やすく、ゴールデンアワーは {goldenHour} 頃です。",
   },
   countries: {
     worldExplorer: "ワールドエクスプローラー",
@@ -1308,6 +1322,10 @@ const es: Messages = {
     faq3A: "Transmite vía {format} ({mediaType}) provisto por {provider}, con monitoreo automático.",
     faq4Q: "¿Es gratis ver esta cámara en vivo de {city}?",
     faq4A: "Sí, todas las cámaras públicas en LiveCam Global son gratuitas y sin registro.",
+    localizedDescription:
+      "Transmisión en vivo de {title} desde {city}, {country} ({categories}). Hora local actual: {localTime} ({phase}), clima: {weather}. Disfruta de esta vista panorámica gratuita en tiempo real.",
+    bestTimeDefault:
+      "Entre {sunrise} y {sunset} ({timezone}) ofrece la mejor visibilidad, con la hora dorada alrededor de {goldenHour}.",
   },
   countries: {
     worldExplorer: "Explorador Mundial",
@@ -1563,6 +1581,10 @@ const fr: Messages = {
     faq3A: "Ce flux utilise {format} ({mediaType}) fourni par {provider}, surveillé automatiquement.",
     faq4Q: "Cette webcam de {city} est-elle gratuite ?",
     faq4A: "Oui, toutes les webcams panoramiques publiques sur LiveCam Global sont gratuites et sans inscription.",
+    localizedDescription:
+      "Vue en direct de {title} depuis {city}, {country} ({categories}). Heure locale actuelle : {localTime} ({phase}), météo : {weather}. Profitez gratuitement de ce panorama en temps réel.",
+    bestTimeDefault:
+      "Les heures de jour entre {sunrise} et {sunset} ({timezone}) offrent la meilleure visibilité, avec l'heure dorée vers {goldenHour}.",
   },
   countries: {
     worldExplorer: "Explorateur Mondial",
@@ -1668,4 +1690,69 @@ export function formatMessage(
     (acc, [key, val]) => acc.replaceAll(`{${key}}`, String(val)),
     template
   );
+}
+
+const WEATHER_LABELS: Record<string, Partial<Record<Locale, string>>> = {
+  Clear: { zh: "晴朗", ja: "快晴", es: "Despejado", fr: "Dégagé" },
+  "Mostly Clear": { zh: "大部晴朗", ja: "晴れ", es: "Mayormente despejado", fr: "Plutôt dégagé" },
+  "Partly Cloudy": { zh: "局部多云", ja: "晴れ時々曇り", es: "Parcialmente nublado", fr: "Partiellement nuageux" },
+  Overcast: { zh: "阴天", ja: "曇り", es: "Nublado", fr: "Couvert" },
+  Cloudy: { zh: "多云", ja: "曇り", es: "Nublado", fr: "Nuageux" },
+  Sunny: { zh: "晴天", ja: "晴れ", es: "Soleado", fr: "Ensoleillé" },
+  Breezy: { zh: "微风", ja: "風あり", es: "Ventoso", fr: "Venteux" },
+  Fair: { zh: "晴好", ja: "穏やか", es: "Agradable", fr: "Clément" },
+  Fog: { zh: "有雾", ja: "霧", es: "Niebla", fr: "Brouillard" },
+  "Rime Fog": { zh: "冻雾", ja: "着氷性の霧", es: "Niebla helada", fr: "Brouillard givrant" },
+  "Light Drizzle": { zh: "小毛毛雨", ja: "弱い霧雨", es: "Llovizna ligera", fr: "Bruine légère" },
+  Drizzle: { zh: "毛毛雨", ja: "霧雨", es: "Llovizna", fr: "Bruine" },
+  "Dense Drizzle": { zh: "浓毛毛雨", ja: "濃い霧雨", es: "Llovizna intensa", fr: "Bruine dense" },
+  "Freezing Drizzle": { zh: "冻毛毛雨", ja: "着氷性の霧雨", es: "Llovizna helada", fr: "Bruine verglaçante" },
+  "Light Rain": { zh: "小雨", ja: "小雨", es: "Lluvia ligera", fr: "Pluie légère" },
+  Rain: { zh: "降雨", ja: "雨", es: "Lluvia", fr: "Pluie" },
+  "Heavy Rain": { zh: "大雨", ja: "大雨", es: "Lluvia intensa", fr: "Forte pluie" },
+  "Freezing Rain": { zh: "冻雨", ja: "着氷性の雨", es: "Lluvia helada", fr: "Pluie verglaçante" },
+  "Light Snow": { zh: "小雪", ja: "小雪", es: "Nieve ligera", fr: "Neige légère" },
+  Snow: { zh: "降雪", ja: "雪", es: "Nieve", fr: "Neige" },
+  "Heavy Snow": { zh: "大雪", ja: "大雪", es: "Nieve intensa", fr: "Forte neige" },
+  "Snow Grains": { zh: "米雪", ja: "霧雪", es: "Granos de nieve", fr: "Neige en grains" },
+  "Rain Showers": { zh: "阵雨", ja: "にわか雨", es: "Chubascos", fr: "Averses" },
+  Showers: { zh: "阵雨", ja: "にわか雨", es: "Chubascos", fr: "Averses" },
+  "Heavy Showers": { zh: "强阵雨", ja: "激しいにわか雨", es: "Chubascos fuertes", fr: "Fortes averses" },
+  "Snow Showers": { zh: "阵雪", ja: "にわか雪", es: "Chubascos de nieve", fr: "Averses de neige" },
+  Thunderstorm: { zh: "雷暴", ja: "雷雨", es: "Tormenta", fr: "Orage" },
+};
+
+export function localizeWeatherSummary(summary: string, locale: Locale): string {
+  if (!summary || locale === "en") return summary;
+  const parts = summary.split("·").map((p) => p.trim());
+  if (parts.length === 2) {
+    const translated = WEATHER_LABELS[parts[1]]?.[locale] ?? parts[1];
+    return `${parts[0]} · ${translated}`;
+  }
+  return WEATHER_LABELS[summary.trim()]?.[locale] ?? summary;
+}
+
+const STREAM_STATUS_LABELS: Record<string, Record<Locale, string>> = {
+  LIVE: { en: "LIVE", zh: "直播中", ja: "ライブ", es: "EN VIVO", fr: "EN DIRECT" },
+  OFFLINE: { en: "OFFLINE", zh: "离线", ja: "オフライン", es: "DESCONECTADO", fr: "HORS LIGNE" },
+  SCHEDULED: { en: "SCHEDULED", zh: "定时", ja: "配信予定", es: "PROGRAMADO", fr: "PROGRAMMÉ" },
+  RESTRICTED: { en: "RESTRICTED", zh: "受限", ja: "制限あり", es: "RESTRINGIDO", fr: "RESTREINT" },
+  UNKNOWN: { en: "UNKNOWN", zh: "未知", ja: "不明", es: "DESCONOCIDO", fr: "INCONNU" },
+};
+
+export function getStreamStatusLabel(locale: Locale, status?: string | null): string {
+  const key = (status ?? "UNKNOWN").toUpperCase();
+  return STREAM_STATUS_LABELS[key]?.[locale] ?? key;
+}
+
+const MEDIA_TYPE_LABELS: Record<string, Record<Locale, string>> = {
+  LIVE_VIDEO: { en: "Live Video", zh: "实时视频", ja: "ライブ映像", es: "Video en vivo", fr: "Vidéo en direct" },
+  SNAPSHOT: { en: "Snapshot", zh: "定时抓拍", ja: "スナップショット", es: "Instantánea", fr: "Instantané" },
+  TIMELAPSE: { en: "Timelapse", zh: "延时摄影", ja: "タイムラプス", es: "Timelapse", fr: "Accéléré" },
+  RECORDED: { en: "Recorded", zh: "录播", ja: "録画", es: "Grabado", fr: "Enregistré" },
+};
+
+export function getMediaTypeLabel(locale: Locale, mediaType?: string | null): string {
+  const key = (mediaType ?? "LIVE_VIDEO").toUpperCase();
+  return MEDIA_TYPE_LABELS[key]?.[locale] ?? key;
 }
