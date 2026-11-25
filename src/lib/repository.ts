@@ -10,7 +10,10 @@ import {
 import type {
   AdminAuditLog,
   AdminCandidate,
+  AdminCategory,
+  AdminCity,
   AdminContactMessage,
+  AdminCountry,
   AdminDiscoveryJob,
   AdminReport,
   PublicWebcam,
@@ -625,7 +628,7 @@ export async function resolveContactMessage(id: string) {
 export async function getAdminDashboardData() {
   if (isDbConfigured()) {
     try {
-      const [webcams, candidates, jobs, reports, contactMessages, auditLogs] = await Promise.all([
+      const [webcams, candidates, jobs, reports, contactMessages, auditLogs, categories, countries, cities] = await Promise.all([
         prisma.webcam.findMany({
           include: {
             city: { include: { country: true } },
@@ -650,6 +653,28 @@ export async function getAdminDashboardData() {
         }),
         prisma.contactMessage.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
         prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 30 }),
+        prisma.category.findMany({
+          include: { _count: { select: { webcams: true } } },
+          orderBy: { name: "asc" },
+        }),
+        prisma.country.findMany({
+          include: {
+            cities: {
+              select: {
+                id: true,
+                _count: { select: { webcams: true } },
+              },
+            },
+          },
+          orderBy: { name: "asc" },
+        }),
+        prisma.city.findMany({
+          include: {
+            country: true,
+            _count: { select: { webcams: true } },
+          },
+          orderBy: [{ country: { name: "asc" } }, { name: "asc" }],
+        }),
       ]);
 
       const quotaUsed = jobs.reduce((acc, j) => acc + j.quotaCost, 0);
@@ -714,10 +739,80 @@ export async function getAdminDashboardData() {
           detail: l.detail,
           createdAt: l.createdAt.toISOString(),
         })),
+        categories: categories.map((c): AdminCategory => ({
+          id: c.id,
+          slug: c.slug,
+          name: c.name,
+          webcamCount: c._count.webcams,
+        })),
+        countries: countries.map((co): AdminCountry => ({
+          id: co.id,
+          isoCode: co.isoCode,
+          name: co.name,
+          slug: co.slug,
+          flag: co.flag,
+          cityCount: co.cities.length,
+          webcamCount: co.cities.reduce((sum, ci) => sum + ci._count.webcams, 0),
+        })),
+        cities: cities.map((ci): AdminCity => ({
+          id: ci.id,
+          countryId: ci.countryId,
+          countryName: ci.country.name,
+          countrySlug: ci.country.slug,
+          countryFlag: ci.country.flag,
+          name: ci.name,
+          slug: ci.slug,
+          lat: ci.lat,
+          lng: ci.lng,
+          timezone: ci.timezone,
+          webcamCount: ci._count.webcams,
+        })),
         youtubeQuotaUsed: quotaUsed,
       };
     } catch {
       // Fallback
+    }
+  }
+
+  const memCountryMap = new Map<string, AdminCountry>();
+  const memCityMap = new Map<string, AdminCity>();
+  const memCatCounts = new Map<string, number>();
+
+  for (const w of memStore.webcams) {
+    for (const c of w.categories) {
+      memCatCounts.set(c.slug, (memCatCounts.get(c.slug) ?? 0) + 1);
+    }
+    const existingCo = memCountryMap.get(w.country.slug) ?? {
+      id: `country-${w.country.slug}`,
+      isoCode: w.country.isoCode,
+      name: w.country.name,
+      slug: w.country.slug,
+      flag: w.country.flag,
+      cityCount: 0,
+      webcamCount: 0,
+    };
+    existingCo.webcamCount += 1;
+    memCountryMap.set(w.country.slug, existingCo);
+
+    const cityKey = `${w.country.slug}:${w.city.slug}`;
+    const existingCi = memCityMap.get(cityKey);
+    if (existingCi) {
+      existingCi.webcamCount += 1;
+    } else {
+      existingCo.cityCount += 1;
+      memCityMap.set(cityKey, {
+        id: `city-${w.city.slug}`,
+        countryId: existingCo.id,
+        countryName: w.country.name,
+        countrySlug: w.country.slug,
+        countryFlag: w.country.flag,
+        name: w.city.name,
+        slug: w.city.slug,
+        lat: w.city.lat,
+        lng: w.city.lng,
+        timezone: w.city.timezone,
+        webcamCount: 1,
+      });
     }
   }
 
@@ -731,8 +826,243 @@ export async function getAdminDashboardData() {
     reports: memStore.reports,
     contactMessages: memStore.contactMessages,
     auditLogs: memStore.auditLogs,
+    categories: SEED_CATEGORIES.map((c): AdminCategory => ({
+      id: `cat-${c.slug}`,
+      slug: c.slug,
+      name: c.name,
+      webcamCount: memCatCounts.get(c.slug) ?? 0,
+    })),
+    countries: Array.from(memCountryMap.values()),
+    cities: Array.from(memCityMap.values()),
     youtubeQuotaUsed: memStore.youtubeQuotaUsed,
   };
+}
+
+export async function upsertCategoryAdmin(input: {
+  id?: string;
+  name: string;
+  slug?: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  const name = input.name.trim();
+  const slug = slugify(input.slug?.trim() || name);
+  if (!name || !slug) return { ok: false, error: "Category name and slug are required" };
+
+  if (isDbConfigured()) {
+    try {
+      if (input.id) {
+        await prisma.category.update({
+          where: { id: input.id },
+          data: { name, slug },
+        });
+      } else {
+        await prisma.category.create({ data: { name, slug } });
+      }
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin@livecam",
+          action: input.id ? "CATEGORY_UPDATED" : "CATEGORY_CREATED",
+          targetType: "category",
+          targetId: slug,
+          detail: name,
+        },
+      });
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : "Failed to save category" };
+    }
+  }
+
+  return { ok: true };
+}
+
+export async function deleteCategoryAdmin(id: string): Promise<{ ok: boolean; error?: string }> {
+  if (isDbConfigured()) {
+    try {
+      const cat = await prisma.category.findUnique({ where: { id } });
+      if (!cat) return { ok: false, error: "Category not found" };
+      await prisma.category.delete({ where: { id } });
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin@livecam",
+          action: "CATEGORY_DELETED",
+          targetType: "category",
+          targetId: cat.slug,
+          detail: cat.name,
+        },
+      });
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : "Failed to delete category" };
+    }
+  }
+  return { ok: true };
+}
+
+export async function upsertCountryAdmin(input: {
+  id?: string;
+  name: string;
+  slug?: string;
+  isoCode: string;
+  flag?: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  const name = input.name.trim();
+  const slug = slugify(input.slug?.trim() || name);
+  const isoCode = input.isoCode.trim().toUpperCase().slice(0, 4);
+  const flag = input.flag?.trim() || "🌍";
+  if (!name || !slug || !isoCode) {
+    return { ok: false, error: "Country name, slug, and ISO code are required" };
+  }
+
+  if (isDbConfigured()) {
+    try {
+      if (input.id) {
+        await prisma.country.update({
+          where: { id: input.id },
+          data: { name, slug, isoCode, flag },
+        });
+      } else {
+        await prisma.country.create({ data: { name, slug, isoCode, flag } });
+      }
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin@livecam",
+          action: input.id ? "COUNTRY_UPDATED" : "COUNTRY_CREATED",
+          targetType: "country",
+          targetId: slug,
+          detail: `${flag} ${name} (${isoCode})`,
+        },
+      });
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : "Failed to save country" };
+    }
+  }
+
+  return { ok: true };
+}
+
+export async function deleteCountryAdmin(id: string): Promise<{ ok: boolean; error?: string }> {
+  if (isDbConfigured()) {
+    try {
+      const country = await prisma.country.findUnique({
+        where: { id },
+        include: { _count: { select: { cities: true } } },
+      });
+      if (!country) return { ok: false, error: "Country not found" };
+      if (country._count.cities > 0) {
+        return {
+          ok: false,
+          error: `Cannot delete "${country.name}" while it still has ${country._count.cities} cities.`,
+        };
+      }
+      await prisma.country.delete({ where: { id } });
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin@livecam",
+          action: "COUNTRY_DELETED",
+          targetType: "country",
+          targetId: country.slug,
+          detail: country.name,
+        },
+      });
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : "Failed to delete country" };
+    }
+  }
+  return { ok: true };
+}
+
+export async function upsertCityAdmin(input: {
+  id?: string;
+  countryId: string;
+  name: string;
+  slug?: string;
+  lat: number;
+  lng: number;
+  timezone: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  const name = input.name.trim();
+  const slug = slugify(input.slug?.trim() || name);
+  const timezone = input.timezone.trim() || "UTC";
+  if (!input.countryId || !name || !slug) {
+    return { ok: false, error: "Country, city name, and slug are required" };
+  }
+
+  if (isDbConfigured()) {
+    try {
+      if (input.id) {
+        await prisma.city.update({
+          where: { id: input.id },
+          data: {
+            countryId: input.countryId,
+            name,
+            slug,
+            lat: Number.isFinite(input.lat) ? input.lat : 0,
+            lng: Number.isFinite(input.lng) ? input.lng : 0,
+            timezone,
+          },
+        });
+      } else {
+        await prisma.city.create({
+          data: {
+            countryId: input.countryId,
+            name,
+            slug,
+            lat: Number.isFinite(input.lat) ? input.lat : 0,
+            lng: Number.isFinite(input.lng) ? input.lng : 0,
+            timezone,
+          },
+        });
+      }
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin@livecam",
+          action: input.id ? "CITY_UPDATED" : "CITY_CREATED",
+          targetType: "city",
+          targetId: slug,
+          detail: name,
+        },
+      });
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : "Failed to save city" };
+    }
+  }
+
+  return { ok: true };
+}
+
+export async function deleteCityAdmin(id: string): Promise<{ ok: boolean; error?: string }> {
+  if (isDbConfigured()) {
+    try {
+      const city = await prisma.city.findUnique({
+        where: { id },
+        include: { _count: { select: { webcams: true } } },
+      });
+      if (!city) return { ok: false, error: "City not found" };
+      if (city._count.webcams > 0) {
+        return {
+          ok: false,
+          error: `Cannot delete "${city.name}" while it still has ${city._count.webcams} webcams.`,
+        };
+      }
+      await prisma.city.delete({ where: { id } });
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin@livecam",
+          action: "CITY_DELETED",
+          targetType: "city",
+          targetId: city.slug,
+          detail: city.name,
+        },
+      });
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : "Failed to delete city" };
+    }
+  }
+  return { ok: true };
 }
 
 export async function approveCandidate(id: string) {

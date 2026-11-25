@@ -96,6 +96,37 @@ export interface AdminContactMessage {
   createdAt: string;
 }
 
+export interface AdminCategory {
+  id: string;
+  slug: string;
+  name: string;
+  webcamCount: number;
+}
+
+export interface AdminCountry {
+  id: string;
+  isoCode: string;
+  name: string;
+  slug: string;
+  flag: string;
+  cityCount: number;
+  webcamCount: number;
+}
+
+export interface AdminCity {
+  id: string;
+  countryId: string;
+  countryName: string;
+  countrySlug: string;
+  countryFlag: string;
+  name: string;
+  slug: string;
+  lat: number;
+  lng: number;
+  timezone: string;
+  webcamCount: number;
+}
+
 export interface AdminAuditLog {
   id: string;
   actor: string;

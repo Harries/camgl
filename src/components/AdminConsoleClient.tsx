@@ -16,6 +16,11 @@ import {
   LogOut,
   Search,
   Mail,
+  Tag,
+  Globe,
+  Plus,
+  Trash2,
+  Pencil,
 } from "lucide-react";
 import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -23,7 +28,10 @@ import { AdminCharts } from "./AdminCharts";
 import type {
   AdminAuditLog,
   AdminCandidate,
+  AdminCategory,
+  AdminCity,
   AdminContactMessage,
+  AdminCountry,
   AdminDiscoveryJob,
   AdminReport,
   PublicWebcam,
@@ -37,6 +45,9 @@ interface AdminData {
   jobs: AdminDiscoveryJob[];
   reports: AdminReport[];
   contactMessages?: AdminContactMessage[];
+  categories?: AdminCategory[];
+  countries?: AdminCountry[];
+  cities?: AdminCity[];
   auditLogs: AdminAuditLog[];
   youtubeQuotaUsed: number;
 }
@@ -44,7 +55,9 @@ interface AdminData {
 export function AdminConsoleClient({ initialData }: { initialData: AdminData }) {
   const router = useRouter();
   const [data, setData] = useState<AdminData>(initialData);
-  const [tab, setTab] = useState<"dashboard" | "review" | "webcams" | "jobs" | "messages" | "reports">("dashboard");
+  const [tab, setTab] = useState<
+    "dashboard" | "review" | "webcams" | "categories" | "locations" | "jobs" | "messages" | "reports"
+  >("dashboard");
   const [collapsed, setCollapsed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -58,6 +71,34 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
   const [webcamPage, setWebcamPage] = useState(1);
   const PAGE_SIZE = 10;
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
+  const [catForm, setCatForm] = useState<{ id?: string; name: string; slug: string }>({
+    name: "",
+    slug: "",
+  });
+  const [countryForm, setCountryForm] = useState<{
+    id?: string;
+    name: string;
+    slug: string;
+    isoCode: string;
+    flag: string;
+  }>({ name: "", slug: "", isoCode: "", flag: "🌍" });
+  const [cityForm, setCityForm] = useState<{
+    id?: string;
+    countryId: string;
+    name: string;
+    slug: string;
+    lat: string;
+    lng: string;
+    timezone: string;
+  }>({
+    countryId: initialData.countries?.[0]?.id ?? "",
+    name: "",
+    slug: "",
+    lat: "0",
+    lng: "0",
+    timezone: "UTC",
+  });
+  const [cityCountryFilter, setCityCountryFilter] = useState("all");
   const [editForm, setEditForm] = useState({
     title: "",
     description: "",
@@ -234,6 +275,18 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
       label: "Webcams & Health",
       badge: data.webcams.length,
       icon: Video,
+    },
+    {
+      key: "categories" as const,
+      label: "Categories",
+      badge: (data.categories ?? []).length,
+      icon: Tag,
+    },
+    {
+      key: "locations" as const,
+      label: "Countries & Cities",
+      badge: (data.countries ?? []).length,
+      icon: Globe,
     },
     {
       key: "jobs" as const,
@@ -885,6 +938,444 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {tab === "categories" && (
+            <div className="space-y-5">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const ok = await runAction({
+                    action: "saveCategory",
+                    id: catForm.id,
+                    name: catForm.name,
+                    slug: catForm.slug,
+                  });
+                  if (ok) setCatForm({ name: "", slug: "" });
+                }}
+                className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 shadow-sm space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {catForm.id ? "Edit Category" : "Add Category"}
+                  </h2>
+                  {catForm.id && (
+                    <button
+                      type="button"
+                      onClick={() => setCatForm({ name: "", slug: "" })}
+                      className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                  <input
+                    required
+                    type="text"
+                    value={catForm.name}
+                    onChange={(e) => setCatForm({ ...catForm, name: e.target.value })}
+                    placeholder="Category Name (e.g., Harbor)"
+                    className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                  <input
+                    type="text"
+                    value={catForm.slug}
+                    onChange={(e) => setCatForm({ ...catForm, slug: e.target.value })}
+                    placeholder="Slug (optional, auto-generated)"
+                    className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    <Plus className="w-4 h-4" />
+                    {catForm.id ? "Save Category" : "Add Category"}
+                  </button>
+                </div>
+              </form>
+
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
+                <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-900 dark:text-white">
+                  All Categories ({(data.categories ?? []).length})
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400">
+                      <tr>
+                        <th className="px-4 py-3 font-medium">Name</th>
+                        <th className="px-4 py-3 font-medium">Slug</th>
+                        <th className="px-4 py-3 font-medium">Webcams</th>
+                        <th className="px-4 py-3 font-medium text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {(data.categories ?? []).map((cat) => (
+                        <tr key={cat.id}>
+                          <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{cat.name}</td>
+                          <td className="px-4 py-3 font-mono text-slate-500 dark:text-slate-400">{cat.slug}</td>
+                          <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">{cat.webcamCount}</td>
+                          <td className="px-4 py-3 text-right space-x-2">
+                            <button
+                              type="button"
+                              onClick={() => setCatForm({ id: cat.id, name: cat.name, slug: cat.slug })}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                            >
+                              <Pencil className="w-3 h-3" /> Edit
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => runAction({ action: "deleteCategory", id: cat.id })}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-400 dark:hover:bg-rose-950/40 disabled:opacity-50"
+                            >
+                              <Trash2 className="w-3 h-3" /> Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === "locations" && (
+            <div className="space-y-6">
+              {/* Countries Management */}
+              <div className="space-y-4">
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const ok = await runAction({
+                      action: "saveCountry",
+                      id: countryForm.id,
+                      name: countryForm.name,
+                      slug: countryForm.slug,
+                      isoCode: countryForm.isoCode,
+                      flag: countryForm.flag,
+                    });
+                    if (ok) setCountryForm({ name: "", slug: "", isoCode: "", flag: "🌍" });
+                  }}
+                  className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 shadow-sm space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {countryForm.id ? "Edit Country" : "Add Country"}
+                    </h2>
+                    {countryForm.id && (
+                      <button
+                        type="button"
+                        onClick={() => setCountryForm({ name: "", slug: "", isoCode: "", flag: "🌍" })}
+                        className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 text-sm">
+                    <input
+                      required
+                      type="text"
+                      value={countryForm.flag}
+                      onChange={(e) => setCountryForm({ ...countryForm, flag: e.target.value })}
+                      placeholder="Flag (🇺🇸)"
+                      className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                    <input
+                      required
+                      type="text"
+                      value={countryForm.name}
+                      onChange={(e) => setCountryForm({ ...countryForm, name: e.target.value })}
+                      placeholder="Country Name"
+                      className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                    <input
+                      type="text"
+                      value={countryForm.slug}
+                      onChange={(e) => setCountryForm({ ...countryForm, slug: e.target.value })}
+                      placeholder="Slug (optional)"
+                      className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                    <input
+                      required
+                      type="text"
+                      maxLength={4}
+                      value={countryForm.isoCode}
+                      onChange={(e) => setCountryForm({ ...countryForm, isoCode: e.target.value.toUpperCase() })}
+                      placeholder="ISO (e.g., US)"
+                      className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 uppercase dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                    <button
+                      type="submit"
+                      disabled={busy}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {countryForm.id ? "Save Country" : "Add Country"}
+                    </button>
+                  </div>
+                </form>
+
+                <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
+                  <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-900 dark:text-white">
+                    Countries ({(data.countries ?? []).length})
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">Country</th>
+                          <th className="px-4 py-3 font-medium">Slug</th>
+                          <th className="px-4 py-3 font-medium">ISO</th>
+                          <th className="px-4 py-3 font-medium">Cities</th>
+                          <th className="px-4 py-3 font-medium">Webcams</th>
+                          <th className="px-4 py-3 font-medium text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {(data.countries ?? []).map((co) => (
+                          <tr key={co.id}>
+                            <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
+                              {co.flag} {co.name}
+                            </td>
+                            <td className="px-4 py-3 font-mono text-slate-500 dark:text-slate-400">{co.slug}</td>
+                            <td className="px-4 py-3 font-mono text-slate-600 dark:text-slate-300">{co.isoCode}</td>
+                            <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">{co.cityCount}</td>
+                            <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">{co.webcamCount}</td>
+                            <td className="px-4 py-3 text-right space-x-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setCountryForm({
+                                    id: co.id,
+                                    name: co.name,
+                                    slug: co.slug,
+                                    isoCode: co.isoCode,
+                                    flag: co.flag,
+                                  })
+                                }
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                              >
+                                <Pencil className="w-3 h-3" /> Edit
+                              </button>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => runAction({ action: "deleteCountry", id: co.id })}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-400 dark:hover:bg-rose-950/40 disabled:opacity-50"
+                              >
+                                <Trash2 className="w-3 h-3" /> Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cities Management */}
+              <div className="space-y-4">
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const ok = await runAction({
+                      action: "saveCity",
+                      id: cityForm.id,
+                      countryId: cityForm.countryId || data.countries?.[0]?.id,
+                      name: cityForm.name,
+                      slug: cityForm.slug,
+                      lat: Number(cityForm.lat),
+                      lng: Number(cityForm.lng),
+                      timezone: cityForm.timezone,
+                    });
+                    if (ok) {
+                      setCityForm({
+                        countryId: data.countries?.[0]?.id ?? "",
+                        name: "",
+                        slug: "",
+                        lat: "0",
+                        lng: "0",
+                        timezone: "UTC",
+                      });
+                    }
+                  }}
+                  className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 shadow-sm space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {cityForm.id ? "Edit City" : "Add City"}
+                    </h2>
+                    {cityForm.id && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCityForm({
+                            countryId: data.countries?.[0]?.id ?? "",
+                            name: "",
+                            slug: "",
+                            lat: "0",
+                            lng: "0",
+                            timezone: "UTC",
+                          })
+                        }
+                        className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-7 gap-3 text-sm">
+                    <select
+                      required
+                      value={cityForm.countryId || data.countries?.[0]?.id || ""}
+                      onChange={(e) => setCityForm({ ...cityForm, countryId: e.target.value })}
+                      className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    >
+                      {(data.countries ?? []).map((co) => (
+                        <option key={co.id} value={co.id}>
+                          {co.flag} {co.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      required
+                      type="text"
+                      value={cityForm.name}
+                      onChange={(e) => setCityForm({ ...cityForm, name: e.target.value })}
+                      placeholder="City Name"
+                      className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                    <input
+                      type="text"
+                      value={cityForm.slug}
+                      onChange={(e) => setCityForm({ ...cityForm, slug: e.target.value })}
+                      placeholder="Slug (optional)"
+                      className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                    <input
+                      required
+                      type="number"
+                      step="any"
+                      value={cityForm.lat}
+                      onChange={(e) => setCityForm({ ...cityForm, lat: e.target.value })}
+                      placeholder="Lat"
+                      className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                    <input
+                      required
+                      type="number"
+                      step="any"
+                      value={cityForm.lng}
+                      onChange={(e) => setCityForm({ ...cityForm, lng: e.target.value })}
+                      placeholder="Lng"
+                      className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                    <input
+                      required
+                      type="text"
+                      value={cityForm.timezone}
+                      onChange={(e) => setCityForm({ ...cityForm, timezone: e.target.value })}
+                      placeholder="Timezone (America/New_York)"
+                      className="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                    <button
+                      type="submit"
+                      disabled={busy}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {cityForm.id ? "Save City" : "Add City"}
+                    </button>
+                  </div>
+                </form>
+
+                <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
+                  <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                      Cities ({(data.cities ?? []).filter((ci) => cityCountryFilter === "all" || ci.countrySlug === cityCountryFilter).length})
+                    </div>
+                    <select
+                      value={cityCountryFilter}
+                      onChange={(e) => setCityCountryFilter(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    >
+                      <option value="all">All Countries</option>
+                      {(data.countries ?? []).map((co) => (
+                        <option key={co.id} value={co.slug}>
+                          {co.flag} {co.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">City</th>
+                          <th className="px-4 py-3 font-medium">Country</th>
+                          <th className="px-4 py-3 font-medium">Coordinates</th>
+                          <th className="px-4 py-3 font-medium">Timezone</th>
+                          <th className="px-4 py-3 font-medium">Webcams</th>
+                          <th className="px-4 py-3 font-medium text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {(data.cities ?? [])
+                          .filter((ci) => cityCountryFilter === "all" || ci.countrySlug === cityCountryFilter)
+                          .map((ci) => (
+                            <tr key={ci.id}>
+                              <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
+                                {ci.name}
+                                <span className="ml-1.5 font-mono text-[11px] text-slate-400">({ci.slug})</span>
+                              </td>
+                              <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                                {ci.countryFlag} {ci.countryName}
+                              </td>
+                              <td className="px-4 py-3 font-mono text-slate-500 dark:text-slate-400">
+                                {ci.lat.toFixed(3)}, {ci.lng.toFixed(3)}
+                              </td>
+                              <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{ci.timezone}</td>
+                              <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">{ci.webcamCount}</td>
+                              <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setCityForm({
+                                      id: ci.id,
+                                      countryId: ci.countryId,
+                                      name: ci.name,
+                                      slug: ci.slug,
+                                      lat: String(ci.lat),
+                                      lng: String(ci.lng),
+                                      timezone: ci.timezone,
+                                    })
+                                  }
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                >
+                                  <Pencil className="w-3 h-3" /> Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => runAction({ action: "deleteCity", id: ci.id })}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-400 dark:hover:bg-rose-950/40 disabled:opacity-50"
+                                >
+                                  <Trash2 className="w-3 h-3" /> Delete
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           )}

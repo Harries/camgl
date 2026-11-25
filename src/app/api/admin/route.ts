@@ -3,6 +3,9 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 import {
   approveCandidate,
   approveCandidatesBatch,
+  deleteCategoryAdmin,
+  deleteCityAdmin,
+  deleteCountryAdmin,
   getAdminDashboardData,
   rejectCandidate,
   rejectCandidatesBatch,
@@ -12,6 +15,9 @@ import {
   syncAllSourceCandidates,
   toggleWebcamSuspend,
   updateWebcamDetails,
+  upsertCategoryAdmin,
+  upsertCityAdmin,
+  upsertCountryAdmin,
 } from "@/lib/repository";
 
 export async function GET() {
@@ -75,6 +81,54 @@ export async function POST(request: Request) {
       case "resolveContact": {
         const ok = await resolveContactMessage(String(body.id));
         if (!ok) return NextResponse.json({ error: "Message not found" }, { status: 404 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "saveCategory": {
+        const res = await upsertCategoryAdmin({
+          id: body.id ? String(body.id) : undefined,
+          name: String(body.name ?? ""),
+          slug: body.slug ? String(body.slug) : undefined,
+        });
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "deleteCategory": {
+        const res = await deleteCategoryAdmin(String(body.id ?? ""));
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "saveCountry": {
+        const res = await upsertCountryAdmin({
+          id: body.id ? String(body.id) : undefined,
+          name: String(body.name ?? ""),
+          slug: body.slug ? String(body.slug) : undefined,
+          isoCode: String(body.isoCode ?? ""),
+          flag: body.flag ? String(body.flag) : undefined,
+        });
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "deleteCountry": {
+        const res = await deleteCountryAdmin(String(body.id ?? ""));
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "saveCity": {
+        const res = await upsertCityAdmin({
+          id: body.id ? String(body.id) : undefined,
+          countryId: String(body.countryId ?? ""),
+          name: String(body.name ?? ""),
+          slug: body.slug ? String(body.slug) : undefined,
+          lat: Number(body.lat ?? 0),
+          lng: Number(body.lng ?? 0),
+          timezone: String(body.timezone ?? "UTC"),
+        });
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "deleteCity": {
+        const res = await deleteCityAdmin(String(body.id ?? ""));
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
         return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }
       case "updateWebcam": {
