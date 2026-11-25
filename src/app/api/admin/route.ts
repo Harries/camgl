@@ -8,6 +8,7 @@ import {
   runHealthCheckBatch,
   syncAllSourceCandidates,
   toggleWebcamSuspend,
+  updateWebcamDetails,
 } from "@/lib/repository";
 
 export async function GET() {
@@ -50,6 +51,27 @@ export async function POST(request: Request) {
       }
       case "reprobe": {
         await reprobeCandidates();
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "updateWebcam": {
+        if (!body?.slug || !body?.title || !body?.description) {
+          return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        }
+        const updated = await updateWebcamDetails({
+          slug: String(body.slug),
+          title: String(body.title),
+          description: String(body.description),
+          bestTime: body.bestTime !== undefined ? String(body.bestTime) : null,
+          sourceType: body.sourceType ? String(body.sourceType) : undefined,
+          embedUrl: body.embedUrl ? String(body.embedUrl) : undefined,
+          sourceUrl: body.sourceUrl ? String(body.sourceUrl) : undefined,
+          categorySlugs: Array.isArray(body.categorySlugs)
+            ? body.categorySlugs.map(String)
+            : undefined,
+          lat: body.lat !== undefined ? Number(body.lat) : undefined,
+          lng: body.lng !== undefined ? Number(body.lng) : undefined,
+        });
+        if (!updated) return NextResponse.json({ error: "Webcam not found" }, { status: 404 });
         return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }
       default:

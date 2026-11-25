@@ -43,13 +43,59 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
   const [collapsed, setCollapsed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [editingSlug, setEditingSlug] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    description: "",
+    bestTime: "",
+    sourceType: "youtube",
+    embedUrl: "",
+    sourceUrl: "",
+    categorySlugs: [] as string[],
+    lat: "0",
+    lng: "0",
+  });
+
+  function openEditModal(w: PublicWebcam) {
+    setEditingSlug(w.slug);
+    setEditForm({
+      title: w.title,
+      description: w.description,
+      bestTime: w.bestTime ?? "",
+      sourceType: w.stream?.sourceType ?? "youtube",
+      embedUrl: w.stream?.embedUrl ?? "",
+      sourceUrl: w.stream?.sourceUrl ?? "",
+      categorySlugs: w.categories.map((c) => c.slug),
+      lat: String(w.city.lat),
+      lng: String(w.city.lng),
+    });
+  }
+
+  async function handleSaveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingSlug) return;
+    const ok = await runAction({
+      action: "updateWebcam",
+      slug: editingSlug,
+      title: editForm.title,
+      description: editForm.description,
+      bestTime: editForm.bestTime,
+      sourceType: editForm.sourceType,
+      embedUrl: editForm.embedUrl,
+      sourceUrl: editForm.sourceUrl,
+      categorySlugs: editForm.categorySlugs,
+      lat: Number(editForm.lat),
+      lng: Number(editForm.lng),
+    });
+    if (ok) setEditingSlug(null);
+  }
 
   async function handleLogout() {
     await fetch("/api/admin/auth", { method: "DELETE" });
     router.refresh();
   }
 
-  async function runAction(payload: Record<string, string>) {
+  async function runAction(payload: Record<string, unknown>): Promise<boolean> {
     setBusy(true);
     setActionError(null);
     try {
@@ -61,11 +107,14 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
       const json = await res.json().catch(() => ({}));
       if (res.ok && json.data) {
         setData(json.data);
+        return true;
       } else {
         setActionError(json.error || `Request failed (${res.status})`);
+        return false;
       }
     } catch {
       setActionError("Network error while executing action");
+      return false;
     } finally {
       setBusy(false);
     }
@@ -507,6 +556,13 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(w)}
+                              className="px-2.5 py-1 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-900 dark:text-blue-400 dark:hover:bg-blue-950/50"
+                            >
+                              Edit
+                            </button>
                             <Link
                               href={`/webcams/${w.slug}`}
                               className="px-2.5 py-1 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -611,6 +667,167 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
           )}
         </div>
       </div>
+
+      {/* Edit Webcam Modal */}
+      {editingSlug && (
+        <div className="fixed inset-0 z-50 bg-black/55 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                  Edit Webcam Details
+                </h2>
+                <div className="text-xs font-mono text-slate-400">/webcams/{editingSlug}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingSlug(null)}
+                className="text-xs px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Close
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="space-y-4 text-sm">
+              <label className="block space-y-1">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Title *</span>
+                <input
+                  required
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </label>
+
+              <label className="block space-y-1">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Description *</span>
+                <textarea
+                  required
+                  rows={3}
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </label>
+
+              <label className="block space-y-1">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Best Time to Watch</span>
+                <input
+                  type="text"
+                  value={editForm.bestTime}
+                  onChange={(e) => setEditForm({ ...editForm, bestTime: e.target.value })}
+                  placeholder="e.g., Sunset and evening lights..."
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label className="block space-y-1">
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Source Type</span>
+                  <select
+                    value={editForm.sourceType}
+                    onChange={(e) => setEditForm({ ...editForm, sourceType: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  >
+                    <option value="youtube">youtube</option>
+                    <option value="hls">hls</option>
+                    <option value="snapshot">snapshot</option>
+                    <option value="official_embed">official_embed</option>
+                  </select>
+                </label>
+                <label className="block space-y-1">
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Latitude</span>
+                  <input
+                    type="number"
+                    step="any"
+                    value={editForm.lat}
+                    onChange={(e) => setEditForm({ ...editForm, lat: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </label>
+                <label className="block space-y-1">
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Longitude</span>
+                  <input
+                    type="number"
+                    step="any"
+                    value={editForm.lng}
+                    onChange={(e) => setEditForm({ ...editForm, lng: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </label>
+              </div>
+
+              <label className="block space-y-1">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Embed / Stream URL</span>
+                <input
+                  type="url"
+                  value={editForm.embedUrl}
+                  onChange={(e) => setEditForm({ ...editForm, embedUrl: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 font-mono text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </label>
+
+              <label className="block space-y-1">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Original Source URL</span>
+                <input
+                  type="url"
+                  value={editForm.sourceUrl}
+                  onChange={(e) => setEditForm({ ...editForm, sourceUrl: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 font-mono text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </label>
+
+              <div className="space-y-1.5">
+                <span className="font-medium text-slate-700 dark:text-slate-300 block">Categories</span>
+                <div className="flex flex-wrap gap-2">
+                  {["city", "beach", "nature", "wildlife", "rail", "ski", "volcano", "port"].map((cat) => {
+                    const selected = editForm.categorySlugs.includes(cat);
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() =>
+                          setEditForm((prev) => ({
+                            ...prev,
+                            categorySlugs: selected
+                              ? prev.categorySlugs.filter((s) => s !== cat)
+                              : [...prev.categorySlugs, cat],
+                          }))
+                        }
+                        className={`px-2.5 py-1 rounded-lg text-xs border capitalize transition-colors ${
+                          selected
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingSlug(null)}
+                  className="px-4 py-2 rounded-lg text-xs font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="px-4 py-2 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {busy ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

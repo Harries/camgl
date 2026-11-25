@@ -760,6 +760,101 @@ export async function toggleWebcamSuspend(slug: string) {
   return cam;
 }
 
+export async function updateWebcamDetails(input: {
+  slug: string;
+  title: string;
+  description: string;
+  bestTime?: string | null;
+  sourceType?: string;
+  embedUrl?: string;
+  sourceUrl?: string;
+  categorySlugs?: string[];
+  lat?: number;
+  lng?: number;
+}) {
+  const cleanBestTime = input.bestTime?.trim() || null;
+  const mediaType = input.sourceType === "snapshot" ? "SNAPSHOT" : "LIVE_VIDEO";
+
+  if (isDbConfigured()) {
+    try {
+      const cam = await prisma.webcam.findUnique({
+        where: { slug: input.slug },
+        include: { streams: { where: { isPrimary: true }, take: 1 } },
+      });
+      if (!cam) return null;
+
+      await prisma.webcam.update({
+        where: { id: cam.id },
+        data: {
+          title: input.title.trim(),
+          description: input.description.trim(),
+          bestTime: cleanBestTime,
+          ...(typeof input.lat === "number" && !Number.isNaN(input.lat) ? { lat: input.lat } : {}),
+          ...(typeof input.lng === "number" && !Number.isNaN(input.lng) ? { lng: input.lng } : {}),
+        },
+      });
+
+      if (cam.streams[0] && input.embedUrl && input.sourceUrl && input.sourceType) {
+        await prisma.stream.update({
+          where: { id: cam.streams[0].id },
+          data: {
+            sourceType: input.sourceType,
+            embedUrl: input.embedUrl.trim(),
+            sourceUrl: input.sourceUrl.trim(),
+            mediaType,
+          },
+        });
+      }
+
+      if (input.categorySlugs && input.categorySlugs.length > 0) {
+        const cats = await prisma.category.findMany({
+          where: { slug: { in: input.categorySlugs } },
+        });
+        await prisma.webcamCategory.deleteMany({ where: { webcamId: cam.id } });
+        if (cats.length > 0) {
+          await prisma.webcamCategory.createMany({
+            data: cats.map((c) => ({ webcamId: cam.id, categoryId: c.id })),
+          });
+        }
+      }
+
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin@livecam",
+          action: "UPDATED",
+          targetType: "webcam",
+          targetId: input.title.trim(),
+        },
+      });
+
+      return cam;
+    } catch {
+      // Fallback
+    }
+  }
+
+  const cam = memStore.webcams.find((w) => w.slug === input.slug);
+  if (!cam) return null;
+  cam.title = input.title.trim();
+  cam.description = input.description.trim();
+  cam.bestTime = cleanBestTime;
+  if (typeof input.lat === "number" && !Number.isNaN(input.lat)) cam.city.lat = input.lat;
+  if (typeof input.lng === "number" && !Number.isNaN(input.lng)) cam.city.lng = input.lng;
+  if (cam.stream && input.embedUrl && input.sourceUrl && input.sourceType) {
+    cam.stream.sourceType = input.sourceType;
+    cam.stream.embedUrl = input.embedUrl.trim();
+    cam.stream.sourceUrl = input.sourceUrl.trim();
+    cam.stream.mediaType = mediaType;
+  }
+  if (input.categorySlugs && input.categorySlugs.length > 0) {
+    cam.categories = input.categorySlugs.map((s) => ({
+      slug: s,
+      name: s.charAt(0).toUpperCase() + s.slice(1),
+    }));
+  }
+  return cam;
+}
+
 export async function syncAllSourceCandidates() {
   const items = await collectAndProbeAllSources();
 
