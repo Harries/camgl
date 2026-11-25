@@ -750,6 +750,23 @@ export async function syncAllSourceCandidates() {
         });
       }
 
+      await prisma.discoveryJob.upsert({
+        where: { id: "job-multi-source" },
+        update: {
+          status: "SUCCESS",
+          lastRunAt: now,
+          quotaCost: items.filter((i) => i.source.startsWith("YouTube API")).length * 10,
+        },
+        create: {
+          id: "job-multi-source",
+          source: "Multi-Source Collector (Windy/YT/USGS/NPS/Roundshot)",
+          query: "All Configured Sources",
+          status: "SUCCESS",
+          quotaCost: items.filter((i) => i.source.startsWith("YouTube API")).length * 10,
+          lastRunAt: now,
+        },
+      });
+
       await prisma.auditLog.create({
         data: {
           actor: "admin@livecam",
