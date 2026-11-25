@@ -9,6 +9,20 @@ const STREAM_PREVIEW_MAP: Record<string, string> = {
 const FALLBACK_SCENIC_PREVIEW =
   "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=80";
 
+function extractWindyWebcamId(
+  externalId?: string | null,
+  embedUrl?: string | null
+): string | null {
+  if (externalId && /^windy-(\d+)$/.test(externalId)) {
+    return externalId.replace("windy-", "");
+  }
+  if (embedUrl) {
+    const match = embedUrl.match(/webcams\.windy\.com\/webcams\/public\/embed\/player\/(\d+)/);
+    if (match) return match[1];
+  }
+  return null;
+}
+
 export function getWebcamPreviewUrl(
   stream?: {
     sourceType?: string | null;
@@ -18,6 +32,10 @@ export function getWebcamPreviewUrl(
   } | null
 ): string | null {
   if (!stream) return null;
+  const windyId = extractWindyWebcamId(stream.externalId, stream.embedUrl);
+  if (windyId) {
+    return `https://imgproxy.windy.com/_/preview/plain/current/${windyId}/original.jpg?v=2`;
+  }
   if (stream.externalId && STREAM_PREVIEW_MAP[stream.externalId]) {
     return STREAM_PREVIEW_MAP[stream.externalId];
   }
