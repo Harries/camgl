@@ -1,3 +1,14 @@
+const STREAM_PREVIEW_MAP: Record<string, string> = {
+  "roundshot-gornergrat": "https://backend.roundshot.com/cams/5/default",
+  "beachtv-keywest-hls":
+    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+  "airvuz-dronetv-hls":
+    "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
+};
+
+const FALLBACK_SCENIC_PREVIEW =
+  "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=80";
+
 export function getWebcamPreviewUrl(
   stream?: {
     sourceType?: string | null;
@@ -7,6 +18,9 @@ export function getWebcamPreviewUrl(
   } | null
 ): string | null {
   if (!stream) return null;
+  if (stream.externalId && STREAM_PREVIEW_MAP[stream.externalId]) {
+    return STREAM_PREVIEW_MAP[stream.externalId];
+  }
   if (stream.sourceType === "youtube" && stream.externalId && stream.externalId.length === 11) {
     return `https://i.ytimg.com/vi/${stream.externalId}/hqdefault.jpg`;
   }
@@ -15,6 +29,9 @@ export function getWebcamPreviewUrl(
     stream.embedUrl
   ) {
     return stream.embedUrl;
+  }
+  if (stream.sourceType === "hls" || stream.sourceType === "official_embed") {
+    return FALLBACK_SCENIC_PREVIEW;
   }
   return null;
 }
