@@ -171,6 +171,7 @@ export default async function WebcamDetailPage({
             sourceUrl={webcam.stream.sourceUrl}
             sourceType={webcam.stream.sourceType}
             mediaType={webcam.stream.mediaType}
+            externalId={webcam.stream.externalId}
           />
         ) : null}
 

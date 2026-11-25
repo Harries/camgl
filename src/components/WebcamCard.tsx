@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { PublicWebcam } from "@/lib/types";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { getSourceTypeMeta } from "@/lib/source-badge";
+import { getWebcamPreviewUrl, WebcamThumbnail } from "./WebcamThumbnail";
 
 export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
   const { isDaylight, localTime } = getDaylightInfo(
@@ -19,18 +20,15 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
       className="group rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all shadow-sm flex flex-col"
     >
       <div className="relative aspect-video bg-slate-900 overflow-hidden">
-        <div
-          className={`w-full h-full flex items-center justify-center transition-transform duration-500 group-hover:scale-105 ${
-            isDaylight
-              ? "bg-gradient-to-br from-sky-600 via-blue-700 to-indigo-900"
-              : "bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-800"
-          }`}
-        >
-          <div className="text-center px-4 text-white/90">
-            <div className="text-2xl mb-1">{webcam.country.flag}</div>
-            <div className="text-xs font-medium opacity-80">{webcam.city.name}</div>
-          </div>
-        </div>
+        <WebcamThumbnail
+          src={getWebcamPreviewUrl(webcam.stream)}
+          alt={webcam.title}
+          flag={webcam.country.flag}
+          subtitle={webcam.city.name}
+          isDaylight={isDaylight}
+          className="transition-transform duration-500 group-hover:scale-105"
+        />
+        <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
         <div className="absolute top-3 left-3 flex items-center gap-1.5">
           <span
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold text-white ${

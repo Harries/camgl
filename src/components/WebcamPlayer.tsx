@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Play, ExternalLink, AlertTriangle, RefreshCw } from "lucide-react";
+import { getWebcamPreviewUrl } from "./WebcamThumbnail";
 
 export function WebcamPlayer({
   title,
@@ -9,12 +10,14 @@ export function WebcamPlayer({
   sourceUrl,
   sourceType,
   mediaType = "LIVE_VIDEO",
+  externalId,
 }: {
   title: string;
   embedUrl: string;
   sourceUrl: string;
   sourceType: string;
   mediaType?: string;
+  externalId?: string;
 }) {
   const [loaded, setLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -106,11 +109,29 @@ export function WebcamPlayer({
           ? "Official YouTube"
           : "Official Partner";
 
+    const previewUrl = getWebcamPreviewUrl({
+      sourceType,
+      mediaType,
+      externalId,
+      embedUrl,
+    });
+
     return (
-      <div className="relative aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 flex flex-col items-center justify-center text-white p-6">
+      <div className="relative aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 flex flex-col items-center justify-center text-white p-6 overflow-hidden">
+        {previewUrl && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={previewUrl}
+              alt={title}
+              className="absolute inset-0 w-full h-full object-cover opacity-55"
+            />
+            <div className="absolute inset-0 bg-black/45" />
+          </>
+        )}
         <button
           onClick={() => setLoaded(true)}
-          className="group flex flex-col items-center gap-3 focus:outline-none cursor-pointer"
+          className="relative z-10 group flex flex-col items-center gap-3 focus:outline-none cursor-pointer"
         >
           <div className="w-16 h-16 rounded-full bg-blue-600 group-hover:bg-blue-500 group-hover:scale-105 transition-all flex items-center justify-center shadow-xl">
             <Play className="w-7 h-7 fill-white ml-0.5" />

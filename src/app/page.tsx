@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listApprovedWebcams, listCategories, listCountriesSummary } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
+import { getWebcamPreviewUrl } from "@/components/WebcamThumbnail";
 
 export const revalidate = 300;
 
@@ -17,6 +18,7 @@ export default async function HomePage({
   ]);
 
   const featured = webcams[0];
+  const featuredPreview = getWebcamPreviewUrl(featured?.stream);
 
   return (
     <div className="space-y-8">
@@ -26,9 +28,20 @@ export default async function HomePage({
           <div className="grid grid-cols-1 lg:grid-cols-12">
             <Link
               href={`/webcams/${featured.slug}`}
-              className="lg:col-span-7 relative min-h-[260px] sm:min-h-[320px] bg-gradient-to-br from-slate-900 via-blue-950 to-slate-800 p-6 flex flex-col justify-between text-white group"
+              className="lg:col-span-7 relative min-h-[260px] sm:min-h-[320px] bg-gradient-to-br from-slate-900 via-blue-950 to-slate-800 p-6 flex flex-col justify-between text-white group overflow-hidden"
             >
-              <div className="flex items-center gap-2">
+              {featuredPreview && (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={featuredPreview}
+                    alt={featured.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40" />
+                </>
+              )}
+              <div className="relative z-10 flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-600 text-white">
                   <span className="w-2 h-2 rounded-full bg-white live-dot" />
                   LIVE
@@ -37,7 +50,7 @@ export default async function HomePage({
                   Featured Spotlight
                 </span>
               </div>
-              <div className="flex items-end justify-between gap-4">
+              <div className="relative z-10 flex items-end justify-between gap-4">
                 <div>
                   <div className="text-xs text-slate-300">
                     {featured.country.flag} {featured.country.name} · {featured.city.name}

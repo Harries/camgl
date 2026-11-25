@@ -58,6 +58,27 @@ export async function probeSourceStability(
       return { online: true, stabilityScore: score, latencyMs };
     }
 
+    if (sourceType === "hls" || embedUrl.toLowerCase().includes(".m3u8")) {
+      const res = await fetch(embedUrl, { signal: AbortSignal.timeout(4000) });
+      const latencyMs = Date.now() - start;
+      if (!res.ok) return { online: false, stabilityScore: 0, latencyMs };
+      const text = await res.text();
+      if (!text.includes("#EXTM3U")) return { online: false, stabilityScore: 0, latencyMs };
+      const firstChild = text.split(/\r?\n/).find((l) => l.trim() && !l.startsWith("#"));
+      if (firstChild) {
+        const childUrl = new URL(firstChild.trim(), embedUrl).href;
+        const childRes = await fetch(childUrl, {
+          method: "HEAD",
+          signal: AbortSignal.timeout(4000),
+        }).catch(() => null);
+        if (!childRes || !childRes.ok) {
+          return { online: false, stabilityScore: 0, latencyMs: Date.now() - start };
+        }
+      }
+      const score = Math.max(65, Math.min(99, 100 - Math.floor(latencyMs / 35)));
+      return { online: true, stabilityScore: score, latencyMs };
+    }
+
     let res = await fetch(embedUrl, {
       method: "HEAD",
       signal: AbortSignal.timeout(4000),
@@ -101,20 +122,20 @@ export interface CollectedCandidateInput {
 // Keyless verified official public feeds (HLS, Snapshots, Official Embeds, YouTube)
 const PUBLIC_FEED_CATALOG: CollectedCandidateInput[] = [
   {
-    source: "NASA TV HLS",
+    source: "Beach TV Florida Keys (HLS)",
     sourceType: "hls",
     mediaType: "LIVE_VIDEO",
-    externalId: "nasa-ntv2-hls",
-    title: "NASA TV Media Channel (HLS .m3u8)",
+    externalId: "beachtv-keywest-hls",
+    title: "Key West & Florida Keys Beach TV (HLS .m3u8)",
     countryName: "United States",
-    cityName: "Houston",
-    lat: 29.5593,
-    lng: -95.09,
-    categorySlug: "nature",
-    embedUrl: "https://ntv2.akamaized.net/hls/live/2013923/NASA-NTV2-HLS/master.m3u8",
-    sourceUrl: "https://www.nasa.gov/nasatv/",
-    licenseNote: "US Public Domain (NASA)",
-    privacyNote: "Pass · Official Broadcast",
+    cityName: "Key West",
+    lat: 24.5551,
+    lng: -81.78,
+    categorySlug: "beach",
+    embedUrl: "https://5ed325193d4e1.streamlock.net:444/LiveTV/KTVHD/playlist.m3u8",
+    sourceUrl: "https://www.beachtv.com/",
+    licenseNote: "Official Public HLS Broadcast",
+    privacyNote: "Pass · Coastal View",
   },
   {
     source: "USGS Volcano Observatory",

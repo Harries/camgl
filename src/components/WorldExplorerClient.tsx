@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import type { PublicWebcam } from "@/lib/types";
 import { RealMap } from "./RealMap";
 import { getSourceTypeMeta } from "@/lib/source-badge";
+import { getWebcamPreviewUrl, WebcamThumbnail } from "./WebcamThumbnail";
 
 export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -316,11 +317,14 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
               href={`/webcams/${cam.slug}`}
               className="group rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all shadow-sm flex flex-col"
             >
-              <div className="relative aspect-video bg-gradient-to-br from-slate-900 via-blue-950 to-slate-800 flex items-center justify-center text-white">
-                <div className="text-center">
-                  <div className="text-2xl mb-1">{cam.country.flag}</div>
-                  <div className="text-xs opacity-80">{cam.city.name}</div>
-                </div>
+              <div className="relative aspect-video bg-slate-900 overflow-hidden">
+                <WebcamThumbnail
+                  src={getWebcamPreviewUrl(cam.stream)}
+                  alt={cam.title}
+                  flag={cam.country.flag}
+                  subtitle={cam.city.name}
+                  className="transition-transform duration-500 group-hover:scale-105"
+                />
                 <span className="absolute top-3 left-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-600 text-white">
                   <span className="w-1.5 h-1.5 rounded-full bg-white live-dot" />
                   {cam.stream?.status ?? "LIVE"}
