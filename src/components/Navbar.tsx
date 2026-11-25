@@ -22,18 +22,26 @@ export function Navbar() {
     }
   };
 
-  const navLink = (href: string, label: string) => {
+  const navLink = (href: string, label: string, showLiveBadge = false) => {
     const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
     return (
       <Link
         href={href}
-        className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+        className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          showLiveBadge ? "mr-1.5" : ""
+        } ${
           active
             ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
             : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800/60"
         }`}
       >
         {label}
+        {showLiveBadge && (
+          <span className="absolute -top-1.5 -right-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[9px] font-bold leading-none tracking-wide shadow-sm ring-2 ring-white dark:ring-slate-900">
+            <span className="w-1 h-1 rounded-full bg-white live-dot" />
+            LIVE
+          </span>
+        )}
       </Link>
     );
   };
@@ -66,7 +74,7 @@ export function Navbar() {
         </form>
 
         <nav className="flex items-center gap-1 sm:gap-1.5">
-          {navLink("/", "Discover")}
+          {navLink("/", "Discover", true)}
           {navLink("/countries", "Map & Countries")}
           <span className="hidden sm:inline-flex">{navLink("/submit", "Submit")}</span>
           <ThemeToggle className="ml-1" />

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { listApprovedWebcams, listCategories, listCountriesSummary } from "@/lib/repository";
-import { WebcamCard } from "@/components/WebcamCard";
+import { listApprovedWebcamsPage, listCategories, listCountriesSummary } from "@/lib/repository";
+import { InfiniteWebcamGrid } from "@/components/InfiniteWebcamGrid";
 import { getWebcamPreviewUrl } from "@/lib/source-badge";
 
 export const revalidate = 300;
@@ -11,12 +11,18 @@ export default async function HomePage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const { category } = await searchParams;
-  const [webcams, categories, countries] = await Promise.all([
-    listApprovedWebcams(category ? { category } : undefined),
+  const [pageData, categories, countries] = await Promise.all([
+    listApprovedWebcamsPage({
+      ...(category ? { category } : {}),
+      page: 1,
+      pageSize: 12,
+    }),
     listCategories(),
     listCountriesSummary(),
   ]);
 
+  const webcams = pageData.items;
+  const totalWebcams = pageData.total;
   const featured = webcams[0];
   const featuredPreview = getWebcamPreviewUrl(featured?.stream);
 
@@ -78,7 +84,7 @@ export default async function HomePage({
 
               <div className="grid grid-cols-3 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/70 dark:border-slate-700/80">
-                  <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{webcams.length}</div>
+                  <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{totalWebcams}</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">Live Cams</div>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/70 dark:border-slate-700/80">
@@ -137,15 +143,17 @@ export default async function HomePage({
             </Link>
           ))}
         </div>
-        <div className="text-sm text-slate-500 dark:text-slate-400">Showing {webcams.length} webcams</div>
+        <div className="text-sm text-slate-500 dark:text-slate-400">Showing {totalWebcams} webcams</div>
       </section>
 
-      {/* Webcam Grid */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {webcams.map((cam) => (
-          <WebcamCard key={cam.id} webcam={cam} />
-        ))}
-      </section>
+      {/* Webcam Grid with Infinite Scroll */}
+      <InfiniteWebcamGrid
+        initialItems={webcams}
+        total={totalWebcams}
+        initialHasMore={pageData.hasMore}
+        category={category}
+        pageSize={12}
+      />
 
       {/* Country Directory Strip */}
       <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-4 shadow-sm">

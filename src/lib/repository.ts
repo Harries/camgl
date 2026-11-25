@@ -209,6 +209,99 @@ export async function listApprovedWebcams(filters?: {
   return enrichWeather(list);
 }
 
+export async function listApprovedWebcamsPage(filters?: {
+  country?: string;
+  city?: string;
+  category?: string;
+  q?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<{ items: PublicWebcam[]; total: number; hasMore: boolean }> {
+  const page = Math.max(1, filters?.page ?? 1);
+  const pageSize = Math.min(48, Math.max(1, filters?.pageSize ?? 12));
+  const skip = (page - 1) * pageSize;
+
+  if (isDbConfigured()) {
+    try {
+      const where = {
+        reviewStatus: "APPROVED" as const,
+        streams: {
+          some: {
+            isPrimary: true,
+            status: "LIVE" as const,
+          },
+        },
+        ...(filters?.country ? { city: { country: { slug: filters.country } } } : {}),
+        ...(filters?.city ? { city: { slug: filters.city } } : {}),
+        ...(filters?.category
+          ? { categories: { some: { category: { slug: filters.category } } } }
+          : {}),
+        ...(filters?.q
+          ? {
+              OR: [
+                { title: { contains: filters.q, mode: "insensitive" as const } },
+                { city: { name: { contains: filters.q, mode: "insensitive" as const } } },
+                { city: { country: { name: { contains: filters.q, mode: "insensitive" as const } } } },
+              ],
+            }
+          : {}),
+      };
+
+      const [total, rows] = await Promise.all([
+        prisma.webcam.count({ where }),
+        prisma.webcam.findMany({
+          where,
+          include: {
+            city: { include: { country: true } },
+            provider: true,
+            categories: { include: { category: true } },
+            streams: {
+              where: { isPrimary: true, status: "LIVE" },
+              orderBy: { lastCheckedAt: "desc" },
+              take: 1,
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: pageSize,
+        }),
+      ]);
+
+      const items = await enrichWeather(rows.map(mapDbWebcam));
+      return {
+        items,
+        total,
+        hasMore: skip + items.length < total,
+      };
+    } catch {
+      // Fallback
+    }
+  }
+
+  const all = memStore.webcams.filter((w) => {
+    if (w.reviewStatus && w.reviewStatus !== "APPROVED") return false;
+    if (w.stream?.status !== "LIVE") return false;
+    if (filters?.country && w.country.slug !== filters.country) return false;
+    if (filters?.city && w.city.slug !== filters.city) return false;
+    if (filters?.category && !w.categories.some((c) => c.slug === filters.category)) return false;
+    if (filters?.q) {
+      const q = filters.q.toLowerCase();
+      const hay = `${w.title} ${w.country.name} ${w.city.name} ${w.categories
+        .map((c) => c.name)
+        .join(" ")}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const slice = await enrichWeather(all.slice(skip, skip + pageSize));
+  return {
+    items: slice,
+    total: all.length,
+    hasMore: skip + slice.length < all.length,
+  };
+}
+
 export async function getWebcamBySlug(slug: string): Promise<PublicWebcam | null> {
   const all = await listApprovedWebcams();
   return all.find((w) => w.slug === slug) ?? null;

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { PublicWebcam } from "@/lib/types";
 import { RealMap } from "./RealMap";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
@@ -12,6 +12,8 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedSlug, setSelectedSlug] = useState<string>(webcams[0]?.slug ?? "");
   const [catFilter, setCatFilter] = useState<string>("all");
+  const [visibleCount, setVisibleCount] = useState<number>(12);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [focusCoords, setFocusCoords] = useState<{
     lng: number;
     lat: number;
@@ -73,6 +75,27 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
 
   const activePin = filtered.find((w) => w.slug === selectedSlug) ?? filtered[0] ?? webcams[0];
   const categories = ["all", "city", "beach", "nature", "wildlife", "rail", "ski", "volcano", "port"];
+  const visibleWebcams = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [selectedCountry, selectedCity, catFilter]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((prev) => Math.min(filtered.length, prev + 12));
+        }
+      },
+      { rootMargin: "240px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, filtered.length]);
 
   function resetAll() {
     setSelectedCountry(null);
@@ -324,7 +347,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
           )}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((cam) => (
+          {visibleWebcams.map((cam) => (
             <Link
               key={cam.id}
               href={`/webcams/${cam.slug}`}
@@ -361,6 +384,23 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
               </div>
             </Link>
           ))}
+        </div>
+        <div ref={sentinelRef} className="flex flex-col items-center justify-center py-4">
+          {hasMore ? (
+            <button
+              type="button"
+              onClick={() => setVisibleCount((prev) => Math.min(filtered.length, prev + 12))}
+              className="px-5 py-2 rounded-full text-xs font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+            >
+              Load More ({visibleWebcams.length} / {filtered.length})
+            </button>
+          ) : (
+            filtered.length > 0 && (
+              <div className="text-xs text-slate-400 dark:text-slate-500">
+                Showing all {filtered.length} matching webcams
+              </div>
+            )
+          )}
         </div>
       </div>
     </div>
