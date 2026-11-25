@@ -5,7 +5,7 @@ import { listApprovedWebcams, listCategories } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
 import { buildAlternates } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n-server";
-import { formatMessage, getCategoryLabel, getMessages } from "@/lib/i18n";
+import { formatMessage, getCategoryLabel, getMessages, localizePath } from "@/lib/i18n";
 
 export const revalidate = 600;
 
@@ -57,7 +57,7 @@ export default async function CategoryPage({
     <div className="space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-sm space-y-2">
         <div className="text-xs text-slate-500 dark:text-slate-400">
-          <Link href="/" className="hover:underline">{tw.home}</Link> / {catLabel}
+          <Link href={localizePath("/", locale)} className="hover:underline">{tw.home}</Link> / {catLabel}
         </div>
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">
           {formatMessage(tw.categoryWebcams, { name: catLabel })}

@@ -5,7 +5,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { PublicWebcam } from "@/lib/types";
 import { RealMap } from "./RealMap";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
-import { formatMessage, getCategoryLabel, getCityLabel, getCountryLabel } from "@/lib/i18n";
+import {
+  formatMessage,
+  getCategoryLabel,
+  getCityLabel,
+  getCountryLabel,
+  getStreamStatusLabel,
+  localizePath,
+  localizeWeatherSummary,
+} from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
 import { WebcamThumbnail } from "./WebcamThumbnail";
 
@@ -233,9 +241,9 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
                 {getCityLabel(locale, activePin.city.slug, activePin.city.name)}
               </span>
               <span className="px-2 py-0.5 rounded-full bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400 font-semibold">
-                {activePin.stream?.status ?? "LIVE"}
+                {getStreamStatusLabel(locale, activePin.stream?.status ?? "LIVE")}
               </span>
-              <span>{activePin.weatherSummary}</span>
+              <span>{localizeWeatherSummary(activePin.weatherSummary, locale)}</span>
             </div>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white truncate">
               {activePin.title}
@@ -245,7 +253,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
             </p>
           </div>
           <Link
-            href={`/webcams/${activePin.slug}`}
+            href={localizePath(`/webcams/${activePin.slug}`, locale)}
             className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 text-center shadow-sm"
           >
             {tco.openLiveStream}
@@ -346,11 +354,12 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
           </h2>
           {selectedCountry && (
             <Link
-              href={
+              href={localizePath(
                 selectedCity
                   ? `/countries/${selectedCountry}/${selectedCity}`
-                  : `/countries/${selectedCountry}`
-              }
+                  : `/countries/${selectedCountry}`,
+                locale
+              )}
               className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
             >
               {tco.openSeoPage}
@@ -361,7 +370,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
           {visibleWebcams.map((cam) => (
             <Link
               key={cam.id}
-              href={`/webcams/${cam.slug}`}
+              href={localizePath(`/webcams/${cam.slug}`, locale)}
               className="group rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all shadow-sm flex flex-col"
             >
               <div className="relative aspect-video bg-slate-900 overflow-hidden">
@@ -374,7 +383,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
                 />
                 <span className="absolute top-3 left-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-600 text-white">
                   <span className="w-1.5 h-1.5 rounded-full bg-white live-dot" />
-                  {cam.stream?.status ?? "LIVE"}
+                  {getStreamStatusLabel(locale, cam.stream?.status ?? "LIVE")}
                 </span>
               </div>
               <div className="p-4 space-y-1">

@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { PublicWebcam } from "@/lib/types";
+import { localizePath } from "@/lib/i18n";
+import { useI18n } from "./I18nProvider";
 
 export function WorldMapClient({ webcams }: { webcams: PublicWebcam[] }) {
+  const { locale } = useI18n();
   const [selectedSlug, setSelectedSlug] = useState(webcams[0]?.slug ?? "");
   const [catFilter, setCatFilter] = useState("all");
 
@@ -117,7 +120,7 @@ export function WorldMapClient({ webcams }: { webcams: PublicWebcam[] }) {
               <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3">{active.description}</p>
               <div className="text-xs text-slate-600 dark:text-slate-300">{active.weatherSummary}</div>
               <Link
-                href={`/webcams/${active.slug}`}
+                href={localizePath(`/webcams/${active.slug}`, locale)}
                 className="block w-full text-center py-2 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700"
               >
                 Open Live Stream →

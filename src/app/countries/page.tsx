@@ -4,7 +4,7 @@ import { listApprovedWebcams, listCategories } from "@/lib/repository";
 import { WorldExplorerClient } from "@/components/WorldExplorerClient";
 import { absoluteUrl, buildAlternates } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n-server";
-import { formatMessage, getCategoryLabel, getCityLabel, getCountryLabel, getMessages } from "@/lib/i18n";
+import { formatMessage, getCategoryLabel, getCityLabel, getCountryLabel, getMessages, localizePath } from "@/lib/i18n";
 
 export const revalidate = 600;
 
@@ -157,7 +157,7 @@ export default async function CountriesPage() {
               <div className="flex items-center justify-between gap-2">
                 <h3 className="font-semibold text-base text-slate-900 dark:text-white">
                   <Link
-                    href={`/countries/${country.slug}`}
+                    href={localizePath(`/countries/${country.slug}`, locale)}
                     className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-2"
                   >
                     <span>{country.flag}</span>
@@ -165,7 +165,7 @@ export default async function CountriesPage() {
                   </Link>
                 </h3>
                 <Link
-                  href={`/countries/${country.slug}`}
+                  href={localizePath(`/countries/${country.slug}`, locale)}
                   className="text-xs px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 shrink-0 tabular-nums"
                 >
                   {formatMessage(tco.camCount, { count: country.webcamCount })} →
@@ -176,7 +176,7 @@ export default async function CountriesPage() {
                 {country.cities.map((city) => (
                   <Link
                     key={`${country.slug}-${city.slug}`}
-                    href={`/countries/${country.slug}/${city.slug}`}
+                    href={localizePath(`/countries/${country.slug}/${city.slug}`, locale)}
                     className="px-2.5 py-1 rounded-lg text-xs bg-white border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-500 dark:hover:text-blue-400 transition-colors"
                   >
                     {getCityLabel(locale, city.slug, city.name)}{" "}
@@ -196,7 +196,7 @@ export default async function CountriesPage() {
           {categories.map((cat) => (
             <Link
               key={cat.slug}
-              href={`/categories/${cat.slug}`}
+              href={localizePath(`/categories/${cat.slug}`, locale)}
               className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
             >
               {formatMessage(tw.categoryWebcams, {
