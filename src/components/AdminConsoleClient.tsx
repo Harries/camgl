@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -15,8 +15,10 @@ import {
   ExternalLink,
   ShieldCheck,
   LogOut,
+  Search,
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
+import { AdminCharts } from "./AdminCharts";
 import type {
   AdminAuditLog,
   AdminCandidate,
@@ -43,6 +45,14 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
   const [collapsed, setCollapsed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [reviewSearch, setReviewSearch] = useState("");
+  const [reviewSource, setReviewSource] = useState("all");
+  const [reviewPage, setReviewPage] = useState(1);
+  const [webcamSearch, setWebcamSearch] = useState("");
+  const [webcamStatus, setWebcamStatus] = useState("all");
+  const [webcamSource, setWebcamSource] = useState("all");
+  const [webcamPage, setWebcamPage] = useState(1);
+  const PAGE_SIZE = 10;
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     title: "",
@@ -125,6 +135,47 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
   const healthPct = data.webcams.length > 0 ? ((liveCount / data.webcams.length) * 100).toFixed(1) : "0.0";
   const openReports = data.reports.filter((r) => r.status === "OPEN").length;
   const quotaPct = Math.min(Math.round((data.youtubeQuotaUsed / 10000) * 100), 100);
+
+  const filteredCandidates = useMemo(() => {
+    const q = reviewSearch.trim().toLowerCase();
+    return data.candidates.filter((c) => {
+      if (reviewSource !== "all" && c.sourceType !== reviewSource) return false;
+      if (!q) return true;
+      return `${c.title} ${c.countryName} ${c.cityName} ${c.source} ${c.externalId}`
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [data.candidates, reviewSearch, reviewSource]);
+
+  const reviewTotalPages = Math.max(1, Math.ceil(filteredCandidates.length / PAGE_SIZE));
+  const safeReviewPage = Math.min(reviewPage, reviewTotalPages);
+  const pagedCandidates = filteredCandidates.slice(
+    (safeReviewPage - 1) * PAGE_SIZE,
+    safeReviewPage * PAGE_SIZE
+  );
+
+  const filteredWebcams = useMemo(() => {
+    const q = webcamSearch.trim().toLowerCase();
+    return data.webcams.filter((w) => {
+      if (webcamSource !== "all" && (w.stream?.sourceType ?? "youtube") !== webcamSource) {
+        return false;
+      }
+      if (webcamStatus === "LIVE" && w.stream?.status !== "LIVE") return false;
+      if (webcamStatus === "OFFLINE" && w.stream?.status === "LIVE") return false;
+      if (webcamStatus === "SUSPENDED" && w.reviewStatus !== "SUSPENDED") return false;
+      if (!q) return true;
+      return `${w.title} ${w.slug} ${w.city.name} ${w.country.name}`
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [data.webcams, webcamSearch, webcamStatus, webcamSource]);
+
+  const webcamTotalPages = Math.max(1, Math.ceil(filteredWebcams.length / PAGE_SIZE));
+  const safeWebcamPage = Math.min(webcamPage, webcamTotalPages);
+  const pagedWebcams = filteredWebcams.slice(
+    (safeWebcamPage - 1) * PAGE_SIZE,
+    safeWebcamPage * PAGE_SIZE
+  );
 
   const navItems = [
     {
@@ -328,6 +379,8 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                 </div>
               </div>
 
+              <AdminCharts webcams={data.webcams} candidates={data.candidates} />
+
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
                 <div className="lg:col-span-7 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm">
                   <div className="flex items-center justify-between">
@@ -423,169 +476,324 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                 </div>
               </div>
 
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                <div className="relative flex-1 min-w-[220px]">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={reviewSearch}
+                    onChange={(e) => {
+                      setReviewSearch(e.target.value);
+                      setReviewPage(1);
+                    }}
+                    placeholder="Search candidate title, city, country, or source..."
+                    className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {(["all", "youtube", "official_embed", "hls", "snapshot"] as const).map((st) => (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => {
+                        setReviewSource(st);
+                        setReviewPage(1);
+                      }}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                        reviewSource === st
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                      }`}
+                    >
+                      {st === "all" ? "All Types" : st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
-                {data.candidates.length === 0 ? (
+                {filteredCandidates.length === 0 ? (
                   <div className="p-10 text-center text-xs text-slate-500 dark:text-slate-400">
-                    All candidates reviewed. Click &quot;Sync All Sources&quot; to fetch new feeds.
+                    {data.candidates.length === 0
+                      ? 'All candidates reviewed. Click "Sync All Sources" to fetch new feeds.'
+                      : "No candidates match your search filter."}
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 dark:bg-slate-800/70 dark:border-slate-800 dark:text-slate-400">
-                        <tr>
-                          <th className="px-3 py-2.5 font-medium">Candidate</th>
-                          <th className="px-3 py-2.5 font-medium">Type</th>
-                          <th className="px-3 py-2.5 font-medium">Stability</th>
-                          <th className="px-3 py-2.5 font-medium">Location</th>
-                          <th className="px-3 py-2.5 font-medium">Source &amp; License</th>
-                          <th className="px-3 py-2.5 font-medium text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {data.candidates.map((c) => {
-                          const score = c.stabilityScore ?? 0;
-                          const scoreClass =
-                            score >= 80
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900"
-                              : score >= 50
-                                ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900"
-                                : "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900";
-                          return (
-                            <tr key={c.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                              <td className="px-3 py-3">
-                                <div className="font-medium text-slate-900 dark:text-white">{c.title}</div>
-                                <a
-                                  href={withOutboundSource(c.sourceUrl)}
-                                  target="_blank"
-                                  rel="noopener"
-                                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                                >
-                                  Preview Source ↗
-                                </a>
-                              </td>
-                              <td className="px-3 py-3">
-                                <span className="inline-block px-2 py-0.5 rounded-md text-xs font-mono bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                  {c.sourceType}
-                                </span>
-                              </td>
-                              <td className="px-3 py-3">
-                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold border tabular-nums ${scoreClass}`}>
-                                  {score}/100
-                                </span>
-                              </td>
-                              <td className="px-3 py-3 text-slate-600 dark:text-slate-300">
-                                {c.cityName}, {c.countryName} · {c.categorySlug}
-                              </td>
-                              <td className="px-3 py-3">
-                                <div className="text-slate-900 dark:text-slate-100">{c.source}</div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{c.licenseNote}</div>
-                              </td>
-                              <td className="px-3 py-3 text-right whitespace-nowrap space-x-1.5">
-                                <button
-                                  disabled={busy}
-                                  onClick={() => runAction({ action: "approve", id: c.id })}
-                                  className="px-2.5 py-1 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
-                                >
-                                  Approve &amp; Go Live
-                                </button>
-                                <button
-                                  disabled={busy}
-                                  onClick={() => runAction({ action: "reject", id: c.id })}
-                                  className="px-2.5 py-1 rounded-md border border-slate-200 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-red-950/50 dark:hover:text-red-400"
-                                >
-                                  Reject
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 dark:bg-slate-800/70 dark:border-slate-800 dark:text-slate-400">
+                          <tr>
+                            <th className="px-3 py-2.5 font-medium">Candidate</th>
+                            <th className="px-3 py-2.5 font-medium">Type</th>
+                            <th className="px-3 py-2.5 font-medium">Stability</th>
+                            <th className="px-3 py-2.5 font-medium">Location</th>
+                            <th className="px-3 py-2.5 font-medium">Source &amp; License</th>
+                            <th className="px-3 py-2.5 font-medium text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {pagedCandidates.map((c) => {
+                            const score = c.stabilityScore ?? 0;
+                            const scoreClass =
+                              score >= 80
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900"
+                                : score >= 50
+                                  ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900"
+                                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900";
+                            return (
+                              <tr key={c.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                                <td className="px-3 py-3">
+                                  <div className="font-medium text-slate-900 dark:text-white">{c.title}</div>
+                                  <a
+                                    href={withOutboundSource(c.sourceUrl)}
+                                    target="_blank"
+                                    rel="noopener"
+                                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                  >
+                                    Preview Source ↗
+                                  </a>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <span className="inline-block px-2 py-0.5 rounded-md text-xs font-mono bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                    {c.sourceType}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold border tabular-nums ${scoreClass}`}>
+                                    {score}/100
+                                  </span>
+                                </td>
+                                <td className="px-3 py-3 text-slate-600 dark:text-slate-300">
+                                  {c.cityName}, {c.countryName} · {c.categorySlug}
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-slate-900 dark:text-slate-100">{c.source}</div>
+                                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{c.licenseNote}</div>
+                                </td>
+                                <td className="px-3 py-3 text-right whitespace-nowrap space-x-1.5">
+                                  <button
+                                    disabled={busy}
+                                    onClick={() => runAction({ action: "approve", id: c.id })}
+                                    className="px-2.5 py-1 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
+                                  >
+                                    Approve &amp; Go Live
+                                  </button>
+                                  <button
+                                    disabled={busy}
+                                    onClick={() => runAction({ action: "reject", id: c.id })}
+                                    className="px-2.5 py-1 rounded-md border border-slate-200 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-red-950/50 dark:hover:text-red-400"
+                                  >
+                                    Reject
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900">
+                      <span>
+                        Showing {(safeReviewPage - 1) * PAGE_SIZE + 1}–{Math.min(safeReviewPage * PAGE_SIZE, filteredCandidates.length)} of {filteredCandidates.length}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          disabled={safeReviewPage <= 1}
+                          onClick={() => setReviewPage((p) => Math.max(1, p - 1))}
+                          className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                        >
+                          Prev
+                        </button>
+                        <span className="px-2 tabular-nums">
+                          {safeReviewPage} / {reviewTotalPages}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={safeReviewPage >= reviewTotalPages}
+                          onClick={() => setReviewPage((p) => Math.min(reviewTotalPages, p + 1))}
+                          className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
           )}
 
           {tab === "webcams" && (
-            <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 dark:bg-slate-800/70 dark:border-slate-800 dark:text-slate-400">
-                    <tr>
-                      <th className="px-4 py-3 font-medium">Title / Slug</th>
-                      <th className="px-4 py-3 font-medium">Source Type</th>
-                      <th className="px-4 py-3 font-medium">Location</th>
-                      <th className="px-4 py-3 font-medium">Review</th>
-                      <th className="px-4 py-3 font-medium">Stream</th>
-                      <th className="px-4 py-3 font-medium text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {data.webcams.map((w) => {
-                      const rev = w.reviewStatus ?? "APPROVED";
-                      const sourceMeta = getSourceTypeMeta(w.stream?.sourceType);
-                      return (
-                        <tr key={w.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                          <td className="px-4 py-3">
-                            <div className="font-medium text-slate-900 dark:text-white">{w.title}</div>
-                            <div className="font-mono text-slate-400 dark:text-slate-500">/webcams/{w.slug}</div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-0.5 rounded-md text-xs font-medium border ${sourceMeta.badgeClass}`}>
-                              {sourceMeta.label}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                            {w.country.flag} {w.city.name}, {w.country.name}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                rev === "APPROVED"
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900"
-                                  : "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900"
-                              }`}
-                            >
-                              {rev}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900">
-                              {w.stream?.status ?? "UNKNOWN"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
-                            <button
-                              type="button"
-                              onClick={() => openEditModal(w)}
-                              className="px-2.5 py-1 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-900 dark:text-blue-400 dark:hover:bg-blue-950/50"
-                            >
-                              Edit
-                            </button>
-                            <Link
-                              href={`/webcams/${w.slug}`}
-                              className="px-2.5 py-1 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                            >
-                              View
-                            </Link>
-                            <button
-                              disabled={busy}
-                              onClick={() => runAction({ action: "suspend", slug: w.slug })}
-                              className={`px-2.5 py-1 rounded-md ${
-                                rev === "APPROVED"
-                                  ? "border border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-900 dark:text-amber-400 dark:hover:bg-amber-950/50"
-                                  : "bg-blue-600 text-white hover:bg-blue-700"
-                              }`}
-                            >
-                              {rev === "APPROVED" ? "Suspend" : "Restore"}
-                            </button>
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                <div className="relative flex-1 min-w-[220px]">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={webcamSearch}
+                    onChange={(e) => {
+                      setWebcamSearch(e.target.value);
+                      setWebcamPage(1);
+                    }}
+                    placeholder="Search title, slug, city, or country..."
+                    className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <select
+                    value={webcamStatus}
+                    onChange={(e) => {
+                      setWebcamStatus(e.target.value);
+                      setWebcamPage(1);
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="LIVE">LIVE</option>
+                    <option value="OFFLINE">OFFLINE</option>
+                    <option value="SUSPENDED">SUSPENDED</option>
+                  </select>
+                  <select
+                    value={webcamSource}
+                    onChange={(e) => {
+                      setWebcamSource(e.target.value);
+                      setWebcamPage(1);
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    <option value="all">All Source Types</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="official_embed">Official Embed</option>
+                    <option value="hls">HLS .m3u8</option>
+                    <option value="snapshot">Snapshot</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 dark:bg-slate-800/70 dark:border-slate-800 dark:text-slate-400">
+                      <tr>
+                        <th className="px-4 py-3 font-medium">Title / Slug</th>
+                        <th className="px-4 py-3 font-medium">Source Type</th>
+                        <th className="px-4 py-3 font-medium">Location</th>
+                        <th className="px-4 py-3 font-medium">Review</th>
+                        <th className="px-4 py-3 font-medium">Stream</th>
+                        <th className="px-4 py-3 font-medium text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {pagedWebcams.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-10 text-center text-xs text-slate-500 dark:text-slate-400">
+                            No webcams match your search filter.
                           </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      ) : (
+                        pagedWebcams.map((w) => {
+                          const rev = w.reviewStatus ?? "APPROVED";
+                          const sourceMeta = getSourceTypeMeta(w.stream?.sourceType);
+                          const isStreamLive = w.stream?.status === "LIVE";
+                          return (
+                            <tr key={w.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                              <td className="px-4 py-3">
+                                <div className="font-medium text-slate-900 dark:text-white">{w.title}</div>
+                                <div className="font-mono text-xs text-slate-400 dark:text-slate-500">/webcams/{w.slug}</div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`px-2 py-0.5 rounded-md text-xs font-medium border ${sourceMeta.badgeClass}`}>
+                                  {sourceMeta.label}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                                {w.country.flag} {w.city.name}, {w.country.name}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                    rev === "APPROVED"
+                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900"
+                                      : "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900"
+                                  }`}
+                                >
+                                  {rev}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
+                                    isStreamLive
+                                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900"
+                                      : "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900"
+                                  }`}
+                                >
+                                  {w.stream?.status ?? "UNKNOWN"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => openEditModal(w)}
+                                  className="px-2.5 py-1 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-900 dark:text-blue-400 dark:hover:bg-blue-950/50"
+                                >
+                                  Edit
+                                </button>
+                                <Link
+                                  href={`/webcams/${w.slug}`}
+                                  className="px-2.5 py-1 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                >
+                                  View
+                                </Link>
+                                <button
+                                  disabled={busy}
+                                  onClick={() => runAction({ action: "suspend", slug: w.slug })}
+                                  className={`px-2.5 py-1 rounded-md ${
+                                    rev === "APPROVED"
+                                      ? "border border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-900 dark:text-amber-400 dark:hover:bg-amber-950/50"
+                                      : "bg-blue-600 text-white hover:bg-blue-700"
+                                  }`}
+                                >
+                                  {rev === "APPROVED" ? "Suspend" : "Restore"}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                {filteredWebcams.length > 0 && (
+                  <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900">
+                    <span>
+                      Showing {(safeWebcamPage - 1) * PAGE_SIZE + 1}–{Math.min(safeWebcamPage * PAGE_SIZE, filteredWebcams.length)} of {filteredWebcams.length}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={safeWebcamPage <= 1}
+                        onClick={() => setWebcamPage((p) => Math.max(1, p - 1))}
+                        className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                      >
+                        Prev
+                      </button>
+                      <span className="px-2 tabular-nums">
+                        {safeWebcamPage} / {webcamTotalPages}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={safeWebcamPage >= webcamTotalPages}
+                        onClick={() => setWebcamPage((p) => Math.min(webcamTotalPages, p + 1))}
+                        className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
