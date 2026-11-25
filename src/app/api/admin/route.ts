@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import {
   approveCandidate,
+  approveCandidatesBatch,
   getAdminDashboardData,
   rejectCandidate,
+  rejectCandidatesBatch,
   reprobeCandidates,
   runHealthCheckBatch,
   syncAllSourceCandidates,
@@ -34,6 +36,22 @@ export async function POST(request: Request) {
       case "reject": {
         const ok = await rejectCandidate(String(body.id));
         if (!ok) return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "approveBatch": {
+        const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
+        if (ids.length === 0) {
+          return NextResponse.json({ error: "No candidates selected" }, { status: 400 });
+        }
+        await approveCandidatesBatch(ids);
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "rejectBatch": {
+        const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
+        if (ids.length === 0) {
+          return NextResponse.json({ error: "No candidates selected" }, { status: 400 });
+        }
+        await rejectCandidatesBatch(ids);
         return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }
       case "suspend": {

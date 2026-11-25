@@ -812,6 +812,43 @@ export async function rejectCandidate(id: string) {
   return true;
 }
 
+export async function approveCandidatesBatch(ids: string[]) {
+  let approved = 0;
+  for (const id of ids) {
+    const res = await approveCandidate(id);
+    if (res) approved += 1;
+  }
+  return { approved };
+}
+
+export async function rejectCandidatesBatch(ids: string[]) {
+  if (ids.length === 0) return { rejected: 0 };
+  if (isDbConfigured()) {
+    try {
+      const res = await prisma.candidate.updateMany({
+        where: { id: { in: ids }, reviewStatus: "PENDING" },
+        data: { reviewStatus: "REJECTED" },
+      });
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin@livecam",
+          action: "REJECTED_BATCH",
+          targetType: "candidate",
+          targetId: `${res.count} candidates`,
+        },
+      });
+      return { rejected: res.count };
+    } catch {
+      // Fallback
+    }
+  }
+  let rejected = 0;
+  for (const id of ids) {
+    if (await rejectCandidate(id)) rejected += 1;
+  }
+  return { rejected };
+}
+
 export async function toggleWebcamSuspend(slug: string) {
   if (isDbConfigured()) {
     try {

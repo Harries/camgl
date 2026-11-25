@@ -48,6 +48,7 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
   const [reviewSearch, setReviewSearch] = useState("");
   const [reviewSource, setReviewSource] = useState("all");
   const [reviewPage, setReviewPage] = useState(1);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
   const [webcamSearch, setWebcamSearch] = useState("");
   const [webcamStatus, setWebcamStatus] = useState("all");
   const [webcamSource, setWebcamSource] = useState("all");
@@ -153,6 +154,41 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
     (safeReviewPage - 1) * PAGE_SIZE,
     safeReviewPage * PAGE_SIZE
   );
+  const pageCandidateIds = pagedCandidates.map((c) => c.id);
+  const allPageSelected =
+    pageCandidateIds.length > 0 &&
+    pageCandidateIds.every((id) => selectedCandidateIds.includes(id));
+
+  function toggleSelectCandidate(id: string) {
+    setSelectedCandidateIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  }
+
+  function toggleSelectAllOnPage() {
+    if (allPageSelected) {
+      setSelectedCandidateIds((prev) =>
+        prev.filter((id) => !pageCandidateIds.includes(id))
+      );
+    } else {
+      setSelectedCandidateIds((prev) =>
+        Array.from(new Set([...prev, ...pageCandidateIds]))
+      );
+    }
+  }
+
+  function selectHighScoreCandidates() {
+    const highIds = filteredCandidates
+      .filter((c) => (c.stabilityScore ?? 0) >= 80)
+      .map((c) => c.id);
+    setSelectedCandidateIds(highIds);
+  }
+
+  async function runBatchReview(action: "approveBatch" | "rejectBatch") {
+    if (selectedCandidateIds.length === 0) return;
+    const ok = await runAction({ action, ids: selectedCandidateIds });
+    if (ok) setSelectedCandidateIds([]);
+  }
 
   const filteredWebcams = useMemo(() => {
     const q = webcamSearch.trim().toLowerCase();
@@ -450,13 +486,42 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
           {tab === "review" && (
             <div className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
-                <div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                    Multi-Source Discovery &amp; Stability Ranking
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    Sorted by live stability score (Windy API v3, YouTube Data API, USGS, NPS, Roundshot, SkylineWebcams).
-                  </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    disabled={busy || filteredCandidates.length === 0}
+                    onClick={selectHighScoreCandidates}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-400 disabled:opacity-50"
+                  >
+                    Select Stable (≥80)
+                  </button>
+                  {selectedCandidateIds.length > 0 && (
+                    <>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => runBatchReview("approveBatch")}
+                        className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 shadow-sm"
+                      >
+                        Approve Selected ({selectedCandidateIds.length})
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => runBatchReview("rejectBatch")}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/50 disabled:opacity-50"
+                      >
+                        Reject Selected ({selectedCandidateIds.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCandidateIds([])}
+                        className="px-2 py-1.5 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                      >
+                        Clear
+                      </button>
+                    </>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -524,6 +589,15 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                       <table className="w-full text-left text-sm">
                         <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 dark:bg-slate-800/70 dark:border-slate-800 dark:text-slate-400">
                           <tr>
+                            <th className="pl-4 pr-2 py-2.5 w-8">
+                              <input
+                                type="checkbox"
+                                checked={allPageSelected}
+                                onChange={toggleSelectAllOnPage}
+                                aria-label="Select all on page"
+                                className="rounded accent-blue-600 cursor-pointer"
+                              />
+                            </th>
                             <th className="px-3 py-2.5 font-medium">Candidate</th>
                             <th className="px-3 py-2.5 font-medium">Type</th>
                             <th className="px-3 py-2.5 font-medium">Stability</th>
@@ -535,6 +609,7 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                           {pagedCandidates.map((c) => {
                             const score = c.stabilityScore ?? 0;
+                            const checked = selectedCandidateIds.includes(c.id);
                             const scoreClass =
                               score >= 80
                                 ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900"
@@ -543,6 +618,15 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                                   : "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900";
                             return (
                               <tr key={c.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                                <td className="pl-4 pr-2 py-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => toggleSelectCandidate(c.id)}
+                                    aria-label={`Select ${c.title}`}
+                                    className="rounded accent-blue-600 cursor-pointer"
+                                  />
+                                </td>
                                 <td className="px-3 py-3">
                                   <div className="font-medium text-slate-900 dark:text-white">{c.title}</div>
                                   <a
