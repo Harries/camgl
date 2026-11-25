@@ -7,6 +7,7 @@ import {
   rejectCandidate,
   rejectCandidatesBatch,
   reprobeCandidates,
+  resolveContactMessage,
   runHealthCheckBatch,
   syncAllSourceCandidates,
   toggleWebcamSuspend,
@@ -69,6 +70,11 @@ export async function POST(request: Request) {
       }
       case "reprobe": {
         await reprobeCandidates();
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "resolveContact": {
+        const ok = await resolveContactMessage(String(body.id));
+        if (!ok) return NextResponse.json({ error: "Message not found" }, { status: 404 });
         return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }
       case "updateWebcam": {

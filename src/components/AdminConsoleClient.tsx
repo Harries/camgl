@@ -15,6 +15,7 @@ import {
   ExternalLink,
   LogOut,
   Search,
+  Mail,
 } from "lucide-react";
 import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -22,6 +23,7 @@ import { AdminCharts } from "./AdminCharts";
 import type {
   AdminAuditLog,
   AdminCandidate,
+  AdminContactMessage,
   AdminDiscoveryJob,
   AdminReport,
   PublicWebcam,
@@ -34,6 +36,7 @@ interface AdminData {
   candidates: AdminCandidate[];
   jobs: AdminDiscoveryJob[];
   reports: AdminReport[];
+  contactMessages?: AdminContactMessage[];
   auditLogs: AdminAuditLog[];
   youtubeQuotaUsed: number;
 }
@@ -41,7 +44,7 @@ interface AdminData {
 export function AdminConsoleClient({ initialData }: { initialData: AdminData }) {
   const router = useRouter();
   const [data, setData] = useState<AdminData>(initialData);
-  const [tab, setTab] = useState<"dashboard" | "review" | "webcams" | "jobs" | "reports">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "review" | "webcams" | "jobs" | "messages" | "reports">("dashboard");
   const [collapsed, setCollapsed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -237,6 +240,12 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
       label: "Discovery Jobs",
       badge: data.jobs.length,
       icon: Radar,
+    },
+    {
+      key: "messages" as const,
+      label: "Contact Messages",
+      badge: (data.contactMessages ?? []).filter((m) => m.status === "OPEN").length,
+      icon: Mail,
     },
     {
       key: "reports" as const,
@@ -910,6 +919,69 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {tab === "messages" && (
+            <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
+              <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  User Contact Messages ({(data.contactMessages ?? []).length})
+                </div>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  Submitted via /contact
+                </span>
+              </div>
+              {(data.contactMessages ?? []).length === 0 ? (
+                <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                  No contact messages yet.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {(data.contactMessages ?? []).map((m) => (
+                    <div key={m.id} className="p-5 space-y-2">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                            {m.subject}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            From <span className="font-medium text-slate-700 dark:text-slate-200">{m.name}</span> ·{" "}
+                            <a href={`mailto:${m.email}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                              {m.email}
+                            </a>{" "}
+                            · {new Date(m.createdAt).toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                              m.status === "RESOLVED"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900"
+                                : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900"
+                            }`}
+                          >
+                            {m.status}
+                          </span>
+                          {m.status === "OPEN" && (
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => runAction({ action: "resolveContact", id: m.id })}
+                              className="px-3 py-1 rounded-lg text-xs font-medium bg-slate-900 text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              Mark Resolved
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3.5 border border-slate-100 dark:border-slate-800">
+                        {m.message}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

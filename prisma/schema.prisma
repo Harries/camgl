@@ -228,6 +228,18 @@ model Report {
   @@map("reports")
 }
 
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    String   @default("OPEN")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("contact_messages")
+}
+
 model AuditLog {
   id         String   @id @default(cuid())
   actor      String

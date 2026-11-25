@@ -10,6 +10,7 @@ import {
 import type {
   AdminAuditLog,
   AdminCandidate,
+  AdminContactMessage,
   AdminDiscoveryJob,
   AdminReport,
   PublicWebcam,
@@ -24,6 +25,7 @@ const memStore = {
   candidates: structuredClone(SEED_CANDIDATES) as AdminCandidate[],
   jobs: structuredClone(SEED_JOBS) as AdminDiscoveryJob[],
   reports: structuredClone(SEED_REPORTS) as AdminReport[],
+  contactMessages: [] as AdminContactMessage[],
   auditLogs: structuredClone(SEED_AUDIT_LOGS) as AdminAuditLog[],
   youtubeQuotaUsed: 0,
 };
@@ -547,10 +549,83 @@ export async function createReport(input: {
   return rep;
 }
 
+export async function createContactMessage(input: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}) {
+  if (isDbConfigured()) {
+    try {
+      const [created] = await prisma.$transaction([
+        prisma.contactMessage.create({
+          data: {
+            name: input.name,
+            email: input.email,
+            subject: input.subject,
+            message: input.message,
+          },
+        }),
+        prisma.auditLog.create({
+          data: {
+            actor: "public-contact",
+            action: "CONTACT_CREATED",
+            targetType: "contact",
+            targetId: input.subject,
+            detail: input.email,
+          },
+        }),
+      ]);
+      return { id: created.id };
+    } catch {
+      // Fallback
+    }
+  }
+
+  const msg: AdminContactMessage = {
+    id: `msg-${Date.now()}`,
+    name: input.name,
+    email: input.email,
+    subject: input.subject,
+    message: input.message,
+    status: "OPEN",
+    createdAt: new Date().toISOString(),
+  };
+  memStore.contactMessages.unshift(msg);
+  return msg;
+}
+
+export async function resolveContactMessage(id: string) {
+  if (isDbConfigured()) {
+    try {
+      const updated = await prisma.contactMessage.update({
+        where: { id },
+        data: { status: "RESOLVED" },
+      });
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin@livecam",
+          action: "CONTACT_RESOLVED",
+          targetType: "contact",
+          targetId: updated.subject,
+        },
+      });
+      return true;
+    } catch {
+      // Fallback
+    }
+  }
+
+  const msg = memStore.contactMessages.find((m) => m.id === id);
+  if (!msg) return false;
+  msg.status = "RESOLVED";
+  return true;
+}
+
 export async function getAdminDashboardData() {
   if (isDbConfigured()) {
     try {
-      const [webcams, candidates, jobs, reports, auditLogs] = await Promise.all([
+      const [webcams, candidates, jobs, reports, contactMessages, auditLogs] = await Promise.all([
         prisma.webcam.findMany({
           include: {
             city: { include: { country: true } },
@@ -573,6 +648,7 @@ export async function getAdminDashboardData() {
           include: { webcam: { select: { title: true } } },
           orderBy: { createdAt: "desc" },
         }),
+        prisma.contactMessage.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
         prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 30 }),
       ]);
 
@@ -620,6 +696,15 @@ export async function getAdminDashboardData() {
           status: (r.status === "RESOLVED" ? "RESOLVED" : "OPEN") as AdminReport["status"],
           createdAt: r.createdAt.toISOString(),
         })),
+        contactMessages: contactMessages.map((m) => ({
+          id: m.id,
+          name: m.name,
+          email: m.email,
+          subject: m.subject,
+          message: m.message,
+          status: (m.status === "RESOLVED" ? "RESOLVED" : "OPEN") as AdminContactMessage["status"],
+          createdAt: m.createdAt.toISOString(),
+        })),
         auditLogs: auditLogs.map((l) => ({
           id: l.id,
           actor: l.actor,
@@ -644,6 +729,7 @@ export async function getAdminDashboardData() {
     candidates: memStore.candidates,
     jobs: memStore.jobs,
     reports: memStore.reports,
+    contactMessages: memStore.contactMessages,
     auditLogs: memStore.auditLogs,
     youtubeQuotaUsed: memStore.youtubeQuotaUsed,
   };

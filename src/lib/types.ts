@@ -86,6 +86,16 @@ export interface AdminReport {
   createdAt: string;
 }
 
+export interface AdminContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: "OPEN" | "RESOLVED";
+  createdAt: string;
+}
+
 export interface AdminAuditLog {
   id: string;
   actor: string;

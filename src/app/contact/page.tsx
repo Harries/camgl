@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail, ShieldCheck, Video, Wrench } from "lucide-react";
+import { ContactFormClient } from "@/components/ContactFormClient";
 
 export const metadata: Metadata = {
   title: "Contact Us | LiveCam Global",
@@ -37,11 +38,11 @@ export default function ContactPage() {
           </p>
           <div className="pt-1 flex flex-col gap-2 text-xs">
             <a
-              href="mailto:partners@camgl.com"
+              href="mailto:support@camgl.com"
               className="inline-flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400 hover:underline"
             >
               <Mail className="w-3.5 h-3.5" />
-              partners@camgl.com
+              support@camgl.com
             </a>
             <Link
               href="/submit"
@@ -64,11 +65,11 @@ export default function ContactPage() {
           </p>
           <div className="pt-1 flex flex-col gap-2 text-xs">
             <a
-              href="mailto:privacy@camgl.com"
+              href="mailto:support@camgl.com"
               className="inline-flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400 hover:underline"
             >
               <Mail className="w-3.5 h-3.5" />
-              privacy@camgl.com
+              support@camgl.com
             </a>
             <Link
               href="/privacy"
@@ -91,11 +92,11 @@ export default function ContactPage() {
           </p>
           <div className="pt-1 flex flex-col gap-2 text-xs">
             <a
-              href="mailto:hello@camgl.com"
+              href="mailto:support@camgl.com"
               className="inline-flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400 hover:underline"
             >
               <Mail className="w-3.5 h-3.5" />
-              hello@camgl.com
+              support@camgl.com
             </a>
             <Link
               href="/countries"
@@ -106,6 +107,8 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
+
+      <ContactFormClient />
 
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-3 shadow-sm text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">
