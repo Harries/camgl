@@ -1475,6 +1475,8 @@ export function getMessages(locale: Locale): Messages {
   return DICTIONARIES[locale] ?? en;
 }
 
+export { getCountryLabel, getCityLabel } from "./geo-i18n";
+
 export function getCategoryLabel(
   locale: Locale,
   slug: string,

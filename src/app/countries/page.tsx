@@ -4,7 +4,7 @@ import { listApprovedWebcams, listCategories } from "@/lib/repository";
 import { WorldExplorerClient } from "@/components/WorldExplorerClient";
 import { absoluteUrl } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n-server";
-import { formatMessage, getCategoryLabel, getMessages } from "@/lib/i18n";
+import { formatMessage, getCategoryLabel, getCityLabel, getCountryLabel, getMessages } from "@/lib/i18n";
 
 export const revalidate = 600;
 
@@ -158,7 +158,7 @@ export default async function CountriesPage() {
                     className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-2"
                   >
                     <span>{country.flag}</span>
-                    <span>{country.name}</span>
+                    <span>{getCountryLabel(locale, country.slug, country.name)}</span>
                   </Link>
                 </h3>
                 <Link
@@ -176,7 +176,8 @@ export default async function CountriesPage() {
                     href={`/countries/${country.slug}/${city.slug}`}
                     className="px-2.5 py-1 rounded-lg text-xs bg-white border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-500 dark:hover:text-blue-400 transition-colors"
                   >
-                    {city.name} <span className="text-slate-400 dark:text-slate-500">({city.count})</span>
+                    {getCityLabel(locale, city.slug, city.name)}{" "}
+                    <span className="text-slate-400 dark:text-slate-500">({city.count})</span>
                   </Link>
                 ))}
               </div>

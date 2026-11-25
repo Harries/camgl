@@ -3,7 +3,7 @@ import { listApprovedWebcamsPage, listCategories, listCountriesSummary } from "@
 import { InfiniteWebcamGrid } from "@/components/InfiniteWebcamGrid";
 import { getWebcamPreviewUrl } from "@/lib/source-badge";
 import { getServerLocale } from "@/lib/i18n-server";
-import { formatMessage, getCategoryLabel, getMessages } from "@/lib/i18n";
+import { formatMessage, getCategoryLabel, getCityLabel, getCountryLabel, getMessages } from "@/lib/i18n";
 
 export const revalidate = 300;
 
@@ -62,7 +62,9 @@ export default async function HomePage({
               <div className="relative z-10 flex items-end justify-between gap-4">
                 <div>
                   <div className="text-xs text-slate-300">
-                    {featured.country.flag} {featured.country.name} · {featured.city.name}
+                    {featured.country.flag}{" "}
+                    {getCountryLabel(locale, featured.country.slug, featured.country.name, featured.country.isoCode)} ·{" "}
+                    {getCityLabel(locale, featured.city.slug, featured.city.name)}
                   </div>
                   <h1 className="text-xl sm:text-2xl font-bold mt-1">{featured.title}</h1>
                 </div>
@@ -179,7 +181,7 @@ export default async function HomePage({
               className="px-3.5 py-2 rounded-lg text-sm border border-slate-200 bg-slate-50 text-slate-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:border-blue-500 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5"
             >
               <span>{ct.flag}</span>
-              <span className="font-medium">{ct.name}</span>
+              <span className="font-medium">{getCountryLabel(locale, ct.slug, ct.name)}</span>
               <span className="text-slate-400 dark:text-slate-500">({ct.webcamCount})</span>
             </Link>
           ))}

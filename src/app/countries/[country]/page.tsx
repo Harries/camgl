@@ -5,6 +5,8 @@ import { listApprovedWebcams } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { absoluteUrl } from "@/lib/seo";
+import { getServerLocale } from "@/lib/i18n-server";
+import { formatMessage, getCityLabel, getCountryLabel, getMessages } from "@/lib/i18n";
 
 export const revalidate = 600;
 
@@ -39,10 +41,15 @@ export default async function CountryDetailPage({
   params: Promise<{ country: string }>;
 }) {
   const { country } = await params;
-  const webcams = await listApprovedWebcams({ country });
+  const [webcams, locale] = await Promise.all([
+    listApprovedWebcams({ country }),
+    getServerLocale(),
+  ]);
   if (webcams.length === 0) notFound();
 
+  const msgs = getMessages(locale);
   const countryInfo = webcams[0].country;
+  const countryLabel = getCountryLabel(locale, countryInfo.slug, countryInfo.name, countryInfo.isoCode);
   const cityMap = new Map<
     string,
     { name: string; slug: string; localTime: string; count: number }
@@ -75,22 +82,24 @@ export default async function CountryDetailPage({
       />
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-sm space-y-3">
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <Link href="/" className="hover:underline">Home</Link>
+          <Link href="/" className="hover:underline">{msgs.webcam.home}</Link>
           <span>/</span>
-          <Link href="/countries" className="hover:underline">Countries</Link>
+          <Link href="/countries" className="hover:underline">{msgs.home.countries}</Link>
           <span>/</span>
-          <span className="text-slate-900 dark:text-white font-medium">{countryInfo.name}</span>
+          <span className="text-slate-900 dark:text-white font-medium">{countryLabel}</span>
         </div>
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-          {countryInfo.flag} {countryInfo.name} Live Webcams
+          {countryInfo.flag} {formatMessage(msgs.webcam.allCountryCams, { country: countryLabel })}
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Explore {webcams.length} verified live streams across {cities.length} {cities.length === 1 ? "city" : "cities"} in {countryInfo.name}.
+          {formatMessage(msgs.home.showingWebcams, { count: webcams.length })}
         </p>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Cities in {countryInfo.name}</h2>
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+          {formatMessage(msgs.countries.citiesIn, { country: countryLabel })}
+        </h2>
         <div className="flex flex-wrap gap-2.5">
           {cities.map((c) => (
             <Link
@@ -98,7 +107,9 @@ export default async function CountryDetailPage({
               href={`/countries/${country}/${c.slug}`}
               className="px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-700 hover:bg-white hover:border-blue-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:border-blue-500 transition-all flex items-center gap-2"
             >
-              <span className="font-medium text-slate-900 dark:text-white">{c.name}</span>
+              <span className="font-medium text-slate-900 dark:text-white">
+                {getCityLabel(locale, c.slug, c.name)}
+              </span>
               <span className="text-slate-400 dark:text-slate-500 tabular-nums">{c.localTime}</span>
               <span className="px-1.5 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-400">
                 {c.count}

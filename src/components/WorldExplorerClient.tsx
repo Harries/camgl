@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { PublicWebcam } from "@/lib/types";
 import { RealMap } from "./RealMap";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
-import { formatMessage, getCategoryLabel } from "@/lib/i18n";
+import { formatMessage, getCategoryLabel, getCityLabel, getCountryLabel } from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
 import { WebcamThumbnail } from "./WebcamThumbnail";
 
@@ -163,7 +163,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
                   onClick={() => setSelectedCity(null)}
                   className="hover:underline text-slate-700 dark:text-slate-300 font-medium capitalize"
                 >
-                  {selectedCountry.replace(/-/g, " ")}
+                  {getCountryLabel(locale, selectedCountry, selectedCountry.replace(/-/g, " "))}
                 </button>
               </>
             )}
@@ -171,7 +171,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
               <>
                 <span>/</span>
                 <span className="text-slate-900 dark:text-white font-semibold capitalize">
-                  {selectedCity.replace(/-/g, " ")}
+                  {getCityLabel(locale, selectedCity, selectedCity.replace(/-/g, " "))}
                 </span>
               </>
             )}
@@ -228,7 +228,9 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
           <div className="space-y-1.5 min-w-0 flex-1">
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span>
-                {activePin.country.flag} {activePin.country.name} · {activePin.city.name}
+                {activePin.country.flag}{" "}
+                {getCountryLabel(locale, activePin.country.slug, activePin.country.name, activePin.country.isoCode)} ·{" "}
+                {getCityLabel(locale, activePin.city.slug, activePin.city.name)}
               </span>
               <span className="px-2 py-0.5 rounded-full bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400 font-semibold">
                 {activePin.stream?.status ?? "LIVE"}
@@ -280,7 +282,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
                 }`}
               >
                 <span>{ct.flag}</span>
-                <span className="font-medium">{ct.name}</span>
+                <span className="font-medium">{getCountryLabel(locale, ct.slug, ct.name)}</span>
                 <span className={active ? "text-blue-100" : "text-slate-400 dark:text-slate-500"}>
                   ({ct.count})
                 </span>
@@ -295,7 +297,9 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
             {selectedCountry
-              ? formatMessage(tco.citiesIn, { country: selectedCountry.replace(/-/g, " ") })
+              ? formatMessage(tco.citiesIn, {
+                  country: getCountryLabel(locale, selectedCountry, selectedCountry.replace(/-/g, " ")),
+                })
               : tco.citiesWorldwide}
           </h2>
           {(selectedCountry || selectedCity || catFilter !== "all") && (
@@ -320,7 +324,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
                     : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-white hover:border-blue-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 dark:hover:border-blue-500"
                 }`}
               >
-                <span className="font-medium">{city.name}</span>
+                <span className="font-medium">{getCityLabel(locale, city.slug, city.name)}</span>
                 <span
                   className={`px-1.5 py-0.5 rounded-full text-[11px] ${
                     active ? "bg-white/20 text-white" : "bg-white border border-slate-200 text-slate-500 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-400"
@@ -365,7 +369,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
                   src={getWebcamPreviewUrl(cam.stream)}
                   alt={cam.title}
                   flag={cam.country.flag}
-                  subtitle={cam.city.name}
+                  subtitle={getCityLabel(locale, cam.city.slug, cam.city.name)}
                   className="transition-transform duration-500 group-hover:scale-105"
                 />
                 <span className="absolute top-3 left-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-600 text-white">
@@ -376,7 +380,9 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
               <div className="p-4 space-y-1">
                 <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
                   <span>
-                    {cam.country.flag} {cam.country.name} · {cam.city.name}
+                    {cam.country.flag}{" "}
+                    {getCountryLabel(locale, cam.country.slug, cam.country.name, cam.country.isoCode)} ·{" "}
+                    {getCityLabel(locale, cam.city.slug, cam.city.name)}
                   </span>
                   <span>{cam.weatherSummary}</span>
                 </div>

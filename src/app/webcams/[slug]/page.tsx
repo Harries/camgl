@@ -8,7 +8,7 @@ import { absoluteUrl, getYouTubeThumbnail, withOutboundSource } from "@/lib/seo"
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
 import { WebcamThumbnail } from "@/components/WebcamThumbnail";
 import { getServerLocale } from "@/lib/i18n-server";
-import { formatMessage, getCategoryLabel, getMessages } from "@/lib/i18n";
+import { formatMessage, getCategoryLabel, getCityLabel, getCountryLabel, getMessages } from "@/lib/i18n";
 
 export const revalidate = 300;
 
@@ -59,6 +59,8 @@ export default async function WebcamDetailPage({
   const [webcam, locale] = await Promise.all([getWebcamBySlug(slug), getServerLocale()]);
   if (!webcam) notFound();
   const tw = getMessages(locale).webcam;
+  const countryLabel = getCountryLabel(locale, webcam.country.slug, webcam.country.name, webcam.country.isoCode);
+  const cityLabel = getCityLabel(locale, webcam.city.slug, webcam.city.name);
 
   const { items: allWebcams } = await listApprovedWebcamsPage({ page: 1, pageSize: 12 });
   const related = allWebcams
@@ -88,8 +90,8 @@ export default async function WebcamDetailPage({
     {
       q: formatMessage(tw.faq1Q, { title: webcam.title }),
       a: formatMessage(tw.faq1A, {
-        city: webcam.city.name,
-        country: webcam.country.name,
+        city: cityLabel,
+        country: countryLabel,
         timezone: webcam.city.timezone,
         localTime,
         phase: isDaylight ? tw.daylight : tw.nighttime,
@@ -99,7 +101,7 @@ export default async function WebcamDetailPage({
       }),
     },
     {
-      q: formatMessage(tw.faq2Q, { city: webcam.city.name }),
+      q: formatMessage(tw.faq2Q, { city: cityLabel }),
       a: webcam.bestTime
         ? formatMessage(tw.faq2AWithBest, {
             bestTime: webcam.bestTime,
@@ -121,7 +123,7 @@ export default async function WebcamDetailPage({
       }),
     },
     {
-      q: formatMessage(tw.faq4Q, { city: webcam.city.name }),
+      q: formatMessage(tw.faq4Q, { city: cityLabel }),
       a: tw.faq4A,
     },
   ];
@@ -205,14 +207,14 @@ export default async function WebcamDetailPage({
           <Link href="/" className="hover:underline">{tw.home}</Link>
           <span>/</span>
           <Link href={`/countries/${webcam.country.slug}`} className="hover:underline">
-            {webcam.country.name}
+            {countryLabel}
           </Link>
           <span>/</span>
           <Link
             href={`/countries/${webcam.country.slug}/${webcam.city.slug}`}
             className="hover:underline"
           >
-            {webcam.city.name}
+            {cityLabel}
           </Link>
           <span>/</span>
           <span className="text-slate-900 dark:text-white font-medium">{webcam.title}</span>
@@ -230,7 +232,7 @@ export default async function WebcamDetailPage({
           </span>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          {webcam.country.flag} {webcam.city.name}, {webcam.country.name} ·{" "}
+          {webcam.country.flag} {cityLabel}, {countryLabel} ·{" "}
           {webcam.categories.map((c) => getCategoryLabel(locale, c.slug, c.name)).join(", ")}
         </p>
       </div>
@@ -284,8 +286,8 @@ export default async function WebcamDetailPage({
             </p>
             <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               {formatMessage(tw.positionedSummary, {
-                city: webcam.city.name,
-                country: webcam.country.name,
+                city: cityLabel,
+                country: countryLabel,
                 lat: latLabel,
                 lng: lngLabel,
                 timezone: webcam.city.timezone,
@@ -314,7 +316,7 @@ export default async function WebcamDetailPage({
                 href={`/countries/${webcam.country.slug}`}
                 className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               >
-                {webcam.country.flag} {formatMessage(tw.allCountryCams, { country: webcam.country.name })}
+                {webcam.country.flag} {formatMessage(tw.allCountryCams, { country: countryLabel })}
               </Link>
             </div>
           </section>
@@ -416,7 +418,8 @@ export default async function WebcamDetailPage({
                   <div className="min-w-0">
                     <div className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">{r.title}</div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {r.city.name}, {r.country.name}
+                      {getCityLabel(locale, r.city.slug, r.city.name)},{" "}
+                      {getCountryLabel(locale, r.country.slug, r.country.name, r.country.isoCode)}
                     </div>
                   </div>
                 </Link>

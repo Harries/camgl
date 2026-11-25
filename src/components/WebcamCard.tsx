@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { PublicWebcam } from "@/lib/types";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
-import { getCategoryLabel } from "@/lib/i18n";
+import { getCategoryLabel, getCityLabel, getCountryLabel } from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
 import { WebcamThumbnail } from "./WebcamThumbnail";
 
@@ -20,6 +20,13 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
     webcam.categories[0]?.slug ?? "live",
     webcam.categories[0]?.name ?? "Live"
   );
+  const countryLabel = getCountryLabel(
+    locale,
+    webcam.country.slug,
+    webcam.country.name,
+    webcam.country.isoCode
+  );
+  const cityLabel = getCityLabel(locale, webcam.city.slug, webcam.city.name);
   const isLive = webcam.stream?.status === "LIVE";
   const sourceMeta = getSourceTypeMeta(webcam.stream?.sourceType);
 
@@ -33,7 +40,7 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
           src={getWebcamPreviewUrl(webcam.stream)}
           alt={webcam.title}
           flag={webcam.country.flag}
-          subtitle={webcam.city.name}
+          subtitle={cityLabel}
           isDaylight={isDaylight}
           className="transition-transform duration-500 group-hover:scale-105"
         />
@@ -59,7 +66,7 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
       <div className="p-4 space-y-1.5 flex-1">
         <div className="flex items-center justify-between gap-2 text-sm text-slate-500 dark:text-slate-400">
           <span>
-            {webcam.country.flag} {webcam.country.name} · {webcam.city.name}
+            {webcam.country.flag} {countryLabel} · {cityLabel}
           </span>
           <span>{webcam.weatherSummary}</span>
         </div>
