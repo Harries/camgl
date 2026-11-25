@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getWebcamBySlug, listApprovedWebcams } from "@/lib/repository";
+import { getWebcamBySlug, listApprovedWebcamsPage } from "@/lib/repository";
 import { WebcamPlayer } from "@/components/WebcamPlayer";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { absoluteUrl, getYouTubeThumbnail, withOutboundSource } from "@/lib/seo";
@@ -57,7 +57,7 @@ export default async function WebcamDetailPage({
   const webcam = await getWebcamBySlug(slug);
   if (!webcam) notFound();
 
-  const allWebcams = await listApprovedWebcams();
+  const { items: allWebcams } = await listApprovedWebcamsPage({ page: 1, pageSize: 12 });
   const related = allWebcams
     .filter((w) => w.slug !== webcam.slug)
     .sort((a, b) => {

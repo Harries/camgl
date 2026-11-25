@@ -9,12 +9,14 @@ export function InfiniteWebcamGrid({
   total,
   initialHasMore,
   category,
+  q,
   pageSize = 12,
 }: {
   initialItems: PublicWebcam[];
   total: number;
   initialHasMore: boolean;
   category?: string;
+  q?: string;
   pageSize?: number;
 }) {
   const [items, setItems] = useState<PublicWebcam[]>(initialItems);
@@ -28,7 +30,7 @@ export function InfiniteWebcamGrid({
     setPage(1);
     setHasMore(initialHasMore);
     setLoading(false);
-  }, [initialItems, initialHasMore, category]);
+  }, [initialItems, initialHasMore, category, q]);
 
   const loadMore = useCallback(async () => {
     if (loading || !hasMore) return;
@@ -40,6 +42,7 @@ export function InfiniteWebcamGrid({
         pageSize: String(pageSize),
       });
       if (category) params.set("category", category);
+      if (q) params.set("q", q);
 
       const res = await fetch(`/api/v1/webcams?${params.toString()}`);
       if (!res.ok) return;
@@ -61,7 +64,7 @@ export function InfiniteWebcamGrid({
     } finally {
       setLoading(false);
     }
-  }, [loading, hasMore, page, pageSize, category]);
+  }, [loading, hasMore, page, pageSize, category, q]);
 
   useEffect(() => {
     const el = sentinelRef.current;

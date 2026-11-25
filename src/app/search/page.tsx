@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { listApprovedWebcams } from "@/lib/repository";
-import { WebcamCard } from "@/components/WebcamCard";
+import { listApprovedWebcamsPage } from "@/lib/repository";
+import { InfiniteWebcamGrid } from "@/components/InfiniteWebcamGrid";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,11 @@ export default async function SearchPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q = "" } = await searchParams;
-  const webcams = await listApprovedWebcams(q ? { q } : undefined);
+  const { items, total, hasMore } = await listApprovedWebcamsPage({
+    q: q || undefined,
+    page: 1,
+    pageSize: 12,
+  });
 
   return (
     <div className="space-y-6">
@@ -25,11 +29,11 @@ export default async function SearchPage({
           {q ? `Search results for "${q}"` : "Search Live Webcams"}
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Found {webcams.length} verified live webcam{webcams.length === 1 ? "" : "s"}
+          Found {total} verified live webcam{total === 1 ? "" : "s"}
         </p>
       </div>
 
-      {webcams.length === 0 ? (
+      {items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900 p-10 text-center space-y-2">
           <div className="text-sm font-medium text-slate-900 dark:text-white">No matching webcams found</div>
           <p className="text-xs text-slate-500 dark:text-slate-400">Try searching for Japan, Italy, Beach, or Tokyo.</p>
@@ -41,11 +45,13 @@ export default async function SearchPage({
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {webcams.map((cam) => (
-            <WebcamCard key={cam.id} webcam={cam} />
-          ))}
-        </div>
+        <InfiniteWebcamGrid
+          initialItems={items}
+          total={total}
+          initialHasMore={hasMore}
+          q={q || undefined}
+          pageSize={12}
+        />
       )}
     </div>
   );

@@ -85,6 +85,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://www.youtube-nocookie.com" />
+        <link rel="preconnect" href="https://i.ytimg.com" />
+        <link rel="preconnect" href="https://webcams.windy.com" />
+        <link rel="preconnect" href="https://imgproxy.windy.com" />
+        <link rel="dns-prefetch" href="https://www.youtube.com" />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script
           type="application/ld+json"

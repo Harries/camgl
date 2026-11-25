@@ -303,8 +303,47 @@ export async function listApprovedWebcamsPage(filters?: {
 }
 
 export async function getWebcamBySlug(slug: string): Promise<PublicWebcam | null> {
-  const all = await listApprovedWebcams();
-  return all.find((w) => w.slug === slug) ?? null;
+  if (isDbConfigured()) {
+    try {
+      const row = await prisma.webcam.findFirst({
+        where: {
+          slug,
+          reviewStatus: "APPROVED",
+          streams: {
+            some: {
+              isPrimary: true,
+              status: "LIVE",
+            },
+          },
+        },
+        include: {
+          city: { include: { country: true } },
+          provider: true,
+          categories: { include: { category: true } },
+          streams: {
+            where: { isPrimary: true, status: "LIVE" },
+            orderBy: { lastCheckedAt: "desc" },
+            take: 1,
+          },
+        },
+      });
+      if (!row) return null;
+      const [enriched] = await enrichWeather([mapDbWebcam(row)]);
+      return enriched ?? null;
+    } catch {
+      // Fallback
+    }
+  }
+
+  const found = memStore.webcams.find(
+    (w) =>
+      w.slug === slug &&
+      (!w.reviewStatus || w.reviewStatus === "APPROVED") &&
+      w.stream?.status === "LIVE"
+  );
+  if (!found) return null;
+  const [enriched] = await enrichWeather([found]);
+  return enriched ?? null;
 }
 
 export async function getRandomWebcam(excludeSlug?: string): Promise<PublicWebcam | null> {
