@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { listApprovedWebcams } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
 import { getDaylightInfo } from "@/lib/suncalc";
+import { absoluteUrl } from "@/lib/seo";
 
 export const revalidate = 600;
 
@@ -16,9 +17,19 @@ export async function generateMetadata({
   const webcams = await listApprovedWebcams({ country, city });
   if (webcams.length === 0) return { title: "City Not Found" };
   const first = webcams[0];
+  const title = `${first.city.name}, ${first.country.name} Live Webcams`;
+  const description = `Watch live webcams in ${first.city.name}, ${first.country.name} with real-time weather and local time.`;
+  const canonical = `/countries/${country}/${city}`;
+
   return {
-    title: `${first.city.name}, ${first.country.name} Live Webcams`,
-    description: `Watch live webcams in ${first.city.name}, ${first.country.name} with real-time weather and local time.`,
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title: `${title} | LiveCam Global`,
+      description,
+      url: canonical,
+    },
   };
 }
 
@@ -33,9 +44,23 @@ export default async function CityDetailPage({
 
   const first = webcams[0];
   const { localTime } = getDaylightInfo(first.city.lat, first.city.lng, first.city.timezone);
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Countries", item: absoluteUrl("/countries") },
+      { "@type": "ListItem", position: 3, name: first.country.name, item: absoluteUrl(`/countries/${country}`) },
+      { "@type": "ListItem", position: 4, name: first.city.name, item: absoluteUrl(`/countries/${country}/${city}`) },
+    ],
+  };
 
   return (
     <div className="space-y-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-sm space-y-3">
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <Link href="/" className="hover:underline">Home</Link>

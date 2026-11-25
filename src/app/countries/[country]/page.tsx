@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { listApprovedWebcams } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
 import { getDaylightInfo } from "@/lib/suncalc";
+import { absoluteUrl } from "@/lib/seo";
 
 export const revalidate = 600;
 
@@ -16,9 +17,19 @@ export async function generateMetadata({
   const webcams = await listApprovedWebcams({ country });
   if (webcams.length === 0) return { title: "Country Not Found" };
   const countryName = webcams[0].country.name;
+  const title = `${countryName} Live Webcams`;
+  const description = `Watch ${webcams.length} verified live webcams across cities in ${countryName} with real-time local weather and time.`;
+  const canonical = `/countries/${country}`;
+
   return {
-    title: `${countryName} Live Webcams`,
-    description: `Watch ${webcams.length} verified live webcams across cities in ${countryName}.`,
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title: `${title} | LiveCam Global`,
+      description,
+      url: canonical,
+    },
   };
 }
 
@@ -46,9 +57,22 @@ export default async function CountryDetailPage({
     }
   }
   const cities = Array.from(cityMap.values());
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Countries", item: absoluteUrl("/countries") },
+      { "@type": "ListItem", position: 3, name: countryInfo.name, item: absoluteUrl(`/countries/${country}`) },
+    ],
+  };
 
   return (
     <div className="space-y-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-sm space-y-3">
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <Link href="/" className="hover:underline">Home</Link>

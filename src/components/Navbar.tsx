@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Globe, Shuffle, Search } from "lucide-react";
+import { Shuffle, Search } from "lucide-react";
 import { useState } from "react";
+import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
 
 export function Navbar() {
@@ -40,10 +41,8 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
-            <Globe className="w-5 h-5" />
-          </div>
+        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+          <BrandLogo className="w-9 h-9 drop-shadow-sm transition-transform group-hover:scale-105" />
           <div>
             <div className="font-semibold text-base tracking-tight leading-none flex items-center gap-1.5 text-slate-900 dark:text-white">
               LiveCam Global

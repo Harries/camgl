@@ -6,7 +6,15 @@ export const revalidate = 600;
 
 export const metadata: Metadata = {
   title: "Map & Countries Explorer",
-  description: "Explore verified live webcams on the world map and by country and city.",
+  description:
+    "Explore verified 24/7 live webcams on the interactive world map, filtered by country, city, and category.",
+  alternates: { canonical: "/countries" },
+  openGraph: {
+    title: "Map & Countries Explorer | LiveCam Global",
+    description:
+      "Explore verified 24/7 live webcams on the interactive world map, filtered by country, city, and category.",
+    url: "/countries",
+  },
 };
 
 export default async function CountriesPage() {

@@ -1,9 +1,35 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { listApprovedWebcams, listCategories } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
 
 export const revalidate = 600;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ category: string }>;
+}): Promise<Metadata> {
+  const { category } = await params;
+  const categories = await listCategories();
+  const catInfo = categories.find((c) => c.slug === category);
+  if (!catInfo) return { title: "Category Not Found" };
+  const title = `${catInfo.name} Live Webcams`;
+  const description = `Watch verified 24/7 ${catInfo.name.toLowerCase()} live webcams from around the world with real-time weather.`;
+  const canonical = `/categories/${category}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title: `${title} | LiveCam Global`,
+      description,
+      url: canonical,
+    },
+  };
+}
 
 export default async function CategoryPage({
   params,

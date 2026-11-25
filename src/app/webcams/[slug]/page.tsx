@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getWebcamBySlug, listApprovedWebcams } from "@/lib/repository";
 import { WebcamPlayer } from "@/components/WebcamPlayer";
 import { getDaylightInfo } from "@/lib/suncalc";
+import { absoluteUrl, getYouTubeThumbnail } from "@/lib/seo";
 
 export const revalidate = 300;
 
@@ -15,9 +16,33 @@ export async function generateMetadata({
   const { slug } = await params;
   const webcam = await getWebcamBySlug(slug);
   if (!webcam) return { title: "Webcam Not Found" };
+  const title = `${webcam.title} (${webcam.city.name}, ${webcam.country.name})`;
+  const thumbnail = getYouTubeThumbnail(webcam.stream?.externalId);
+  const canonical = `/webcams/${webcam.slug}`;
+
   return {
-    title: `${webcam.title} (${webcam.city.name}, ${webcam.country.name})`,
+    title,
     description: webcam.description,
+    keywords: [
+      webcam.title,
+      `${webcam.city.name} live cam`,
+      `${webcam.country.name} webcam`,
+      ...webcam.categories.map((c) => `${c.name.toLowerCase()} webcam`),
+    ],
+    alternates: { canonical },
+    openGraph: {
+      type: "video.other",
+      title,
+      description: webcam.description,
+      url: canonical,
+      ...(thumbnail ? { images: [{ url: thumbnail, width: 480, height: 360, alt: webcam.title }] } : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: webcam.description,
+      ...(thumbnail ? { images: [thumbnail] } : {}),
+    },
   };
 }
 
@@ -40,8 +65,68 @@ export default async function WebcamDetailPage({
     webcam.city.timezone
   );
 
+  const thumbnail = getYouTubeThumbnail(webcam.stream?.externalId);
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      name: webcam.title,
+      description: webcam.description,
+      ...(thumbnail ? { thumbnailUrl: thumbnail } : {}),
+      uploadDate: webcam.stream?.lastCheckedAt ?? new Date().toISOString(),
+      ...(webcam.stream
+        ? {
+            embedUrl: webcam.stream.embedUrl,
+            contentUrl: webcam.stream.sourceUrl,
+          }
+        : {}),
+      publication: {
+        "@type": "BroadcastEvent",
+        isLiveBroadcast: webcam.stream?.status === "LIVE",
+      },
+      contentLocation: {
+        "@type": "Place",
+        name: `${webcam.city.name}, ${webcam.country.name}`,
+        geo: {
+          "@type": "GeoCoordinates",
+          latitude: webcam.city.lat,
+          longitude: webcam.city.lng,
+        },
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: webcam.country.name,
+          item: absoluteUrl(`/countries/${webcam.country.slug}`),
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: webcam.city.name,
+          item: absoluteUrl(`/countries/${webcam.country.slug}/${webcam.city.slug}`),
+        },
+        {
+          "@type": "ListItem",
+          position: 4,
+          name: webcam.title,
+          item: absoluteUrl(`/webcams/${webcam.slug}`),
+        },
+      ],
+    },
+  ];
+
   return (
     <div className="space-y-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
           <Link href="/" className="hover:underline">Home</Link>
