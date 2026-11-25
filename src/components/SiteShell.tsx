@@ -23,9 +23,12 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
           <div>
             © {new Date().getFullYear()} LiveCam Global. Official embed player platform · No unauthorized surveillance streams.
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <Link href="/countries" className="hover:text-slate-900 dark:hover:text-white">Map &amp; Countries</Link>
             <Link href="/submit" className="hover:text-slate-900 dark:hover:text-white">Partners &amp; Submit</Link>
+            <Link href="/privacy" className="hover:text-slate-900 dark:hover:text-white">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-slate-900 dark:hover:text-white">Terms</Link>
+            <Link href="/contact" className="hover:text-slate-900 dark:hover:text-white">Contact</Link>
           </div>
         </div>
       </footer>
