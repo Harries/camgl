@@ -175,9 +175,9 @@ export const SEED_WEBCAMS: PublicWebcam[] = [
     provider: { name: "NASA", type: "observatory", website: "https://www.nasa.gov" },
     stream: {
       sourceType: "youtube",
-      externalId: "21X5lGlDOfg",
-      embedUrl: "https://www.youtube-nocookie.com/embed/21X5lGlDOfg",
-      sourceUrl: "https://www.youtube.com/watch?v=21X5lGlDOfg",
+      externalId: "fO9e9jnhYK8",
+      embedUrl: "https://www.youtube-nocookie.com/embed/fO9e9jnhYK8",
+      sourceUrl: "https://www.youtube.com/watch?v=fO9e9jnhYK8",
       mediaType: "LIVE_VIDEO",
       status: "LIVE",
       lastCheckedAt: new Date().toISOString(),

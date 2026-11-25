@@ -6,6 +6,15 @@ export interface ProbeResult {
   latencyMs: number;
 }
 
+function extractYouTubeVideoId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    return u.searchParams.get("v") || u.pathname.split("/").pop() || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function probeSourceStability(
   sourceType: string,
   embedUrl: string,
@@ -14,6 +23,31 @@ export async function probeSourceStability(
   const start = Date.now();
   try {
     if (sourceType === "youtube") {
+      const ytKey = process.env.YOUTUBE_API_KEY;
+      const vid = extractYouTubeVideoId(sourceUrl) || extractYouTubeVideoId(embedUrl);
+      if (ytKey && vid) {
+        const apiRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=snippet,status&id=${vid}&key=${ytKey}`,
+          { signal: AbortSignal.timeout(4000) }
+        );
+        const latencyMs = Date.now() - start;
+        if (apiRes.ok) {
+          const json = (await apiRes.json()) as {
+            items?: Array<{
+              snippet?: { liveBroadcastContent?: string };
+              status?: { embeddable?: boolean };
+            }>;
+          };
+          const item = json.items?.[0];
+          const isLive =
+            item?.snippet?.liveBroadcastContent === "live" &&
+            item?.status?.embeddable !== false;
+          if (!isLive) return { online: false, stabilityScore: 0, latencyMs };
+          const score = Math.max(70, Math.min(98, 100 - Math.floor(latencyMs / 45)));
+          return { online: true, stabilityScore: score, latencyMs };
+        }
+      }
+
       const res = await fetch(
         `https://www.youtube.com/oembed?url=${encodeURIComponent(sourceUrl)}&format=json`,
         { signal: AbortSignal.timeout(4000) }
