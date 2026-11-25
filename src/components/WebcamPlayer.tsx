@@ -80,22 +80,27 @@ export function WebcamPlayer({
     };
   }, [loaded, isHls, embedUrl]);
 
+  const frameClass = "w-full bg-slate-950 flex items-center justify-center";
+  const boxClass = "relative w-full aspect-video max-w-[calc(64dvh*16/9)] max-h-[64dvh] mx-auto overflow-hidden";
+
   if (hasError) {
     return (
-      <div className="aspect-video bg-slate-900 text-white flex flex-col items-center justify-center p-6 text-center space-y-3">
-        <AlertTriangle className="w-8 h-8 text-amber-400" />
-        <div className="text-sm font-semibold">Stream player unavailable</div>
-        <p className="text-xs text-slate-300 max-w-md">
-          This stream may be temporarily offline, geo-restricted, or blocked from embedding in your region.
-        </p>
-        <a
-          href={sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
-        >
-          Watch on Original Source <ExternalLink className="w-3.5 h-3.5" />
-        </a>
+      <div className={frameClass}>
+        <div className={`${boxClass} bg-slate-900 text-white flex flex-col items-center justify-center p-6 text-center space-y-3`}>
+          <AlertTriangle className="w-8 h-8 text-amber-400" />
+          <div className="text-sm font-semibold">Stream player unavailable</div>
+          <p className="text-xs text-slate-300 max-w-md">
+            This stream may be temporarily offline, geo-restricted, or blocked from embedding in your region.
+          </p>
+          <a
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
+          >
+            Watch on Original Source <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
       </div>
     );
   }
@@ -117,44 +122,48 @@ export function WebcamPlayer({
     });
 
     return (
-      <div className="relative aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 flex flex-col items-center justify-center text-white p-6 overflow-hidden">
-        {previewUrl && (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={previewUrl}
-              alt={title}
-              className="absolute inset-0 w-full h-full object-cover opacity-55"
-            />
-            <div className="absolute inset-0 bg-black/45" />
-          </>
-        )}
-        <button
-          onClick={() => setLoaded(true)}
-          className="relative z-10 group flex flex-col items-center gap-3 focus:outline-none cursor-pointer"
-        >
-          <div className="w-16 h-16 rounded-full bg-blue-600 group-hover:bg-blue-500 group-hover:scale-105 transition-all flex items-center justify-center shadow-xl">
-            <Play className="w-7 h-7 fill-white ml-0.5" />
-          </div>
-          <div className="text-sm font-semibold">Load {typeLabel} Stream</div>
-          <div className="text-xs text-slate-300">Click to stream directly from the authorized source</div>
-        </button>
+      <div className={frameClass}>
+        <div className={`${boxClass} bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 flex flex-col items-center justify-center text-white p-6`}>
+          {previewUrl && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewUrl}
+                alt={title}
+                className="absolute inset-0 w-full h-full object-cover opacity-55"
+              />
+              <div className="absolute inset-0 bg-black/45" />
+            </>
+          )}
+          <button
+            onClick={() => setLoaded(true)}
+            className="relative z-10 group flex flex-col items-center gap-3 focus:outline-none cursor-pointer"
+          >
+            <div className="w-16 h-16 rounded-full bg-blue-600 group-hover:bg-blue-500 group-hover:scale-105 transition-all flex items-center justify-center shadow-xl">
+              <Play className="w-7 h-7 fill-white ml-0.5" />
+            </div>
+            <div className="text-sm font-semibold">Load {typeLabel} Stream</div>
+            <div className="text-xs text-slate-300">Click to stream directly from the authorized source</div>
+          </button>
+        </div>
       </div>
     );
   }
 
   if (isHls) {
     return (
-      <div className="relative aspect-video bg-black">
-        <video
-          ref={videoRef}
-          controls
-          autoPlay
-          muted
-          playsInline
-          className="w-full h-full object-contain"
-          onError={() => setHasError(true)}
-        />
+      <div className={frameClass}>
+        <div className={`${boxClass} bg-black`}>
+          <video
+            ref={videoRef}
+            controls
+            autoPlay
+            muted
+            playsInline
+            className="w-full h-full object-contain"
+            onError={() => setHasError(true)}
+          />
+        </div>
       </div>
     );
   }
@@ -163,26 +172,28 @@ export function WebcamPlayer({
     const separator = embedUrl.includes("?") ? "&" : "?";
     const imgUrl = `${embedUrl}${separator}t=${snapTick}`;
     return (
-      <div className="relative aspect-video bg-black overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imgUrl}
-          alt={title}
-          className="w-full h-full object-cover"
-          onError={() => setHasError(true)}
-        />
-        <div className="absolute bottom-3 right-3 flex items-center gap-2">
-          <span className="px-2.5 py-1 rounded-md bg-black/65 text-white text-xs backdrop-blur">
-            Auto-refresh 15s
-          </span>
-          <button
-            type="button"
-            onClick={() => setSnapTick(Date.now())}
-            className="p-1.5 rounded-md bg-black/65 text-white hover:bg-black/85 backdrop-blur cursor-pointer"
-            title="Refresh snapshot"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
+      <div className={frameClass}>
+        <div className={`${boxClass} bg-black`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imgUrl}
+            alt={title}
+            className="w-full h-full object-contain"
+            onError={() => setHasError(true)}
+          />
+          <div className="absolute bottom-3 right-3 flex items-center gap-2">
+            <span className="px-2.5 py-1 rounded-md bg-black/65 text-white text-xs backdrop-blur">
+              Auto-refresh 15s
+            </span>
+            <button
+              type="button"
+              onClick={() => setSnapTick(Date.now())}
+              className="p-1.5 rounded-md bg-black/65 text-white hover:bg-black/85 backdrop-blur cursor-pointer"
+              title="Refresh snapshot"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -194,15 +205,17 @@ export function WebcamPlayer({
       : embedUrl;
 
   return (
-    <div className="relative aspect-video bg-black">
-      <iframe
-        src={iframeSrc}
-        title={title}
-        className="w-full h-full border-0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        onError={() => setHasError(true)}
-      />
+    <div className={frameClass}>
+      <div className={`${boxClass} bg-black`}>
+        <iframe
+          src={iframeSrc}
+          title={title}
+          className="w-full h-full border-0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          onError={() => setHasError(true)}
+        />
+      </div>
     </div>
   );
 }
