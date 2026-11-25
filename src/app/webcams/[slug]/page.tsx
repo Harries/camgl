@@ -6,6 +6,7 @@ import { WebcamPlayer } from "@/components/WebcamPlayer";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { absoluteUrl, getYouTubeThumbnail } from "@/lib/seo";
 import { getSourceTypeMeta } from "@/lib/source-badge";
+import { getWebcamPreviewUrl, WebcamThumbnail } from "@/components/WebcamThumbnail";
 
 export const revalidate = 300;
 
@@ -56,15 +57,50 @@ export default async function WebcamDetailPage({
   const webcam = await getWebcamBySlug(slug);
   if (!webcam) notFound();
 
-  const related = (await listApprovedWebcams())
+  const allWebcams = await listApprovedWebcams();
+  const related = allWebcams
     .filter((w) => w.slug !== webcam.slug)
-    .slice(0, 4);
+    .sort((a, b) => {
+      const aScore =
+        (a.country.slug === webcam.country.slug ? 2 : 0) +
+        (a.categories.some((c) => webcam.categories.some((wc) => wc.slug === c.slug)) ? 1 : 0);
+      const bScore =
+        (b.country.slug === webcam.country.slug ? 2 : 0) +
+        (b.categories.some((c) => webcam.categories.some((wc) => wc.slug === c.slug)) ? 1 : 0);
+      return bScore - aScore;
+    })
+    .slice(0, 5);
 
-  const { isDaylight, localTime } = getDaylightInfo(
+  const { isDaylight, localTime, sunriseLocal, sunsetLocal, goldenHourLocal } = getDaylightInfo(
     webcam.city.lat,
     webcam.city.lng,
     webcam.city.timezone
   );
+
+  const sourceMeta = getSourceTypeMeta(webcam.stream?.sourceType);
+  const latLabel = `${Math.abs(webcam.city.lat).toFixed(4)}° ${webcam.city.lat >= 0 ? "N" : "S"}`;
+  const lngLabel = `${Math.abs(webcam.city.lng).toFixed(4)}° ${webcam.city.lng >= 0 ? "E" : "W"}`;
+
+  const faqs = [
+    {
+      q: `What is the current weather and local time at ${webcam.title}?`,
+      a: `Local time in ${webcam.city.name}, ${webcam.country.name} (${webcam.city.timezone}) is currently ${localTime} (${isDaylight ? "Daylight" : "Nighttime"}), with live weather conditions of ${webcam.weatherSummary}. Today's sunrise is around ${sunriseLocal} and sunset is around ${sunsetLocal}.`,
+    },
+    {
+      q: `When is the best time to watch ${webcam.city.name} live?`,
+      a: webcam.bestTime
+        ? `${webcam.bestTime} Golden hour typically begins around ${goldenHourLocal} local time.`
+        : `Daylight hours between ${sunriseLocal} and ${sunsetLocal} (${webcam.city.timezone}) offer the clearest visibility, with golden hour around ${goldenHourLocal}.`,
+    },
+    {
+      q: `What stream format does ${webcam.title} use?`,
+      a: `This webcam streams via ${sourceMeta.label} (${webcam.stream?.mediaType ?? "LIVE_VIDEO"}) provided by ${webcam.provider?.name ?? "an official partner"}. Stream availability is monitored automatically.`,
+    },
+    {
+      q: `Is this ${webcam.city.name} live webcam free to watch?`,
+      a: `Yes. All public scenic webcams on LiveCam Global are free to watch with no registration required, embedded from official or public-domain sources.`,
+    },
+  ];
 
   const thumbnail = getYouTubeThumbnail(webcam.stream?.externalId);
   const jsonLd = [
@@ -119,6 +155,18 @@ export default async function WebcamDetailPage({
           item: absoluteUrl(`/webcams/${webcam.slug}`),
         },
       ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqs.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: f.a,
+        },
+      })),
     },
   ];
 
@@ -202,23 +250,133 @@ export default async function WebcamDetailPage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8">
-          <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-3 shadow-sm">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">About This Location</h2>
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{webcam.description}</p>
+        <div className="lg:col-span-8 space-y-6">
+          <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+              About {webcam.title}
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              {webcam.description}
+            </p>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              Positioned in{" "}
+              <Link
+                href={`/countries/${webcam.country.slug}/${webcam.city.slug}`}
+                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              >
+                {webcam.city.name}
+              </Link>
+              ,{" "}
+              <Link
+                href={`/countries/${webcam.country.slug}`}
+                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              >
+                {webcam.country.name}
+              </Link>{" "}
+              ({latLabel}, {lngLabel}), this live feed lets travelers, weather watchers, and locals check real-time sky conditions, daylight, and activity in the {webcam.city.timezone} timezone.
+            </p>
             {webcam.bestTime && (
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-sm">
                 <div className="font-medium text-slate-900 dark:text-white mb-1">Best Time to Watch</div>
                 <div className="text-slate-600 dark:text-slate-300">{webcam.bestTime}</div>
               </div>
             )}
-          </div>
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Categories:</span>
+              {webcam.categories.map((cat) => (
+                <Link
+                  key={cat.slug}
+                  href={`/categories/${cat.slug}`}
+                  className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                >
+                  {cat.name} Webcams
+                </Link>
+              ))}
+              <Link
+                href={`/countries/${webcam.country.slug}`}
+                className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+              >
+                {webcam.country.flag} All {webcam.country.name} Cams
+              </Link>
+            </div>
+          </section>
+
+          {/* Daylight & Location Telemetry */}
+          <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+              Daylight, Coordinates &amp; Stream Details
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
+                <div className="text-slate-500 dark:text-slate-400">Sunrise / Sunset</div>
+                <div className="font-semibold text-slate-900 dark:text-white mt-0.5 tabular-nums">
+                  {sunriseLocal} / {sunsetLocal}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
+                <div className="text-slate-500 dark:text-slate-400">Golden Hour</div>
+                <div className="font-semibold text-slate-900 dark:text-white mt-0.5 tabular-nums">
+                  {goldenHourLocal}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
+                <div className="text-slate-500 dark:text-slate-400">Coordinates</div>
+                <div className="font-semibold text-slate-900 dark:text-white mt-0.5 tabular-nums">
+                  {latLabel}, {lngLabel}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
+                <div className="text-slate-500 dark:text-slate-400">Timezone</div>
+                <div className="font-semibold text-slate-900 dark:text-white mt-0.5">
+                  {webcam.city.timezone}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
+                <div className="text-slate-500 dark:text-slate-400">Stream Format</div>
+                <div className="font-semibold text-slate-900 dark:text-white mt-0.5">
+                  {sourceMeta.label}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
+                <div className="text-slate-500 dark:text-slate-400">Original Source</div>
+                {webcam.stream?.sourceUrl ? (
+                  <a
+                    href={webcam.stream.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-blue-600 dark:text-blue-400 hover:underline mt-0.5 inline-block truncate max-w-full"
+                  >
+                    Open Source ↗
+                  </a>
+                ) : (
+                  <div className="font-semibold text-slate-900 dark:text-white mt-0.5">Official Feed</div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* SEO FAQ Section */}
+          <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+              Frequently Asked Questions
+            </h2>
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {faqs.map((f) => (
+                <div key={f.q} className="py-3 first:pt-0 last:pb-0 space-y-1">
+                  <h3 className="text-sm font-medium text-slate-900 dark:text-white">{f.q}</h3>
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                    {f.a}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
 
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-4 space-y-6">
           <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Nearby &amp; Related</h3>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Nearby &amp; Related</h2>
               <Link href="/random" className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium">
                 Random →
               </Link>
@@ -230,8 +388,12 @@ export default async function WebcamDetailPage({
                   href={`/webcams/${r.slug}`}
                   className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
-                  <div className="w-16 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center text-sm shrink-0">
-                    {r.country.flag}
+                  <div className="w-20 h-12 rounded-lg bg-slate-900 overflow-hidden shrink-0">
+                    <WebcamThumbnail
+                      src={getWebcamPreviewUrl(r.stream)}
+                      alt={r.title}
+                      flag={r.country.flag}
+                    />
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">{r.title}</div>
