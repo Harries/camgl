@@ -168,6 +168,7 @@ model Candidate {
   mediaType      MediaType    @default(LIVE_VIDEO) @map("media_type")
   externalId     String       @map("external_id")
   title          String
+  description    String?
   countryName    String       @map("country_name")
   cityName       String       @map("city_name")
   lat            Float        @default(0)
@@ -189,6 +190,7 @@ model Candidate {
 model Submission {
   id          String       @id @default(cuid())
   title       String
+  description String?
   category    String
   location    String
   sourceUrl   String       @map("source_url")

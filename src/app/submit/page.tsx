@@ -8,6 +8,7 @@ export default function SubmitPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     title: "",
+    description: "",
     category: "City",
     location: "",
     sourceUrl: "",
@@ -49,7 +50,7 @@ export default function SubmitPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-2 shadow-sm">
         <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">
           Partner &amp; Operator Portal
@@ -143,6 +144,18 @@ export default function SubmitPage() {
             />
           </label>
         </div>
+
+        <label className="block space-y-1.5">
+          <span className="font-medium text-slate-700 dark:text-slate-300">Description *</span>
+          <textarea
+            required
+            rows={3}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="Describe what this webcam shows, visible landmarks, viewing angle, or best time to watch..."
+            className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-slate-800"
+          />
+        </label>
 
         <label className="flex items-start gap-2.5 pt-2 cursor-pointer">
           <input

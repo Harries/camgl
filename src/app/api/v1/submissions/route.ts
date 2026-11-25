@@ -9,6 +9,7 @@ export async function POST(request: Request) {
     }
     const created = await createSubmission({
       title: String(body.title),
+      description: body.description ? String(body.description) : undefined,
       category: String(body.category || "City"),
       location: String(body.location),
       sourceUrl: String(body.sourceUrl),

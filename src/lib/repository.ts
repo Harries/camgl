@@ -408,6 +408,7 @@ function detectSourceMeta(url: string, ytId: string | null): {
 
 export async function createSubmission(input: {
   title: string;
+  description?: string;
   category: string;
   location: string;
   sourceUrl: string;
@@ -425,12 +426,15 @@ export async function createSubmission(input: {
   const { sourceType, mediaType } = detectSourceMeta(input.sourceUrl, ytId);
   const probe = await probeSourceStability(sourceType, embedUrl, input.sourceUrl);
 
+  const cleanDescription = input.description?.trim() || null;
+
   if (isDbConfigured()) {
     try {
       const [sub] = await prisma.$transaction([
         prisma.submission.create({
           data: {
             title: input.title,
+            description: cleanDescription,
             category: input.category,
             location: input.location,
             sourceUrl: input.sourceUrl,
@@ -446,6 +450,7 @@ export async function createSubmission(input: {
             mediaType,
             externalId,
             title: input.title,
+            description: cleanDescription,
             countryName,
             cityName,
             categorySlug: input.category.toLowerCase(),
@@ -480,6 +485,7 @@ export async function createSubmission(input: {
     mediaType,
     externalId,
     title: input.title,
+    description: cleanDescription,
     countryName,
     cityName,
     lat: 0,
@@ -581,6 +587,7 @@ export async function getAdminDashboardData() {
           mediaType: c.mediaType,
           externalId: c.externalId,
           title: c.title,
+          description: c.description,
           countryName: c.countryName,
           cityName: c.cityName,
           lat: c.lat,
@@ -722,7 +729,9 @@ export async function approveCandidate(id: string) {
           cityId: city.id,
           slug: webcamSlug,
           title: cand.title,
-          description: `${cand.title} located in ${cand.cityName}, ${cand.countryName}.`,
+          description:
+            cand.description?.trim() ||
+            `${cand.title} located in ${cand.cityName}, ${cand.countryName}.`,
           bestTime: "Daylight and golden hour.",
           lat: cand.lat || city.lat,
           lng: cand.lng || city.lng,
@@ -770,7 +779,9 @@ export async function approveCandidate(id: string) {
     id: `cam-${Date.now()}`,
     slug,
     title: cand.title,
-    description: `${cand.title} located in ${cand.cityName}, ${cand.countryName}. Approved via Admin Review.`,
+    description:
+      cand.description?.trim() ||
+      `${cand.title} located in ${cand.cityName}, ${cand.countryName}. Approved via Admin Review.`,
     bestTime: "Daylight and golden hour.",
     country: {
       name: cand.countryName,

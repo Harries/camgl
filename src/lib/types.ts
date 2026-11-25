@@ -57,6 +57,7 @@ export interface AdminCandidate {
   categorySlug: string;
   embedUrl: string;
   sourceUrl: string;
+  description?: string | null;
   licenseNote: string;
   privacyNote: string;
   stabilityScore: number;
