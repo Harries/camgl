@@ -326,65 +326,115 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
 
           {/* Tab Panels */}
           {tab === "review" && (
-            <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
-              {data.candidates.length === 0 ? (
-                <div className="p-10 text-center text-xs text-slate-500 dark:text-slate-400">All candidates reviewed.</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 dark:bg-slate-800/70 dark:border-slate-800 dark:text-slate-400">
-                      <tr>
-                        <th className="px-3 py-2.5 font-medium">Candidate</th>
-                        <th className="px-3 py-2.5 font-medium">Location</th>
-                        <th className="px-3 py-2.5 font-medium">Source &amp; License</th>
-                        <th className="px-3 py-2.5 font-medium">Privacy</th>
-                        <th className="px-3 py-2.5 font-medium text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {data.candidates.map((c) => (
-                        <tr key={c.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                          <td className="px-3 py-3 font-medium text-slate-900 dark:text-white">{c.title}</td>
-                          <td className="px-3 py-3 text-slate-600 dark:text-slate-300">
-                            {c.cityName}, {c.countryName} · {c.categorySlug}
-                          </td>
-                          <td className="px-3 py-3">
-                            <div className="text-slate-900 dark:text-slate-100">{c.source}</div>
-                            <div className="text-slate-500 dark:text-slate-400 mt-0.5">{c.licenseNote}</div>
-                          </td>
-                          <td className="px-3 py-3">
-                            <span
-                              className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                                c.privacyNote.startsWith("Pass")
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900"
-                                  : "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900"
-                              }`}
-                            >
-                              {c.privacyNote}
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 text-right whitespace-nowrap space-x-1.5">
-                            <button
-                              disabled={busy}
-                              onClick={() => runAction({ action: "approve", id: c.id })}
-                              className="px-2.5 py-1 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              disabled={busy}
-                              onClick={() => runAction({ action: "reject", id: c.id })}
-                              className="px-2.5 py-1 rounded-md border border-slate-200 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-red-950/50 dark:hover:text-red-400"
-                            >
-                              Reject
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                <div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    Multi-Source Discovery &amp; Stability Ranking
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    Sorted by live stability score (Windy API v3, YouTube Data API, USGS, NPS, Roundshot, SkylineWebcams).
+                  </div>
                 </div>
-              )}
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={busy}
+                    onClick={() => runAction({ action: "reprobe" })}
+                    className="px-3.5 py-2 rounded-lg text-xs font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
+                  >
+                    Re-probe Stability
+                  </button>
+                  <button
+                    disabled={busy}
+                    onClick={() => runAction({ action: "syncSources" })}
+                    className="px-3.5 py-2 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Sync All Sources
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
+                {data.candidates.length === 0 ? (
+                  <div className="p-10 text-center text-xs text-slate-500 dark:text-slate-400">
+                    All candidates reviewed. Click &quot;Sync All Sources&quot; to fetch new feeds.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 dark:bg-slate-800/70 dark:border-slate-800 dark:text-slate-400">
+                        <tr>
+                          <th className="px-3 py-2.5 font-medium">Candidate</th>
+                          <th className="px-3 py-2.5 font-medium">Type</th>
+                          <th className="px-3 py-2.5 font-medium">Stability</th>
+                          <th className="px-3 py-2.5 font-medium">Location</th>
+                          <th className="px-3 py-2.5 font-medium">Source &amp; License</th>
+                          <th className="px-3 py-2.5 font-medium text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {data.candidates.map((c) => {
+                          const score = c.stabilityScore ?? 0;
+                          const scoreClass =
+                            score >= 80
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900"
+                              : score >= 50
+                                ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900"
+                                : "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900";
+                          return (
+                            <tr key={c.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                              <td className="px-3 py-3">
+                                <div className="font-medium text-slate-900 dark:text-white">{c.title}</div>
+                                <a
+                                  href={c.sourceUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                >
+                                  Preview Source ↗
+                                </a>
+                              </td>
+                              <td className="px-3 py-3">
+                                <span className="inline-block px-2 py-0.5 rounded-md text-xs font-mono bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                  {c.sourceType}
+                                </span>
+                              </td>
+                              <td className="px-3 py-3">
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold border tabular-nums ${scoreClass}`}>
+                                  {score}/100
+                                </span>
+                              </td>
+                              <td className="px-3 py-3 text-slate-600 dark:text-slate-300">
+                                {c.cityName}, {c.countryName} · {c.categorySlug}
+                              </td>
+                              <td className="px-3 py-3">
+                                <div className="text-slate-900 dark:text-slate-100">{c.source}</div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{c.licenseNote}</div>
+                              </td>
+                              <td className="px-3 py-3 text-right whitespace-nowrap space-x-1.5">
+                                <button
+                                  disabled={busy}
+                                  onClick={() => runAction({ action: "approve", id: c.id })}
+                                  className="px-2.5 py-1 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
+                                >
+                                  Approve &amp; Go Live
+                                </button>
+                                <button
+                                  disabled={busy}
+                                  onClick={() => runAction({ action: "reject", id: c.id })}
+                                  className="px-2.5 py-1 rounded-md border border-slate-200 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-red-950/50 dark:hover:text-red-400"
+                                >
+                                  Reject
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

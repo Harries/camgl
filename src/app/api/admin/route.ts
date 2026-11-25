@@ -4,7 +4,9 @@ import {
   approveCandidate,
   getAdminDashboardData,
   rejectCandidate,
+  reprobeCandidates,
   runHealthCheckBatch,
+  syncAllSourceCandidates,
   toggleWebcamSuspend,
 } from "@/lib/repository";
 
@@ -40,6 +42,14 @@ export async function POST(request: Request) {
       }
       case "healthCheck": {
         await runHealthCheckBatch();
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "syncSources": {
+        await syncAllSourceCandidates();
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "reprobe": {
+        await reprobeCandidates();
         return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }
       default:

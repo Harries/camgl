@@ -162,19 +162,25 @@ model DiscoveryJob {
 }
 
 model Candidate {
-  id           String       @id @default(cuid())
-  source       String
-  externalId   String       @map("external_id")
-  title        String
-  countryName  String       @map("country_name")
-  cityName     String       @map("city_name")
-  categorySlug String       @map("category_slug")
-  embedUrl     String       @map("embed_url")
-  sourceUrl    String       @map("source_url")
-  licenseNote  String       @map("license_note")
-  privacyNote  String       @map("privacy_note")
-  reviewStatus ReviewStatus @default(PENDING) @map("review_status")
-  createdAt    DateTime     @default(now()) @map("created_at")
+  id             String       @id @default(cuid())
+  source         String
+  sourceType     String       @default("official_embed") @map("source_type")
+  mediaType      MediaType    @default(LIVE_VIDEO) @map("media_type")
+  externalId     String       @map("external_id")
+  title          String
+  countryName    String       @map("country_name")
+  cityName       String       @map("city_name")
+  lat            Float        @default(0)
+  lng            Float        @default(0)
+  categorySlug   String       @map("category_slug")
+  embedUrl       String       @map("embed_url")
+  sourceUrl      String       @map("source_url")
+  licenseNote    String       @map("license_note")
+  privacyNote    String       @map("privacy_note")
+  stabilityScore Int          @default(80) @map("stability_score")
+  lastProbedAt   DateTime?    @map("last_probed_at")
+  reviewStatus   ReviewStatus @default(PENDING) @map("review_status")
+  createdAt      DateTime     @default(now()) @map("created_at")
 
   @@unique([source, externalId])
   @@map("candidates")

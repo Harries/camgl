@@ -46,15 +46,21 @@ export interface PublicWebcam {
 export interface AdminCandidate {
   id: string;
   source: string;
+  sourceType: string;
+  mediaType: string;
   externalId: string;
   title: string;
   countryName: string;
   cityName: string;
+  lat: number;
+  lng: number;
   categorySlug: string;
   embedUrl: string;
   sourceUrl: string;
   licenseNote: string;
   privacyNote: string;
+  stabilityScore: number;
+  lastProbedAt: string | null;
   reviewStatus: ReviewStatus;
   createdAt: string;
 }

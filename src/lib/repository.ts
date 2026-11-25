@@ -16,6 +16,7 @@ import type {
   StreamStatus,
 } from "./types";
 import { coordKey, fetchWeatherBatch } from "./weather";
+import { collectAndProbeAllSources, probeSourceStability } from "./collectors";
 
 // In-memory store fallback when PostgreSQL is unreachable (e.g., offline build)
 const memStore = {
@@ -249,6 +250,19 @@ export async function listCategories() {
   return SEED_CATEGORIES;
 }
 
+function detectSourceMeta(url: string, ytId: string | null): {
+  sourceType: string;
+  mediaType: "LIVE_VIDEO" | "SNAPSHOT";
+} {
+  if (ytId) return { sourceType: "youtube", mediaType: "LIVE_VIDEO" };
+  const lower = url.toLowerCase();
+  if (lower.includes(".m3u8")) return { sourceType: "hls", mediaType: "LIVE_VIDEO" };
+  if (/\.(jpg|jpeg|png|webp)(\?|$)/i.test(lower)) {
+    return { sourceType: "snapshot", mediaType: "SNAPSHOT" };
+  }
+  return { sourceType: "official_embed", mediaType: "LIVE_VIDEO" };
+}
+
 export async function createSubmission(input: {
   title: string;
   category: string;
@@ -265,6 +279,8 @@ export async function createSubmission(input: {
   const embedUrl = ytId
     ? `https://www.youtube-nocookie.com/embed/${ytId}`
     : input.sourceUrl;
+  const { sourceType, mediaType } = detectSourceMeta(input.sourceUrl, ytId);
+  const probe = await probeSourceStability(sourceType, embedUrl, input.sourceUrl);
 
   if (isDbConfigured()) {
     try {
@@ -283,6 +299,8 @@ export async function createSubmission(input: {
         prisma.candidate.create({
           data: {
             source: input.operator ? `Partner · ${input.operator}` : "User Submission",
+            sourceType,
+            mediaType,
             externalId,
             title: input.title,
             countryName,
@@ -292,6 +310,8 @@ export async function createSubmission(input: {
             sourceUrl: input.sourceUrl,
             licenseNote: "Pending Operator Verification",
             privacyNote: "Pending Review",
+            stabilityScore: probe.stabilityScore,
+            lastProbedAt: new Date(),
             reviewStatus: "PENDING",
           },
         }),
@@ -313,15 +333,21 @@ export async function createSubmission(input: {
   const cand: AdminCandidate = {
     id: `cand-${Date.now()}`,
     source: input.operator ? `Partner · ${input.operator}` : "User Submission",
+    sourceType,
+    mediaType,
     externalId,
     title: input.title,
     countryName,
     cityName,
+    lat: 0,
+    lng: 0,
     categorySlug: input.category.toLowerCase(),
     embedUrl,
     sourceUrl: input.sourceUrl,
     licenseNote: "Pending Operator Verification",
     privacyNote: "Pending Review",
+    stabilityScore: probe.stabilityScore,
+    lastProbedAt: new Date().toISOString(),
     reviewStatus: "PENDING",
     createdAt: new Date().toISOString(),
   };
@@ -387,7 +413,7 @@ export async function getAdminDashboardData() {
         }),
         prisma.candidate.findMany({
           where: { reviewStatus: "PENDING" },
-          orderBy: { createdAt: "desc" },
+          orderBy: [{ stabilityScore: "desc" }, { createdAt: "desc" }],
         }),
         prisma.discoveryJob.findMany({ orderBy: { nextRunAt: "asc" } }),
         prisma.report.findMany({
@@ -404,15 +430,21 @@ export async function getAdminDashboardData() {
         candidates: candidates.map((c) => ({
           id: c.id,
           source: c.source,
+          sourceType: c.sourceType,
+          mediaType: c.mediaType,
           externalId: c.externalId,
           title: c.title,
           countryName: c.countryName,
           cityName: c.cityName,
+          lat: c.lat,
+          lng: c.lng,
           categorySlug: c.categorySlug,
           embedUrl: c.embedUrl,
           sourceUrl: c.sourceUrl,
           licenseNote: c.licenseNote,
           privacyNote: c.privacyNote,
+          stabilityScore: c.stabilityScore,
+          lastProbedAt: c.lastProbedAt ? c.lastProbedAt.toISOString() : null,
           reviewStatus: c.reviewStatus,
           createdAt: c.createdAt.toISOString(),
         })),
@@ -491,8 +523,8 @@ export async function approveCandidate(id: string) {
           countryId: country.id,
           name: cand.cityName,
           slug: citySlug,
-          lat: 0,
-          lng: 0,
+          lat: cand.lat,
+          lng: cand.lng,
           timezone: "UTC",
         },
       });
@@ -508,15 +540,16 @@ export async function approveCandidate(id: string) {
           title: cand.title,
           description: `${cand.title} located in ${cand.cityName}, ${cand.countryName}.`,
           bestTime: "Daylight and golden hour.",
-          lat: city.lat,
-          lng: city.lng,
+          lat: cand.lat || city.lat,
+          lng: cand.lng || city.lng,
           reviewStatus: "APPROVED",
           streams: {
             create: {
-              sourceType: "youtube",
+              sourceType: cand.sourceType,
               externalId: cand.externalId,
               embedUrl: cand.embedUrl,
               sourceUrl: cand.sourceUrl,
+              mediaType: cand.mediaType,
               status: "LIVE",
               lastCheckedAt: new Date(),
             },
@@ -565,17 +598,17 @@ export async function approveCandidate(id: string) {
       name: cand.cityName,
       slug: slugify(cand.cityName),
       timezone: "UTC",
-      lat: 40,
-      lng: 10,
+      lat: cand.lat || 40,
+      lng: cand.lng || 10,
     },
     categories: [{ name: cand.categorySlug, slug: cand.categorySlug }],
     provider: { name: cand.source, type: "partner", website: null },
     stream: {
-      sourceType: "youtube",
+      sourceType: cand.sourceType,
       externalId: cand.externalId,
       embedUrl: cand.embedUrl,
       sourceUrl: cand.sourceUrl,
-      mediaType: "LIVE_VIDEO",
+      mediaType: cand.mediaType,
       status: "LIVE",
       lastCheckedAt: new Date().toISOString(),
     },
@@ -675,16 +708,112 @@ export async function toggleWebcamSuspend(slug: string) {
   return cam;
 }
 
-async function checkStreamLive(sourceUrl: string): Promise<"LIVE" | "OFFLINE"> {
-  try {
-    const res = await fetch(
-      `https://www.youtube.com/oembed?url=${encodeURIComponent(sourceUrl)}&format=json`,
-      { signal: AbortSignal.timeout(3000) }
-    );
-    return res.ok ? "LIVE" : "OFFLINE";
-  } catch {
-    return "OFFLINE";
+export async function syncAllSourceCandidates() {
+  const items = await collectAndProbeAllSources();
+
+  if (isDbConfigured()) {
+    try {
+      const now = new Date();
+      for (const item of items) {
+        await prisma.candidate.upsert({
+          where: { source_externalId: { source: item.source, externalId: item.externalId } },
+          update: {
+            title: item.title,
+            sourceType: item.sourceType,
+            mediaType: item.mediaType as "LIVE_VIDEO" | "SNAPSHOT",
+            embedUrl: item.embedUrl,
+            sourceUrl: item.sourceUrl,
+            lat: item.lat,
+            lng: item.lng,
+            stabilityScore: item.stabilityScore,
+            lastProbedAt: now,
+          },
+          create: {
+            source: item.source,
+            sourceType: item.sourceType,
+            mediaType: item.mediaType as "LIVE_VIDEO" | "SNAPSHOT",
+            externalId: item.externalId,
+            title: item.title,
+            countryName: item.countryName,
+            cityName: item.cityName,
+            lat: item.lat,
+            lng: item.lng,
+            categorySlug: item.categorySlug,
+            embedUrl: item.embedUrl,
+            sourceUrl: item.sourceUrl,
+            licenseNote: item.licenseNote,
+            privacyNote: item.privacyNote,
+            stabilityScore: item.stabilityScore,
+            lastProbedAt: now,
+            reviewStatus: "PENDING",
+          },
+        });
+      }
+
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin@livecam",
+          action: "MULTI_SOURCE_SYNC",
+          targetType: "candidate",
+          targetId: `${items.length} sources probed`,
+          detail: `${items.filter((i) => i.stabilityScore >= 70).length} stable`,
+        },
+      });
+      return { synced: items.length };
+    } catch {
+      // Fallback
+    }
   }
+
+  for (const item of items) {
+    const existing = memStore.candidates.find(
+      (c) => c.source === item.source && c.externalId === item.externalId
+    );
+    if (existing) {
+      existing.stabilityScore = item.stabilityScore;
+      existing.lastProbedAt = item.lastProbedAt;
+    } else {
+      memStore.candidates.unshift({
+        id: `cand-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        ...item,
+        reviewStatus: "PENDING",
+        createdAt: new Date().toISOString(),
+      });
+    }
+  }
+  memStore.candidates.sort((a, b) => b.stabilityScore - a.stabilityScore);
+  return { synced: items.length };
+}
+
+export async function reprobeCandidates() {
+  if (isDbConfigured()) {
+    try {
+      const pending = await prisma.candidate.findMany({ where: { reviewStatus: "PENDING" } });
+      const now = new Date();
+      await Promise.all(
+        pending.map(async (c) => {
+          const probe = await probeSourceStability(c.sourceType, c.embedUrl, c.sourceUrl);
+          return prisma.candidate.update({
+            where: { id: c.id },
+            data: { stabilityScore: probe.stabilityScore, lastProbedAt: now },
+          });
+        })
+      );
+      return { probed: pending.length };
+    } catch {
+      // Fallback
+    }
+  }
+
+  await Promise.all(
+    memStore.candidates.map(async (c) => {
+      const probe = await probeSourceStability(c.sourceType, c.embedUrl, c.sourceUrl);
+      c.stabilityScore = probe.stabilityScore;
+      c.lastProbedAt = new Date().toISOString();
+    })
+  );
+  memStore.candidates.sort((a, b) => b.stabilityScore - a.stabilityScore);
+  return { probed: memStore.candidates.length };
 }
 
 export async function runHealthCheckBatch() {
@@ -692,10 +821,13 @@ export async function runHealthCheckBatch() {
     try {
       const streams = await prisma.stream.findMany({ where: { isPrimary: true } });
       const results = await Promise.all(
-        streams.map(async (s) => ({
-          id: s.id,
-          status: await checkStreamLive(s.sourceUrl),
-        }))
+        streams.map(async (s) => {
+          const probe = await probeSourceStability(s.sourceType, s.embedUrl, s.sourceUrl);
+          return {
+            id: s.id,
+            status: (probe.online ? "LIVE" : "OFFLINE") as "LIVE" | "OFFLINE",
+          };
+        })
       );
 
       const now = new Date();
@@ -729,7 +861,12 @@ export async function runHealthCheckBatch() {
   let liveCount = 0;
   for (const w of memStore.webcams) {
     if (w.stream) {
-      const status = await checkStreamLive(w.stream.sourceUrl);
+      const probe = await probeSourceStability(
+        w.stream.sourceType,
+        w.stream.embedUrl,
+        w.stream.sourceUrl
+      );
+      const status = probe.online ? "LIVE" : "OFFLINE";
       w.stream.status = status;
       w.stream.lastCheckedAt = now;
       if (status === "LIVE") liveCount += 1;
