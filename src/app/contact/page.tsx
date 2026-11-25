@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail, ShieldCheck, Video, Wrench } from "lucide-react";
 import { ContactFormClient } from "@/components/ContactFormClient";
+import { getServerLocale } from "@/lib/i18n-server";
+import { getMessages } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Contact Us | LiveCam Global",
@@ -10,18 +12,21 @@ export const metadata: Metadata = {
   alternates: { canonical: "/contact" },
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const locale = await getServerLocale();
+  const tc = getMessages(locale).contact;
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-2 shadow-sm">
         <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">
-          Support &amp; Partnerships
+          {tc.eyebrow}
         </span>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Contact LiveCam Global
+          {tc.title}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-          Reach out to our team for operator partnerships, stream attribution updates, privacy inquiries, or broken feed reports.
+          {tc.subtitle}
         </p>
       </div>
 
@@ -31,10 +36,10 @@ export default function ContactPage() {
             <Video className="w-5 h-5" />
           </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Partners &amp; Camera Operators
+            {tc.partnersTitle}
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            Want to list your hotel, resort, city, or scenic live stream? Submit it directly or email our partnerships team.
+            {tc.partnersBody}
           </p>
           <div className="pt-1 flex flex-col gap-2 text-xs">
             <a
@@ -48,7 +53,7 @@ export default function ContactPage() {
               href="/submit"
               className="inline-flex items-center justify-center px-3.5 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 w-fit"
             >
-              Submit a Webcam
+              {tc.submitBtn}
             </Link>
           </div>
         </div>
@@ -58,10 +63,10 @@ export default function ContactPage() {
             <ShieldCheck className="w-5 h-5" />
           </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Privacy &amp; Removal Requests
+            {tc.privacyTitle}
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            Need to update stream attribution, report a privacy concern, or request immediate removal of a listed camera?
+            {tc.privacyBody}
           </p>
           <div className="pt-1 flex flex-col gap-2 text-xs">
             <a
@@ -75,7 +80,7 @@ export default function ContactPage() {
               href="/privacy"
               className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline"
             >
-              View Privacy Policy →
+              {tc.viewPrivacy}
             </Link>
           </div>
         </div>
@@ -85,10 +90,10 @@ export default function ContactPage() {
             <Wrench className="w-5 h-5" />
           </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Technical &amp; General Support
+            {tc.supportTitle}
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            Spotted an offline feed, wrong location tag, or playback issue? Use the Report button on any webcam page or write to us.
+            {tc.supportBody}
           </p>
           <div className="pt-1 flex flex-col gap-2 text-xs">
             <a
@@ -102,7 +107,7 @@ export default function ContactPage() {
               href="/countries"
               className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline"
             >
-              Browse Live Webcams →
+              {tc.browseCams}
             </Link>
           </div>
         </div>
@@ -112,11 +117,9 @@ export default function ContactPage() {
 
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-3 shadow-sm text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-          What to Include in Your Message
+          {tc.includeTitle}
         </h2>
-        <p>
-          To help us respond quickly (typically within 1–2 business days), please include the webcam page URL (for example, <code className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-xs">https://camgl.com/webcams/...</code>), your organization or channel name, and any relevant ownership or technical details.
-        </p>
+        <p>{tc.includeBody}</p>
       </div>
     </div>
   );

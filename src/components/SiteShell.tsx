@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Navbar } from "./Navbar";
+import { useI18n } from "./I18nProvider";
 
 export function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
+  const { messages } = useI18n();
+  const tf = messages.footer;
 
   if (isAdmin) {
     return <>{children}</>;
@@ -21,14 +24,14 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
       <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500 dark:text-slate-400">
           <div>
-            © {new Date().getFullYear()} LiveCam Global. Official embed player platform · No unauthorized surveillance streams.
+            © {new Date().getFullYear()} {tf.tagline}
           </div>
           <div className="flex flex-wrap items-center gap-4">
-            <Link href="/countries" className="hover:text-slate-900 dark:hover:text-white">Map &amp; Countries</Link>
-            <Link href="/submit" className="hover:text-slate-900 dark:hover:text-white">Partners &amp; Submit</Link>
-            <Link href="/privacy" className="hover:text-slate-900 dark:hover:text-white">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-slate-900 dark:hover:text-white">Terms</Link>
-            <Link href="/contact" className="hover:text-slate-900 dark:hover:text-white">Contact</Link>
+            <Link href="/countries" className="hover:text-slate-900 dark:hover:text-white">{tf.mapAndCountries}</Link>
+            <Link href="/submit" className="hover:text-slate-900 dark:hover:text-white">{tf.partnersAndSubmit}</Link>
+            <Link href="/privacy" className="hover:text-slate-900 dark:hover:text-white">{tf.privacy}</Link>
+            <Link href="/terms" className="hover:text-slate-900 dark:hover:text-white">{tf.terms}</Link>
+            <Link href="/contact" className="hover:text-slate-900 dark:hover:text-white">{tf.contact}</Link>
           </div>
         </div>
       </footer>

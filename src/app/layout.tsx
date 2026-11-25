@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { SiteShell } from "@/components/SiteShell";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { I18nProvider } from "@/components/I18nProvider";
 import { getSiteUrl } from "@/lib/seo";
 
 const siteUrl = getSiteUrl();
@@ -98,7 +99,9 @@ export default function RootLayout({
       </head>
       <body className="antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors">
         <ThemeProvider>
-          <SiteShell>{children}</SiteShell>
+          <I18nProvider>
+            <SiteShell>{children}</SiteShell>
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>

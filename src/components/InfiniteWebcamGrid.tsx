@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PublicWebcam } from "@/lib/types";
+import { formatMessage } from "@/lib/i18n";
+import { useI18n } from "./I18nProvider";
 import { WebcamCard } from "./WebcamCard";
 
 export function InfiniteWebcamGrid({
@@ -24,6 +26,8 @@ export function InfiniteWebcamGrid({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const { messages } = useI18n();
+  const tg = messages.grid;
 
   useEffect(() => {
     setItems(initialItems);
@@ -99,13 +103,13 @@ export function InfiniteWebcamGrid({
             className="px-5 py-2 rounded-full text-xs font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
           >
             {loading
-              ? "Loading more webcams..."
-              : `Load More (${items.length} / ${total})`}
+              ? tg.loadingMore
+              : formatMessage(tg.loadMore, { loaded: items.length, total })}
           </button>
         ) : (
           total > 0 && (
             <div className="text-xs text-slate-400 dark:text-slate-500">
-              Showing all {items.length} live webcams
+              {formatMessage(tg.showingAll, { count: items.length })}
             </div>
           )
         )}

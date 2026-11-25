@@ -2,6 +2,8 @@ import Link from "next/link";
 import { listApprovedWebcamsPage, listCategories, listCountriesSummary } from "@/lib/repository";
 import { InfiniteWebcamGrid } from "@/components/InfiniteWebcamGrid";
 import { getWebcamPreviewUrl } from "@/lib/source-badge";
+import { getServerLocale } from "@/lib/i18n-server";
+import { formatMessage, getMessages } from "@/lib/i18n";
 
 export const revalidate = 300;
 
@@ -10,7 +12,8 @@ export default async function HomePage({
 }: {
   searchParams: Promise<{ category?: string }>;
 }) {
-  const { category } = await searchParams;
+  const [{ category }, locale] = await Promise.all([searchParams, getServerLocale()]);
+  const th = getMessages(locale).home;
   const [pageData, categories, countries] = await Promise.all([
     listApprovedWebcamsPage({
       ...(category ? { category } : {}),
@@ -64,7 +67,7 @@ export default async function HomePage({
                   <h1 className="text-xl sm:text-2xl font-bold mt-1">{featured.title}</h1>
                 </div>
                 <span className="px-3.5 py-2 rounded-lg text-xs font-medium bg-white text-slate-900 group-hover:scale-105 transition-transform shrink-0 shadow">
-                  Watch Live →
+                  {th.watchLive}
                 </span>
               </div>
             </Link>
@@ -72,28 +75,28 @@ export default async function HomePage({
             <div className="lg:col-span-5 p-6 flex flex-col justify-between gap-5 bg-white dark:bg-slate-900">
               <div className="space-y-3">
                 <div className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">
-                  Explore the World in Real Time
+                  {th.heroEyebrow}
                 </div>
                 <h2 className="text-xl font-semibold leading-snug text-slate-900 dark:text-white">
-                  Verified scenic webcams, local weather &amp; live timezones — free, no login required.
+                  {th.heroTitle}
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Browse by country, city, or category. Every stream is reviewed for licensing and privacy, embedded via official players, and monitored every 30 minutes.
+                  {th.heroSubtitle}
                 </p>
               </div>
 
               <div className="grid grid-cols-3 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/70 dark:border-slate-700/80">
                   <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{totalWebcams}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Live Cams</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{th.liveCams}</div>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/70 dark:border-slate-700/80">
                   <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{countries.length}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Countries</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{th.countries}</div>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/70 dark:border-slate-700/80">
                   <div className="text-lg font-bold tabular-nums text-emerald-600 dark:text-emerald-400">100%</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Licensed</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{th.licensed}</div>
                 </div>
               </div>
 
@@ -102,13 +105,13 @@ export default async function HomePage({
                   href="/countries"
                   className="px-4 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
                 >
-                  🗺️ Explore Map &amp; Countries
+                  {th.exploreMap}
                 </Link>
                 <Link
                   href="/random"
                   className="px-4 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
                 >
-                  🎲 Random Cam
+                  {th.randomCam}
                 </Link>
               </div>
             </div>
@@ -127,7 +130,7 @@ export default async function HomePage({
                 : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
             }`}
           >
-            All
+            {th.allCategories}
           </Link>
           {categories.map((cat) => (
             <Link
@@ -143,7 +146,9 @@ export default async function HomePage({
             </Link>
           ))}
         </div>
-        <div className="text-sm text-slate-500 dark:text-slate-400">Showing {totalWebcams} webcams</div>
+        <div className="text-sm text-slate-500 dark:text-slate-400">
+          {formatMessage(th.showingWebcams, { count: totalWebcams })}
+        </div>
       </section>
 
       {/* Webcam Grid with Infinite Scroll */}
@@ -159,11 +164,11 @@ export default async function HomePage({
       <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">Browse by Country &amp; City</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Hierarchical SEO directories with local time &amp; weather context</p>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">{th.browseByCountry}</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{th.browseByCountrySub}</p>
           </div>
           <Link href="/countries" className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium">
-            View all countries →
+            {th.viewAllCountries}
           </Link>
         </div>
         <div className="flex flex-wrap gap-2">

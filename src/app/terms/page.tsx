@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getServerLocale } from "@/lib/i18n-server";
+import { getMessages } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Terms of Service | LiveCam Global",
@@ -52,18 +54,21 @@ const SECTIONS = [
   },
 ];
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const locale = await getServerLocale();
+  const tl = getMessages(locale).legal;
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-2 shadow-sm">
         <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">
-          Legal &amp; Compliance
+          {tl.eyebrow}
         </span>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Terms of Service
+          {tl.termsTitle}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-          Last updated: November 25, 2026 · Guidelines for visitors, stream operators, and partners on LiveCam Global.
+          {tl.termsSubtitle}
         </p>
       </div>
 
@@ -86,13 +91,13 @@ export default function TermsPage() {
             href="/contact"
             className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700"
           >
-            Contact Us
+            {tl.contactUs}
           </Link>
           <Link
             href="/privacy"
             className="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
-            Read Privacy Policy
+            {tl.readPrivacy}
           </Link>
         </div>
       </div>

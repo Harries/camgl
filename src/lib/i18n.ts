@@ -1,0 +1,711 @@
+export const SUPPORTED_LOCALES = ["en", "zh", "ja", "es", "fr"] as const;
+export type Locale = (typeof SUPPORTED_LOCALES)[number];
+
+export const DEFAULT_LOCALE: Locale = "en";
+export const LOCALE_COOKIE = "camgl_lang";
+
+export const LOCALE_OPTIONS: { code: Locale; label: string; short: string }[] = [
+  { code: "en", label: "English", short: "EN" },
+  { code: "zh", label: "简体中文", short: "中文" },
+  { code: "ja", label: "日本語", short: "日本語" },
+  { code: "es", label: "Español", short: "ES" },
+  { code: "fr", label: "Français", short: "FR" },
+];
+
+export function normalizeLocale(value?: string | null): Locale {
+  if (!value) return DEFAULT_LOCALE;
+  const lower = value.toLowerCase().trim();
+  if ((SUPPORTED_LOCALES as readonly string[]).includes(lower)) {
+    return lower as Locale;
+  }
+  const prefix = lower.split("-")[0];
+  if ((SUPPORTED_LOCALES as readonly string[]).includes(prefix)) {
+    return prefix as Locale;
+  }
+  return DEFAULT_LOCALE;
+}
+
+export interface Messages {
+  nav: {
+    brandSubtitle: string;
+    searchPlaceholder: string;
+    discover: string;
+    mapAndCountries: string;
+    submit: string;
+    random: string;
+    live: string;
+  };
+  footer: {
+    tagline: string;
+    mapAndCountries: string;
+    partnersAndSubmit: string;
+    privacy: string;
+    terms: string;
+    contact: string;
+  };
+  home: {
+    watchLive: string;
+    heroEyebrow: string;
+    heroTitle: string;
+    heroSubtitle: string;
+    liveCams: string;
+    countries: string;
+    licensed: string;
+    exploreMap: string;
+    randomCam: string;
+    allCategories: string;
+    showingWebcams: string;
+    browseByCountry: string;
+    browseByCountrySub: string;
+    viewAllCountries: string;
+  };
+  grid: {
+    loadingMore: string;
+    loadMore: string;
+    showingAll: string;
+  };
+  search: {
+    titleDefault: string;
+    titleForQuery: string;
+    foundCount: string;
+    noResults: string;
+    backHome: string;
+  };
+  submit: {
+    portalEyebrow: string;
+    title: string;
+    subtitle: string;
+    webcamTitle: string;
+    category: string;
+    countryCity: string;
+    streamUrl: string;
+    operator: string;
+    contactEmail: string;
+    description: string;
+    descriptionPlaceholder: string;
+    declaration: string;
+    cancel: string;
+    submitBtn: string;
+    submitting: string;
+    successTitle: string;
+    successBody: string;
+    backHome: string;
+  };
+  contact: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    partnersTitle: string;
+    partnersBody: string;
+    submitBtn: string;
+    privacyTitle: string;
+    privacyBody: string;
+    viewPrivacy: string;
+    supportTitle: string;
+    supportBody: string;
+    browseCams: string;
+    formTitle: string;
+    formSubtitle: string;
+    yourName: string;
+    yourEmail: string;
+    subject: string;
+    message: string;
+    messagePlaceholder: string;
+    sending: string;
+    sendBtn: string;
+    sentTitle: string;
+    sentBody: string;
+    sendAnother: string;
+    includeTitle: string;
+    includeBody: string;
+  };
+  legal: {
+    eyebrow: string;
+    privacyTitle: string;
+    privacySubtitle: string;
+    termsTitle: string;
+    termsSubtitle: string;
+    contactPrivacy: string;
+    readTerms: string;
+    contactUs: string;
+    readPrivacy: string;
+  };
+}
+
+const en: Messages = {
+  nav: {
+    brandSubtitle: "Verified Live Views",
+    searchPlaceholder: "Search city, country, landmark, or category...",
+    discover: "Discover",
+    mapAndCountries: "Map & Countries",
+    submit: "Submit",
+    random: "Random",
+    live: "LIVE",
+  },
+  footer: {
+    tagline: "LiveCam Global. Official embed player platform · No unauthorized surveillance streams.",
+    mapAndCountries: "Map & Countries",
+    partnersAndSubmit: "Partners & Submit",
+    privacy: "Privacy Policy",
+    terms: "Terms",
+    contact: "Contact",
+  },
+  home: {
+    watchLive: "Watch Live →",
+    heroEyebrow: "Explore the World in Real Time",
+    heroTitle: "Verified scenic webcams, local weather & live timezones — free, no login required.",
+    heroSubtitle:
+      "Browse by country, city, or category. Every stream is reviewed for licensing and privacy, embedded via official players, and monitored every 30 minutes.",
+    liveCams: "Live Cams",
+    countries: "Countries",
+    licensed: "Licensed",
+    exploreMap: "🗺️ Explore Map & Countries",
+    randomCam: "🎲 Random Cam",
+    allCategories: "All",
+    showingWebcams: "Showing {count} webcams",
+    browseByCountry: "Browse by Country & City",
+    browseByCountrySub: "Hierarchical SEO directories with local time & weather context",
+    viewAllCountries: "View all countries →",
+  },
+  grid: {
+    loadingMore: "Loading more webcams...",
+    loadMore: "Load More ({loaded} / {total})",
+    showingAll: "Showing all {count} live webcams",
+  },
+  search: {
+    titleDefault: "Search Live Webcams",
+    titleForQuery: 'Search results for "{q}"',
+    foundCount: "Found {count} verified live webcams",
+    noResults: "No matching webcams found. Try another city, country, or category.",
+    backHome: "Back to Discover",
+  },
+  submit: {
+    portalEyebrow: "Partner & Operator Portal",
+    title: "Submit a Live Webcam",
+    subtitle:
+      "Hotels, resorts, tourism boards, and camera operators can submit public scenic live streams for free listing. Submissions are reviewed before publishing.",
+    webcamTitle: "Webcam Title *",
+    category: "Category *",
+    countryCity: "Country & City *",
+    streamUrl: "Official Stream / Embed URL *",
+    operator: "Operator / Hotel Name",
+    contactEmail: "Contact Email *",
+    description: "Description *",
+    descriptionPlaceholder:
+      "Describe what this webcam shows, visible landmarks, viewing angle, or best time to watch...",
+    declaration:
+      "I confirm this camera is a public scenic view (no private surveillance or sensitive areas) and I have authority to permit public embedding.",
+    cancel: "Cancel",
+    submitBtn: "Submit for Review",
+    submitting: "Submitting...",
+    successTitle: "Submission Received",
+    successBody:
+      "Your webcam has been placed in the Admin Review Queue for licensing and privacy verification.",
+    backHome: "Back to Home",
+  },
+  contact: {
+    eyebrow: "Support & Partnerships",
+    title: "Contact LiveCam Global",
+    subtitle:
+      "Reach out to our team for operator partnerships, stream attribution updates, privacy inquiries, or broken feed reports.",
+    partnersTitle: "Partners & Camera Operators",
+    partnersBody:
+      "Want to list your hotel, resort, city, or scenic live stream? Submit it directly or email our partnerships team.",
+    submitBtn: "Submit a Webcam",
+    privacyTitle: "Privacy & Removal Requests",
+    privacyBody:
+      "Need to update stream attribution, report a privacy concern, or request immediate removal of a listed camera?",
+    viewPrivacy: "View Privacy Policy →",
+    supportTitle: "Technical & General Support",
+    supportBody:
+      "Spotted an offline feed, wrong location tag, or playback issue? Use the Report button on any webcam page or write to us.",
+    browseCams: "Browse Live Webcams →",
+    formTitle: "Send Us a Message",
+    formSubtitle:
+      "Fill out the form below and our team will review your inquiry in the admin console.",
+    yourName: "Your Name *",
+    yourEmail: "Contact Email *",
+    subject: "Subject *",
+    message: "Message *",
+    messagePlaceholder: "Please include the webcam URL (if applicable) and any details...",
+    sending: "Sending...",
+    sendBtn: "Send Message",
+    sentTitle: "Message Sent Successfully",
+    sentBody:
+      "Thank you for reaching out! Our team has received your message and will reply to your email as soon as possible.",
+    sendAnother: "Send Another Message",
+    includeTitle: "What to Include in Your Message",
+    includeBody:
+      "To help us respond quickly (typically within 1–2 business days), please include the webcam page URL, your organization or channel name, and any relevant ownership or technical details.",
+  },
+  legal: {
+    eyebrow: "Legal & Compliance",
+    privacyTitle: "Privacy Policy",
+    privacySubtitle:
+      "Last updated: November 25, 2026 · How LiveCam Global protects visitor privacy and reviews public scenic streams.",
+    termsTitle: "Terms of Service",
+    termsSubtitle:
+      "Last updated: November 25, 2026 · Guidelines for visitors, stream operators, and partners on LiveCam Global.",
+    contactPrivacy: "Contact Privacy Team",
+    readTerms: "Read Terms of Service",
+    contactUs: "Contact Us",
+    readPrivacy: "Read Privacy Policy",
+  },
+};
+
+const zh: Messages = {
+  nav: {
+    brandSubtitle: "全球实景实时直播",
+    searchPlaceholder: "搜索城市、国家、地标或分类...",
+    discover: "发现",
+    mapAndCountries: "地图与国家",
+    submit: "提交摄像头",
+    random: "随机漫游",
+    live: "直播",
+  },
+  footer: {
+    tagline: "LiveCam Global · 官方授权嵌入播放平台 · 严禁未授权监控视频流",
+    mapAndCountries: "地图与国家",
+    partnersAndSubmit: "合作与提交",
+    privacy: "隐私政策",
+    terms: "服务条款",
+    contact: "联系我们",
+  },
+  home: {
+    watchLive: "立即观看 →",
+    heroEyebrow: "实时探索世界角落",
+    heroTitle: "精选全球风景实况摄像头、当地天气与实时时区 — 免费免登录观看。",
+    heroSubtitle:
+      "按国家、城市或分类浏览。每路视频流均经过授权与隐私审核，采用官方播放器嵌入，并每 30 分钟自动巡检状态。",
+    liveCams: "在线镜头",
+    countries: "国家/地区",
+    licensed: "合规授权",
+    exploreMap: "🗺️ 探索地图与国家",
+    randomCam: "🎲 随机看一个",
+    allCategories: "全部",
+    showingWebcams: "共 {count} 个摄像头",
+    browseByCountry: "按国家与城市浏览",
+    browseByCountrySub: "支持当地时间与实时天气的全球城市目录",
+    viewAllCountries: "查看全部国家 →",
+  },
+  grid: {
+    loadingMore: "正在加载更多摄像头...",
+    loadMore: "加载更多 ({loaded} / {total})",
+    showingAll: "已显示全部 {count} 个实时摄像头",
+  },
+  search: {
+    titleDefault: "搜索实时摄像头",
+    titleForQuery: "“{q}” 的搜索结果",
+    foundCount: "共找到 {count} 个已验证实时摄像头",
+    noResults: "未找到匹配的摄像头，请尝试其他城市、国家或分类关键词。",
+    backHome: "返回发现页",
+  },
+  submit: {
+    portalEyebrow: "合作伙伴与运营商入口",
+    title: "提交实时摄像头",
+    subtitle:
+      "酒店、度假村、旅游局及摄像头运营商可免费提交公开风景直播流。提交后将进入审核队列。",
+    webcamTitle: "摄像头名称 *",
+    category: "分类 *",
+    countryCity: "国家与城市 *",
+    streamUrl: "官方视频流 / 嵌入地址 *",
+    operator: "运营商 / 酒店名称",
+    contactEmail: "联系邮箱 *",
+    description: "画面内容描述 *",
+    descriptionPlaceholder: "描述镜头拍摄的画面内容、可见地标、视角或最佳观看时段...",
+    declaration:
+      "我确认该摄像头仅拍摄公开风景画面（不含私人监控或敏感区域），且我有权授权公开嵌入展示。",
+    cancel: "取消",
+    submitBtn: "提交审核",
+    submitting: "提交中...",
+    successTitle: "提交已收到",
+    successBody: "您的摄像头已进入后台审核队列，我们将核验授权与隐私合规性。",
+    backHome: "返回首页",
+  },
+  contact: {
+    eyebrow: "支持与合作",
+    title: "联系 LiveCam Global",
+    subtitle: "如需商务合作、归属信息更新、隐私下架申请或故障反馈，欢迎随时联系我们。",
+    partnersTitle: "合作伙伴与运营商",
+    partnersBody: "希望收录您的酒店、景区、城市或风景直播？可直接在线提交或发送邮件联系我们。",
+    submitBtn: "提交摄像头",
+    privacyTitle: "隐私与下架请求",
+    privacyBody: "如需更新视频流归属、反馈隐私问题或申请立即移除某个摄像头，请直接联系我们。",
+    viewPrivacy: "查看隐私政策 →",
+    supportTitle: "技术与常规支持",
+    supportBody: "发现画面离线、地区标签错误或播放异常？可在摄像头详情页点击反馈或给我们留言。",
+    browseCams: "浏览实时摄像头 →",
+    formTitle: "在线发送消息",
+    formSubtitle: "填写下方表单，我们的管理员将在后台查看并回复您的邮箱。",
+    yourName: "您的姓名 *",
+    yourEmail: "联系邮箱 *",
+    subject: "主题 *",
+    message: "留言内容 *",
+    messagePlaceholder: "请附上相关摄像头链接（如有）以及具体说明...",
+    sending: "发送中...",
+    sendBtn: "发送消息",
+    sentTitle: "消息发送成功",
+    sentBody: "感谢您的联系！我们已收到您的留言，并将尽快通过邮件回复您。",
+    sendAnother: "再发一条消息",
+    includeTitle: "建议包含的信息",
+    includeBody:
+      "为方便我们快速处理（通常 1–2 个工作日内回复），请在消息中附上摄像头页面链接、所属机构或频道名称及详细说明。",
+  },
+  legal: {
+    eyebrow: "法律与合规",
+    privacyTitle: "隐私政策",
+    privacySubtitle: "最后更新：2026年11月25日 · LiveCam Global 如何保护访客隐私并审核公开风景流。",
+    termsTitle: "服务条款",
+    termsSubtitle: "最后更新：2026年11月25日 · LiveCam Global 访客、运营商与合作伙伴使用规范。",
+    contactPrivacy: "联系隐私团队",
+    readTerms: "阅读服务条款",
+    contactUs: "联系我们",
+    readPrivacy: "阅读隐私政策",
+  },
+};
+
+const ja: Messages = {
+  nav: {
+    brandSubtitle: "認証済みライブカメラ",
+    searchPlaceholder: "都市・国・ランドマーク・カテゴリで検索...",
+    discover: "発見",
+    mapAndCountries: "地図と国",
+    submit: "投稿",
+    random: "ランダム",
+    live: "LIVE",
+  },
+  footer: {
+    tagline: "LiveCam Global · 公式埋め込みプラットフォーム · 無許可監視カメラ配信禁止",
+    mapAndCountries: "地図と国",
+    partnersAndSubmit: "パートナー・投稿",
+    privacy: "プライバシーポリシー",
+    terms: "利用規約",
+    contact: "お問い合わせ",
+  },
+  home: {
+    watchLive: "ライブを見る →",
+    heroEyebrow: "世界をリアルタイムで探索",
+    heroTitle: "認証済みの絶景ライブカメラ、現地の天気・現地時刻をログイン不要で無料視聴。",
+    heroSubtitle:
+      "国・都市・カテゴリから検索できます。すべての配信はライセンスとプライバシーを審査し、公式プレーヤーで30分ごとに稼働監視しています。",
+    liveCams: "ライブ配信",
+    countries: "国・地域",
+    licensed: "公式認可",
+    exploreMap: "🗺️ 地図と国を見る",
+    randomCam: "🎲 ランダム視聴",
+    allCategories: "すべて",
+    showingWebcams: "{count} 件のカメラを表示中",
+    browseByCountry: "国・都市から探す",
+    browseByCountrySub: "現地時刻と天気情報付きの地域ディレクトリ",
+    viewAllCountries: "すべての国を見る →",
+  },
+  grid: {
+    loadingMore: "さらに読み込み中...",
+    loadMore: "もっと見る ({loaded} / {total})",
+    showingAll: "全 {count} 件のライブカメラを表示しました",
+  },
+  search: {
+    titleDefault: "ライブカメラを検索",
+    titleForQuery: "「{q}」の検索結果",
+    foundCount: "{count} 件の認証済みライブカメラが見つかりました",
+    noResults: "一致するカメラが見つかりませんでした。別の都市・国・カテゴリをお試しください。",
+    backHome: "トップへ戻る",
+  },
+  submit: {
+    portalEyebrow: "パートナー・運営者ポータル",
+    title: "ライブカメラを投稿",
+    subtitle:
+      "ホテル、リゾート、観光局、カメラ運営者は公開風景ライブ配信を無料で申請できます。",
+    webcamTitle: "カメラ名 *",
+    category: "カテゴリ *",
+    countryCity: "国と都市 *",
+    streamUrl: "公式配信 / 埋め込みURL *",
+    operator: "運営者・ホテル名",
+    contactEmail: "連絡先メール *",
+    description: "カメラ内容の説明 *",
+    descriptionPlaceholder: "映っている景色、ランドマーク、視点やおすすめの時間帯などを入力...",
+    declaration:
+      "このカメラは公開風景のみを撮影しており（私的監視や機密エリアを含まない）、公開埋め込みを許可する権限があることを確認します。",
+    cancel: "キャンセル",
+    submitBtn: "審査に送信",
+    submitting: "送信中...",
+    successTitle: "送信を受け付けました",
+    successBody: "管理者の審査キューに登録されました。ライセンスとプライバシー確認後に公開されます。",
+    backHome: "ホームに戻る",
+  },
+  contact: {
+    eyebrow: "サポート・パートナーシップ",
+    title: "お問い合わせ",
+    subtitle: "掲載のご相談、クレジット修正、プライバシー削除依頼、不具合報告などはこちらからご連絡ください。",
+    partnersTitle: "パートナー・運営者向け",
+    partnersBody: "ホテルや観光地のライブカメラ掲載をご希望の場合は、申請フォームまたはメールでご連絡ください。",
+    submitBtn: "カメラを投稿",
+    privacyTitle: "プライバシー・削除依頼",
+    privacyBody: "配信元の表記変更やプライバシーに関するご相談、掲載削除をご希望の場合はご連絡ください。",
+    viewPrivacy: "プライバシーポリシーを見る →",
+    supportTitle: "技術・一般サポート",
+    supportBody: "配信停止や位置情報の誤りを見つけた場合は、各カメラページの報告ボタンまたは下記フォームからお知らせください。",
+    browseCams: "ライブカメラ一覧 →",
+    formTitle: "メッセージを送信",
+    formSubtitle: "以下のフォームにご記入ください。担当者が管理画面で確認のうえ返信いたします。",
+    yourName: "お名前 *",
+    yourEmail: "メールアドレス *",
+    subject: "件名 *",
+    message: "お問い合わせ内容 *",
+    messagePlaceholder: "該当するカメラURLや詳細をご記入ください...",
+    sending: "送信中...",
+    sendBtn: "送信する",
+    sentTitle: "送信が完了しました",
+    sentBody: "お問い合わせありがとうございます。確認次第、ご入力いただいたメールアドレスへ返信いたします。",
+    sendAnother: "別のメッセージを送る",
+    includeTitle: "ご記入いただきたい内容",
+    includeBody: "迅速な対応（通常1〜2営業日）のため、カメラページのURLや組織名・チャンネル名などをご記載ください。",
+  },
+  legal: {
+    eyebrow: "規約とコンプライアンス",
+    privacyTitle: "プライバシーポリシー",
+    privacySubtitle: "最終更新: 2026年11月25日 · LiveCam Global のプライバシー保護方針。",
+    termsTitle: "利用規約",
+    termsSubtitle: "最終更新: 2026年11月25日 · LiveCam Global のご利用ガイドライン。",
+    contactPrivacy: "プライバシー窓口へ",
+    readTerms: "利用規約を読む",
+    contactUs: "お問い合わせ",
+    readPrivacy: "プライバシーポリシーを読む",
+  },
+};
+
+const es: Messages = {
+  nav: {
+    brandSubtitle: "Vistas en Vivo Verificadas",
+    searchPlaceholder: "Buscar ciudad, país, lugar o categoría...",
+    discover: "Descubrir",
+    mapAndCountries: "Mapa y Países",
+    submit: "Enviar",
+    random: "Aleatorio",
+    live: "EN VIVO",
+  },
+  footer: {
+    tagline: "LiveCam Global · Plataforma oficial de cámaras en vivo · Sin vigilancia no autorizada.",
+    mapAndCountries: "Mapa y Países",
+    partnersAndSubmit: "Socios y Envío",
+    privacy: "Privacidad",
+    terms: "Términos",
+    contact: "Contacto",
+  },
+  home: {
+    watchLive: "Ver en Vivo →",
+    heroEyebrow: "Explora el Mundo en Tiempo Real",
+    heroTitle: "Cámaras panorámicas verificadas, clima local y zona horaria en vivo — gratis y sin registro.",
+    heroSubtitle:
+      "Navega por país, ciudad o categoría. Cada transmisión se revisa por licencia y privacidad y se supervisa cada 30 minutos.",
+    liveCams: "Cámaras",
+    countries: "Países",
+    licensed: "Autorizadas",
+    exploreMap: "🗺️ Explorar Mapa y Países",
+    randomCam: "🎲 Cámara Aleatoria",
+    allCategories: "Todas",
+    showingWebcams: "Mostrando {count} cámaras",
+    browseByCountry: "Explorar por País y Ciudad",
+    browseByCountrySub: "Directorios con hora local y clima en tiempo real",
+    viewAllCountries: "Ver todos los países →",
+  },
+  grid: {
+    loadingMore: "Cargando más cámaras...",
+    loadMore: "Cargar más ({loaded} / {total})",
+    showingAll: "Mostrando las {count} cámaras en vivo",
+  },
+  search: {
+    titleDefault: "Buscar Cámaras en Vivo",
+    titleForQuery: 'Resultados para "{q}"',
+    foundCount: "Se encontraron {count} cámaras en vivo verificadas",
+    noResults: "No se encontraron cámaras. Prueba otra ciudad, país o categoría.",
+    backHome: "Volver a Descubrir",
+  },
+  submit: {
+    portalEyebrow: "Portal de Socios y Operadores",
+    title: "Enviar una Cámara en Vivo",
+    subtitle:
+      "Hoteles, resorts, oficinas de turismo y operadores pueden enviar transmisiones públicas gratuitas para revisión.",
+    webcamTitle: "Título de la Cámara *",
+    category: "Categoría *",
+    countryCity: "País y Ciudad *",
+    streamUrl: "URL Oficial / Embed *",
+    operator: "Operador / Hotel",
+    contactEmail: "Correo de Contacto *",
+    description: "Descripción *",
+    descriptionPlaceholder: "Describe qué muestra la cámara, lugares visibles o mejor hora para ver...",
+    declaration:
+      "Confirmo que esta cámara muestra una vista pública panorámica (sin vigilancia privada) y tengo autorización para su inserción pública.",
+    cancel: "Cancelar",
+    submitBtn: "Enviar para Revisión",
+    submitting: "Enviando...",
+    successTitle: "Envío Recibido",
+    successBody: "Tu cámara pasó a la cola de revisión para verificar licencia y privacidad.",
+    backHome: "Volver al Inicio",
+  },
+  contact: {
+    eyebrow: "Soporte y Alianzas",
+    title: "Contactar a LiveCam Global",
+    subtitle: "Escríbenos para alianzas, atribución, privacidad o reportes técnicos.",
+    partnersTitle: "Socios y Operadores",
+    partnersBody: "¿Deseas incluir tu cámara turística o de hotel? Envíala directamente o escríbenos.",
+    submitBtn: "Enviar Cámara",
+    privacyTitle: "Privacidad y Retiro",
+    privacyBody: "¿Necesitas actualizar créditos o solicitar la retirada inmediata de una cámara?",
+    viewPrivacy: "Ver Política de Privacidad →",
+    supportTitle: "Soporte Técnico",
+    supportBody: "¿Detectaste una transmisión caída o etiqueta incorrecta? Usa el botón Reportar o escríbenos.",
+    browseCams: "Ver Cámaras en Vivo →",
+    formTitle: "Envíanos un Mensaje",
+    formSubtitle: "Completa el formulario y nuestro equipo revisará tu consulta en el panel.",
+    yourName: "Tu Nombre *",
+    yourEmail: "Correo Electrónico *",
+    subject: "Asunto *",
+    message: "Mensaje *",
+    messagePlaceholder: "Incluye la URL de la cámara (si aplica) y los detalles...",
+    sending: "Enviando...",
+    sendBtn: "Enviar Mensaje",
+    sentTitle: "Mensaje Enviado",
+    sentBody: "¡Gracias por escribirnos! Responderemos a tu correo lo antes posible.",
+    sendAnother: "Enviar Otro Mensaje",
+    includeTitle: "Qué Incluir en tu Mensaje",
+    includeBody: "Para responderte en 1–2 días hábiles, incluye la URL de la cámara y el nombre de tu organización.",
+  },
+  legal: {
+    eyebrow: "Legal y Cumplimiento",
+    privacyTitle: "Política de Privacidad",
+    privacySubtitle: "Última actualización: 25 de noviembre de 2026 · Cómo protegemos la privacidad en LiveCam Global.",
+    termsTitle: "Términos de Servicio",
+    termsSubtitle: "Última actualización: 25 de noviembre de 2026 · Normas de uso para visitantes y operadores.",
+    contactPrivacy: "Contactar Privacidad",
+    readTerms: "Leer Términos",
+    contactUs: "Contáctanos",
+    readPrivacy: "Leer Privacidad",
+  },
+};
+
+const fr: Messages = {
+  nav: {
+    brandSubtitle: "Vues en Direct Vérifiées",
+    searchPlaceholder: "Rechercher ville, pays, lieu ou catégorie...",
+    discover: "Découvrir",
+    mapAndCountries: "Carte & Pays",
+    submit: "Soumettre",
+    random: "Aléatoire",
+    live: "DIRECT",
+  },
+  footer: {
+    tagline: "LiveCam Global · Plateforme officielle d'intégration · Aucune surveillance non autorisée.",
+    mapAndCountries: "Carte & Pays",
+    partnersAndSubmit: "Partenaires & Soumission",
+    privacy: "Confidentialité",
+    terms: "Conditions",
+    contact: "Contact",
+  },
+  home: {
+    watchLive: "Voir en Direct →",
+    heroEyebrow: "Explorez le Monde en Temps Réel",
+    heroTitle: "Webcams panoramiques vérifiées, météo locale et fuseaux horaires — gratuit, sans inscription.",
+    heroSubtitle:
+      "Parcourez par pays, ville ou catégorie. Chaque flux est vérifié pour sa licence et sa confidentialité, puis contrôlé toutes les 30 minutes.",
+    liveCams: "Webcams",
+    countries: "Pays",
+    licensed: "Autorisées",
+    exploreMap: "🗺️ Explorer Carte & Pays",
+    randomCam: "🎲 Webcam Aléatoire",
+    allCategories: "Toutes",
+    showingWebcams: "{count} webcams affichées",
+    browseByCountry: "Parcourir par Pays & Ville",
+    browseByCountrySub: "Répertoire avec heure locale et météo en direct",
+    viewAllCountries: "Voir tous les pays →",
+  },
+  grid: {
+    loadingMore: "Chargement...",
+    loadMore: "Charger plus ({loaded} / {total})",
+    showingAll: "Toutes les {count} webcams affichées",
+  },
+  search: {
+    titleDefault: "Rechercher des Webcams",
+    titleForQuery: 'Résultats pour "{q}"',
+    foundCount: "{count} webcams en direct vérifiées trouvées",
+    noResults: "Aucune webcam trouvée. Essayez une autre ville, un pays ou une catégorie.",
+    backHome: "Retour à Découvrir",
+  },
+  submit: {
+    portalEyebrow: "Portail Partenaires & Opérateurs",
+    title: "Soumettre une Webcam en Direct",
+    subtitle:
+      "Hôtels, offices de tourisme et opérateurs peuvent soumettre gratuitement leurs flux publics panoramiques.",
+    webcamTitle: "Titre de la Webcam *",
+    category: "Catégorie *",
+    countryCity: "Pays & Ville *",
+    streamUrl: "URL Officielle / Embed *",
+    operator: "Opérateur / Hôtel",
+    contactEmail: "E-mail de Contact *",
+    description: "Description *",
+    descriptionPlaceholder: "Décrivez la vue, les monuments visibles ou le meilleur moment pour regarder...",
+    declaration:
+      "Je confirme que cette caméra filme une vue publique panoramique (sans surveillance privée) et que j'ai l'autorisation d'intégration.",
+    cancel: "Annuler",
+    submitBtn: "Soumettre",
+    submitting: "Envoi...",
+    successTitle: "Soumission Reçue",
+    successBody: "Votre webcam est en file d'attente pour vérification de licence et de confidentialité.",
+    backHome: "Retour à l'Accueil",
+  },
+  contact: {
+    eyebrow: "Support & Partenariats",
+    title: "Contacter LiveCam Global",
+    subtitle: "Contactez-nous pour un partenariat, une attribution, la confidentialité ou un signalement.",
+    partnersTitle: "Partenaires & Opérateurs",
+    partnersBody: "Vous souhaitez référencer votre webcam touristique ? Soumettez-la ou écrivez-nous.",
+    submitBtn: "Soumettre une Webcam",
+    privacyTitle: "Confidentialité & Retrait",
+    privacyBody: "Besoin de mettre à jour une source ou de demander le retrait immédiat d'une caméra ?",
+    viewPrivacy: "Voir la Confidentialité →",
+    supportTitle: "Support Technique",
+    supportBody: "Flux hors ligne ou erreur de lieu ? Utilisez le bouton Signaler ou écrivez-nous.",
+    browseCams: "Parcourir les Webcams →",
+    formTitle: "Envoyer un Message",
+    formSubtitle: "Remplissez le formulaire ci-dessous et notre équipe vous répondra rapidement.",
+    yourName: "Votre Nom *",
+    yourEmail: "Votre E-mail *",
+    subject: "Sujet *",
+    message: "Message *",
+    messagePlaceholder: "Indiquez l'URL de la webcam (si applicable) et les détails...",
+    sending: "Envoi...",
+    sendBtn: "Envoyer",
+    sentTitle: "Message Envoyé",
+    sentBody: "Merci ! Notre équipe a bien reçu votre message et vous répondra par e-mail.",
+    sendAnother: "Envoyer un Autre Message",
+    includeTitle: "Informations Utiles",
+    includeBody: "Pour une réponse sous 1 à 2 jours ouvrés, incluez l'URL de la webcam et le nom de votre organisation.",
+  },
+  legal: {
+    eyebrow: "Légal & Conformité",
+    privacyTitle: "Politique de Confidentialité",
+    privacySubtitle: "Dernière mise à jour : 25 novembre 2026 · Protection des données sur LiveCam Global.",
+    termsTitle: "Conditions d'Utilisation",
+    termsSubtitle: "Dernière mise à jour : 25 novembre 2026 · Règles d'utilisation pour visiteurs et partenaires.",
+    contactPrivacy: "Contacter l'Équipe",
+    readTerms: "Lire les Conditions",
+    contactUs: "Nous Contacter",
+    readPrivacy: "Lire la Confidentialité",
+  },
+};
+
+const DICTIONARIES: Record<Locale, Messages> = { en, zh, ja, es, fr };
+
+export function getMessages(locale: Locale): Messages {
+  return DICTIONARIES[locale] ?? en;
+}
+
+export function formatMessage(
+  template: string,
+  vars: Record<string, string | number>
+): string {
+  return Object.entries(vars).reduce(
+    (acc, [key, val]) => acc.replaceAll(`{${key}}`, String(val)),
+    template
+  );
+}

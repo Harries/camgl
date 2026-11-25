@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { listApprovedWebcamsPage } from "@/lib/repository";
 import { InfiniteWebcamGrid } from "@/components/InfiniteWebcamGrid";
+import { getServerLocale } from "@/lib/i18n-server";
+import { formatMessage, getMessages } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +17,8 @@ export default async function SearchPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
-  const { q = "" } = await searchParams;
+  const [{ q = "" }, locale] = await Promise.all([searchParams, getServerLocale()]);
+  const ts = getMessages(locale).search;
   const { items, total, hasMore } = await listApprovedWebcamsPage({
     q: q || undefined,
     page: 1,
@@ -26,10 +29,10 @@ export default async function SearchPage({
     <div className="space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-sm space-y-2">
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-          {q ? `Search results for "${q}"` : "Search Live Webcams"}
+          {q ? formatMessage(ts.titleForQuery, { q }) : ts.titleDefault}
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Found {total} verified live webcam{total === 1 ? "" : "s"}
+          {formatMessage(ts.foundCount, { count: total })}
         </p>
       </div>
 

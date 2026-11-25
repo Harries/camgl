@@ -6,11 +6,15 @@ import { Shuffle, Search } from "lucide-react";
 import { useState } from "react";
 import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useI18n } from "./I18nProvider";
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const { messages } = useI18n();
+  const t = messages.nav;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +43,7 @@ export function Navbar() {
         {showLiveBadge && (
           <span className="absolute -top-1.5 -right-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[9px] font-bold leading-none tracking-wide shadow-sm ring-2 ring-white dark:ring-slate-900">
             <span className="w-1 h-1 rounded-full bg-white live-dot" />
-            LIVE
+            {t.live}
           </span>
         )}
       </Link>
@@ -58,7 +62,7 @@ export function Navbar() {
                 MVP
               </span>
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Verified Live Views</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.brandSubtitle}</div>
           </div>
         </Link>
 
@@ -68,22 +72,23 @@ export function Navbar() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search city, country, landmark, or category..."
+            placeholder={t.searchPlaceholder}
             className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-slate-800"
           />
         </form>
 
         <nav className="flex items-center gap-1 sm:gap-1.5">
-          {navLink("/", "Discover", true)}
-          {navLink("/countries", "Map & Countries")}
-          <span className="hidden sm:inline-flex">{navLink("/submit", "Submit")}</span>
+          {navLink("/", t.discover, true)}
+          {navLink("/countries", t.mapAndCountries)}
+          <span className="hidden sm:inline-flex">{navLink("/submit", t.submit)}</span>
+          <LanguageSwitcher className="ml-1" />
           <ThemeToggle className="ml-1" />
           <Link
             href="/random"
             className="ml-1 px-3.5 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-sm"
           >
             <Shuffle className="w-4 h-4" />
-            Random
+            <span className="hidden sm:inline">{t.random}</span>
           </Link>
         </nav>
       </div>
