@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { listApprovedWebcams, listCategories, listCountriesSummary } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
-import { getWebcamPreviewUrl } from "@/components/WebcamThumbnail";
+import { getWebcamPreviewUrl } from "@/lib/source-badge";
 
 export const revalidate = 300;
 

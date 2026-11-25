@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Play, ExternalLink, AlertTriangle, RefreshCw } from "lucide-react";
-import { getWebcamPreviewUrl } from "./WebcamThumbnail";
+import { getWebcamPreviewUrl } from "@/lib/source-badge";
 
 export function WebcamPlayer({
   title,

@@ -2,27 +2,6 @@
 
 import { useState } from "react";
 
-export function getWebcamPreviewUrl(
-  stream?: {
-    sourceType?: string | null;
-    mediaType?: string | null;
-    externalId?: string | null;
-    embedUrl?: string | null;
-  } | null
-): string | null {
-  if (!stream) return null;
-  if (stream.sourceType === "youtube" && stream.externalId && stream.externalId.length === 11) {
-    return `https://i.ytimg.com/vi/${stream.externalId}/hqdefault.jpg`;
-  }
-  if (
-    (stream.sourceType === "snapshot" || stream.mediaType === "SNAPSHOT") &&
-    stream.embedUrl
-  ) {
-    return stream.embedUrl;
-  }
-  return null;
-}
-
 export function WebcamThumbnail({
   src,
   alt,

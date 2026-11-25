@@ -5,8 +5,8 @@ import { getWebcamBySlug, listApprovedWebcams } from "@/lib/repository";
 import { WebcamPlayer } from "@/components/WebcamPlayer";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { absoluteUrl, getYouTubeThumbnail } from "@/lib/seo";
-import { getSourceTypeMeta } from "@/lib/source-badge";
-import { getWebcamPreviewUrl, WebcamThumbnail } from "@/components/WebcamThumbnail";
+import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
+import { WebcamThumbnail } from "@/components/WebcamThumbnail";
 
 export const revalidate = 300;
 

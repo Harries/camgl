@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { PublicWebcam } from "@/lib/types";
 import { getDaylightInfo } from "@/lib/suncalc";
-import { getSourceTypeMeta } from "@/lib/source-badge";
-import { getWebcamPreviewUrl, WebcamThumbnail } from "./WebcamThumbnail";
+import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
+import { WebcamThumbnail } from "./WebcamThumbnail";
 
 export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
   const { isDaylight, localTime } = getDaylightInfo(

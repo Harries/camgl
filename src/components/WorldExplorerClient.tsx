@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { PublicWebcam } from "@/lib/types";
 import { RealMap } from "./RealMap";
-import { getSourceTypeMeta } from "@/lib/source-badge";
-import { getWebcamPreviewUrl, WebcamThumbnail } from "./WebcamThumbnail";
+import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
+import { WebcamThumbnail } from "./WebcamThumbnail";
 
 export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
