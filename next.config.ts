@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "i.ytimg.com" },
       { protocol: "https", hostname: "img.youtube.com" },
+      { protocol: "https", hostname: "volcanoes.usgs.gov" },
+      { protocol: "https", hostname: "*.windy.com" },
     ],
   },
   async headers() {
@@ -14,8 +16,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value:
-              "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;",
+            value: "frame-src 'self' https:;",
           },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
