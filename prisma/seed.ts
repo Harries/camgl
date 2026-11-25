@@ -55,13 +55,20 @@ async function main() {
     if (cam.stream) {
       await prisma.stream.upsert({
         where: { sourceType_externalId: { sourceType: cam.stream.sourceType, externalId: cam.stream.externalId } },
-        update: { embedUrl: cam.stream.embedUrl, status: "LIVE", lastCheckedAt: new Date() },
+        update: {
+          embedUrl: cam.stream.embedUrl,
+          sourceUrl: cam.stream.sourceUrl,
+          mediaType: cam.stream.mediaType as "LIVE_VIDEO" | "SNAPSHOT",
+          status: "LIVE",
+          lastCheckedAt: new Date(),
+        },
         create: {
           webcamId: webcam.id,
           sourceType: cam.stream.sourceType,
           externalId: cam.stream.externalId,
           embedUrl: cam.stream.embedUrl,
           sourceUrl: cam.stream.sourceUrl,
+          mediaType: cam.stream.mediaType as "LIVE_VIDEO" | "SNAPSHOT",
           status: "LIVE",
           lastCheckedAt: new Date(),
         },

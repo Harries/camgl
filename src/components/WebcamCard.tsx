@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PublicWebcam } from "@/lib/types";
 import { getDaylightInfo } from "@/lib/suncalc";
+import { getSourceTypeMeta } from "@/lib/source-badge";
 
 export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
   const { isDaylight, localTime } = getDaylightInfo(
@@ -10,6 +11,7 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
   );
   const primaryCat = webcam.categories[0]?.name ?? "Live";
   const isLive = webcam.stream?.status === "LIVE";
+  const sourceMeta = getSourceTypeMeta(webcam.stream?.sourceType);
 
   return (
     <Link
@@ -54,9 +56,14 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
           </span>
           <span>{webcam.weatherSummary}</span>
         </div>
-        <h3 className="font-semibold text-base text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
-          {webcam.title}
-        </h3>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-semibold text-base text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
+            {webcam.title}
+          </h3>
+          <span className={`shrink-0 px-2 py-0.5 rounded-md text-[11px] font-medium border ${sourceMeta.badgeClass}`}>
+            {sourceMeta.label}
+          </span>
+        </div>
       </div>
     </Link>
   );

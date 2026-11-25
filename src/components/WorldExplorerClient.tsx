@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { PublicWebcam } from "@/lib/types";
 import { RealMap } from "./RealMap";
+import { getSourceTypeMeta } from "@/lib/source-badge";
 
 export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -332,9 +333,14 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
                   </span>
                   <span>{cam.weatherSummary}</span>
                 </div>
-                <h3 className="font-semibold text-base text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
-                  {cam.title}
-                </h3>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-semibold text-base text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
+                    {cam.title}
+                  </h3>
+                  <span className={`shrink-0 px-2 py-0.5 rounded-md text-[11px] font-medium border ${getSourceTypeMeta(cam.stream?.sourceType).badgeClass}`}>
+                    {getSourceTypeMeta(cam.stream?.sourceType).label}
+                  </span>
+                </div>
               </div>
             </Link>
           ))}

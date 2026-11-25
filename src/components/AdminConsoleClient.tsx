@@ -24,6 +24,7 @@ import type {
   AdminReport,
   PublicWebcam,
 } from "@/lib/types";
+import { getSourceTypeMeta } from "@/lib/source-badge";
 
 interface AdminData {
   webcams: (PublicWebcam & { reviewStatus?: string })[];
@@ -445,6 +446,7 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 dark:bg-slate-800/70 dark:border-slate-800 dark:text-slate-400">
                     <tr>
                       <th className="px-4 py-3 font-medium">Title / Slug</th>
+                      <th className="px-4 py-3 font-medium">Source Type</th>
                       <th className="px-4 py-3 font-medium">Location</th>
                       <th className="px-4 py-3 font-medium">Review</th>
                       <th className="px-4 py-3 font-medium">Stream</th>
@@ -454,11 +456,17 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {data.webcams.map((w) => {
                       const rev = w.reviewStatus ?? "APPROVED";
+                      const sourceMeta = getSourceTypeMeta(w.stream?.sourceType);
                       return (
                         <tr key={w.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
                           <td className="px-4 py-3">
                             <div className="font-medium text-slate-900 dark:text-white">{w.title}</div>
                             <div className="font-mono text-slate-400 dark:text-slate-500">/webcams/{w.slug}</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-0.5 rounded-md text-xs font-medium border ${sourceMeta.badgeClass}`}>
+                              {sourceMeta.label}
+                            </span>
                           </td>
                           <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                             {w.country.flag} {w.city.name}, {w.country.name}

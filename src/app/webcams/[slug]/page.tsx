@@ -5,6 +5,7 @@ import { getWebcamBySlug, listApprovedWebcams } from "@/lib/repository";
 import { WebcamPlayer } from "@/components/WebcamPlayer";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { absoluteUrl, getYouTubeThumbnail } from "@/lib/seo";
+import { getSourceTypeMeta } from "@/lib/source-badge";
 
 export const revalidate = 300;
 
@@ -150,7 +151,12 @@ export default async function WebcamDetailPage({
       </div>
 
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{webcam.title}</h1>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{webcam.title}</h1>
+          <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium border ${getSourceTypeMeta(webcam.stream?.sourceType).badgeClass}`}>
+            {getSourceTypeMeta(webcam.stream?.sourceType).label}
+          </span>
+        </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           {webcam.country.flag} {webcam.city.name}, {webcam.country.name} ·{" "}
           {webcam.categories.map((c) => c.name).join(", ")}
