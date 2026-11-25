@@ -4,12 +4,15 @@ import { getServerLocale } from "@/lib/i18n-server";
 import { getMessages } from "@/lib/i18n";
 import { buildAlternates } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy | LiveCam Global",
-  description:
-    "Learn how LiveCam Global handles privacy, public scenic webcam embeds, theme preferences, and partner submissions.",
-  alternates: buildAlternates("/privacy"),
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getServerLocale();
+  const seo = getMessages(locale).seo;
+  return {
+    title: seo.privacyTitle,
+    description: seo.privacyDesc,
+    alternates: buildAlternates("/privacy", locale),
+  };
+}
 
 export default async function PrivacyPage() {
   const locale = await getServerLocale();

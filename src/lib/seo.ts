@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, localizePath, SUPPORTED_LOCALES, type Locale } from "@/lib/i18n";
+
 export function getSiteUrl(): string {
   const raw =
     process.env.SITE_URL ||
@@ -16,18 +18,17 @@ export function absoluteUrl(path = "/"): string {
   return `${base}${normalized}`;
 }
 
-export function buildAlternates(path = "/") {
+export function buildAlternates(path = "/", locale: Locale = DEFAULT_LOCALE) {
   const normalized = path === "/" ? "/" : path.startsWith("/") ? path : `/${path}`;
+  const languages: Record<string, string> = {
+    "x-default": normalized,
+  };
+  for (const loc of SUPPORTED_LOCALES) {
+    languages[loc] = localizePath(normalized, loc);
+  }
   return {
-    canonical: normalized,
-    languages: {
-      "x-default": normalized,
-      en: normalized,
-      zh: `${normalized}?lang=zh`,
-      ja: `${normalized}?lang=ja`,
-      es: `${normalized}?lang=es`,
-      fr: `${normalized}?lang=fr`,
-    },
+    canonical: localizePath(normalized, locale),
+    languages,
   };
 }
 

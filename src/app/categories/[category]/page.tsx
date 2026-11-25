@@ -15,21 +15,24 @@ export async function generateMetadata({
   params: Promise<{ category: string }>;
 }): Promise<Metadata> {
   const { category } = await params;
-  const categories = await listCategories();
+  const [categories, locale] = await Promise.all([listCategories(), getServerLocale()]);
   const catInfo = categories.find((c) => c.slug === category);
   if (!catInfo) return { title: "Category Not Found" };
-  const title = `${catInfo.name} Live Webcams`;
-  const description = `Watch verified 24/7 ${catInfo.name.toLowerCase()} live webcams from around the world with real-time weather.`;
+  const seo = getMessages(locale).seo;
+  const catLabel = getCategoryLabel(locale, catInfo.slug, catInfo.name);
+  const title = formatMessage(seo.categoryTitle, { category: catLabel });
+  const description = formatMessage(seo.categoryDesc, { category: catLabel.toLowerCase() });
   const canonical = `/categories/${category}`;
+  const alternates = buildAlternates(canonical, locale);
 
   return {
     title,
     description,
-    alternates: buildAlternates(canonical),
+    alternates,
     openGraph: {
       title: `${title} | LiveCam Global`,
       description,
-      url: canonical,
+      url: alternates.canonical,
     },
   };
 }

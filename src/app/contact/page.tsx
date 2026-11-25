@@ -6,12 +6,15 @@ import { getServerLocale } from "@/lib/i18n-server";
 import { getMessages } from "@/lib/i18n";
 import { buildAlternates } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Contact Us | LiveCam Global",
-  description:
-    "Contact LiveCam Global for webcam partnerships, stream removal or privacy requests, and technical support.",
-  alternates: buildAlternates("/contact"),
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getServerLocale();
+  const seo = getMessages(locale).seo;
+  return {
+    title: seo.contactTitle,
+    description: seo.contactDesc,
+    alternates: buildAlternates("/contact", locale),
+  };
+}
 
 export default async function ContactPage() {
   const locale = await getServerLocale();

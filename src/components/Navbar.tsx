@@ -8,29 +8,32 @@ import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useI18n } from "./I18nProvider";
+import { localizePath, stripLocalePrefix } from "@/lib/i18n";
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   const t = messages.nav;
+  const { path: barePathname } = stripLocalePrefix(pathname);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = query.trim();
+    const searchBase = localizePath("/search", locale);
     if (trimmed) {
-      router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+      router.push(`${searchBase}?q=${encodeURIComponent(trimmed)}`);
     } else {
-      router.push("/search");
+      router.push(searchBase);
     }
   };
 
   const navLink = (href: string, label: string, showLiveBadge = false) => {
-    const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+    const active = href === "/" ? barePathname === "/" : barePathname.startsWith(href);
     return (
       <Link
-        href={href}
+        href={localizePath(href, locale)}
         className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
           showLiveBadge ? "mr-1.5" : ""
         } ${
@@ -53,7 +56,7 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+        <Link href={localizePath("/", locale)} className="flex items-center gap-2.5 shrink-0 group">
           <BrandLogo className="w-9 h-9 drop-shadow-sm transition-transform group-hover:scale-105" />
           <div>
             <div className="font-semibold text-base tracking-tight leading-none flex items-center gap-1.5 text-slate-900 dark:text-white">
@@ -84,7 +87,7 @@ export function Navbar() {
           <LanguageSwitcher className="ml-1" />
           <ThemeToggle className="ml-1" />
           <Link
-            href="/random"
+            href={localizePath("/random", locale)}
             className="ml-1 px-3.5 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-sm"
           >
             <Shuffle className="w-4 h-4" />

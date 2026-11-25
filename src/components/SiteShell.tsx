@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Navbar } from "./Navbar";
 import { useI18n } from "./I18nProvider";
+import { localizePath } from "@/lib/i18n";
 
 export function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   const tf = messages.footer;
 
   if (isAdmin) {
@@ -27,11 +28,11 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
             © {new Date().getFullYear()} {tf.tagline}
           </div>
           <div className="flex flex-wrap items-center gap-4">
-            <Link href="/countries" className="hover:text-slate-900 dark:hover:text-white">{tf.mapAndCountries}</Link>
-            <Link href="/submit" className="hover:text-slate-900 dark:hover:text-white">{tf.partnersAndSubmit}</Link>
-            <Link href="/privacy" className="hover:text-slate-900 dark:hover:text-white">{tf.privacy}</Link>
-            <Link href="/terms" className="hover:text-slate-900 dark:hover:text-white">{tf.terms}</Link>
-            <Link href="/contact" className="hover:text-slate-900 dark:hover:text-white">{tf.contact}</Link>
+            <Link href={localizePath("/countries", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.mapAndCountries}</Link>
+            <Link href={localizePath("/submit", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.partnersAndSubmit}</Link>
+            <Link href={localizePath("/privacy", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.privacy}</Link>
+            <Link href={localizePath("/terms", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.terms}</Link>
+            <Link href={localizePath("/contact", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.contact}</Link>
           </div>
         </div>
       </footer>

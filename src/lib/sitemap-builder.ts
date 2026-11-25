@@ -1,14 +1,11 @@
 import type { MetadataRoute } from "next";
 import { listApprovedWebcams, listCategories, listCountriesSummary } from "@/lib/repository";
 import { getSiteUrl } from "@/lib/seo";
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, localizePath, SUPPORTED_LOCALES, type Locale } from "@/lib/i18n";
 
 function localizedUrl(baseUrl: string, path: string, locale: Locale): string {
-  const normalized = path === "/" ? "" : path;
-  if (locale === DEFAULT_LOCALE) {
-    return `${baseUrl}${normalized || "/"}`;
-  }
-  return `${baseUrl}${normalized || "/"}?lang=${locale}`;
+  const locPath = localizePath(path, locale);
+  return `${baseUrl}${locPath}`;
 }
 
 function escapeXml(value: string): string {

@@ -8,25 +8,28 @@ import { formatMessage, getCategoryLabel, getCityLabel, getCountryLabel, getMess
 
 export const revalidate = 600;
 
-export const metadata: Metadata = {
-  title: "Live Webcams by Country & City — Global Directory & Map",
-  description:
-    "Browse verified 24/7 live webcams by country and city worldwide. Explore our interactive world map and regional webcam directories with live weather and local time.",
-  keywords: [
-    "webcams by country",
-    "world webcams directory",
-    "city live cameras",
-    "global webcam map",
-    "live scenic webcams",
-  ],
-  alternates: buildAlternates("/countries"),
-  openGraph: {
-    title: "Live Webcams by Country & City — Global Directory & Map | LiveCam Global",
-    description:
-      "Browse verified 24/7 live webcams by country and city worldwide with live weather and local time.",
-    url: "/countries",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getServerLocale();
+  const seo = getMessages(locale).seo;
+  const alternates = buildAlternates("/countries", locale);
+  return {
+    title: seo.countriesTitle,
+    description: seo.countriesDesc,
+    keywords: [
+      "webcams by country",
+      "world webcams directory",
+      "city live cameras",
+      "global webcam map",
+      "live scenic webcams",
+    ],
+    alternates,
+    openGraph: {
+      title: `${seo.countriesTitle} | LiveCam Global`,
+      description: seo.countriesDesc,
+      url: alternates.canonical,
+    },
+  };
+}
 
 export default async function CountriesPage() {
   const [webcams, categories, locale] = await Promise.all([

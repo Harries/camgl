@@ -202,6 +202,29 @@ export interface Messages {
     citiesBadge: string;
     camCount: string;
   };
+  seo: {
+    homeTitle: string;
+    homeTemplate: string;
+    homeDesc: string;
+    countriesTitle: string;
+    countriesDesc: string;
+    countryTitle: string;
+    countryDesc: string;
+    cityTitle: string;
+    cityDesc: string;
+    categoryTitle: string;
+    categoryDesc: string;
+    webcamTitle: string;
+    webcamDesc: string;
+    submitTitle: string;
+    submitDesc: string;
+    privacyTitle: string;
+    privacyDesc: string;
+    termsTitle: string;
+    termsDesc: string;
+    contactTitle: string;
+    contactDesc: string;
+  };
   categories: Record<string, string>;
 }
 
@@ -478,6 +501,39 @@ const en: Messages = {
     citiesBadge: "{count} Cities",
     camCount: "{count} cams",
   },
+  seo: {
+    homeTitle: "LiveCam Global — Verified Live Webcams Around the World",
+    homeTemplate: "%s | LiveCam Global",
+    homeDesc:
+      "Explore verified 24/7 live scenic webcams, real-time local weather, and world map views across countries and cities worldwide.",
+    countriesTitle: "Live Webcams by Country & City — Global Directory & Map",
+    countriesDesc:
+      "Browse verified 24/7 live webcams by country and city on an interactive world map. Explore beaches, city skylines, mountains, wildlife, and ports.",
+    countryTitle: "{country} Live Webcams",
+    countryDesc:
+      "Watch {count} verified live webcams across cities in {country} with real-time local weather and time.",
+    cityTitle: "{city}, {country} Live Webcams",
+    cityDesc:
+      "Watch live webcams in {city}, {country} with real-time weather and local time.",
+    categoryTitle: "{category} Live Webcams",
+    categoryDesc:
+      "Watch verified 24/7 {category} live webcams from around the world with real-time weather.",
+    webcamTitle: "{title} ({city}, {country})",
+    webcamDesc:
+      "Watch {title} live from {city}, {country}. Real-time local time, weather, and scenic live stream.",
+    submitTitle: "Submit a Live Webcam",
+    submitDesc:
+      "Partner & operator portal to submit official public scenic live webcams for free listing on LiveCam Global.",
+    privacyTitle: "Privacy Policy",
+    privacyDesc:
+      "Learn how LiveCam Global handles privacy, public scenic webcam embeds, theme preferences, and partner submissions.",
+    termsTitle: "Terms of Service",
+    termsDesc:
+      "Terms of Service governing the use of LiveCam Global, official webcam embeds, partner submissions, and content attribution.",
+    contactTitle: "Contact Us",
+    contactDesc:
+      "Contact LiveCam Global for webcam partnerships, stream removal or privacy requests, and technical support.",
+  },
   categories: {
     all: "All",
     city: "City",
@@ -751,6 +807,31 @@ const zh: Messages = {
     citiesBadge: "{count} 座城市",
     camCount: "{count} 路",
   },
+  seo: {
+    homeTitle: "LiveCam Global — 全球实景高清实时摄像头",
+    homeTemplate: "%s | LiveCam Global",
+    homeDesc:
+      "免费探索全球 24/7 实景风景摄像头、当地实时天气与交互式世界地图，覆盖全球热门国家与城市。",
+    countriesTitle: "按国家与城市浏览全球实时摄像头 — 地图与目录",
+    countriesDesc:
+      "按国家与城市浏览全球已验证的 24/7 实景摄像头，覆盖海滩、城市天际线、雪山、野生动物与港口。",
+    countryTitle: "{country} 实时摄像头",
+    countryDesc: "观看 {country} 各地 {count} 路已验证实景摄像头直播，同步查看当地时间与实时天气。",
+    cityTitle: "{country}{city}实时摄像头",
+    cityDesc: "在线观看 {country}{city} 的实时实景摄像头直播，获取当地实时天气与时间。",
+    categoryTitle: "{category}实时摄像头",
+    categoryDesc: "观看全球各地 24/7 {category}主题实景摄像头直播与实时天气。",
+    webcamTitle: "{title}（{country}·{city}）",
+    webcamDesc: "在线观看位于{country}{city}的 {title} 实景直播，查看当地时间与天气。",
+    submitTitle: "提交实时摄像头",
+    submitDesc: "合作伙伴与运营商入口：免费提交公开风景实时摄像头加入 LiveCam Global。",
+    privacyTitle: "隐私政策",
+    privacyDesc: "了解 LiveCam Global 如何保护访客隐私、规范公开风景直播嵌入与合作提交信息。",
+    termsTitle: "服务条款",
+    termsDesc: "了解 LiveCam Global 的服务条款、官方嵌入规范、内容归属与下架申请流程。",
+    contactTitle: "联系我们",
+    contactDesc: "联系 LiveCam Global 处理摄像头合作接入、隐私与下架申请或技术支持。",
+  },
   categories: {
     all: "全部",
     city: "城市",
@@ -995,6 +1076,31 @@ const ja: Messages = {
     citiesBadge: "{count} 都市",
     camCount: "{count} 件",
   },
+  seo: {
+    homeTitle: "LiveCam Global — 世界の認証済みライブカメラ",
+    homeTemplate: "%s | LiveCam Global",
+    homeDesc:
+      "世界中の24時間ライブカメラ、現地の天気、インタラクティブ世界地図を無料で探索できます。",
+    countriesTitle: "国・都市別ライブカメラ — 世界ディレクトリ＆マップ",
+    countriesDesc:
+      "インタラクティブな世界地図から国・都市別にライブカメラを検索。ビーチ、街並み、山、自然、港湾の映像を視聴できます。",
+    countryTitle: "{country} のライブカメラ",
+    countryDesc: "{country} 各地の認証済みライブカメラ {count} 件を現地の天気・時刻とともに視聴。",
+    cityTitle: "{city}（{country}）のライブカメラ",
+    cityDesc: "{country} {city} のライブカメラを現地の天気・時刻とともにリアルタイム視聴。",
+    categoryTitle: "{category} ライブカメラ",
+    categoryDesc: "世界中の24時間 {category} ライブカメラと現地の天気をリアルタイムで視聴。",
+    webcamTitle: "{title}（{city}・{country}）",
+    webcamDesc: "{country} {city} の {title} ライブ映像。現地時刻と天気も確認できます。",
+    submitTitle: "ライブカメラを投稿",
+    submitDesc: "LiveCam Global へ公開風景ライブカメラを無料登録するためのパートナー申請ページ。",
+    privacyTitle: "プライバシーポリシー",
+    privacyDesc: "LiveCam Global のプライバシー保護方針と公開ライブカメラの取り扱いについて。",
+    termsTitle: "利用規約",
+    termsDesc: "LiveCam Global の利用規約、公式埋め込み・権利表記・削除依頼について。",
+    contactTitle: "お問い合わせ",
+    contactDesc: "ライブカメラの提携、配信削除・プライバシーに関するお問い合わせ窓口。",
+  },
   categories: {
     all: "すべて",
     city: "都市",
@@ -1224,6 +1330,31 @@ const es: Messages = {
     countriesBadge: "{count} Países",
     citiesBadge: "{count} Ciudades",
     camCount: "{count} cám.",
+  },
+  seo: {
+    homeTitle: "LiveCam Global — Cámaras en Vivo Verificadas del Mundo",
+    homeTemplate: "%s | LiveCam Global",
+    homeDesc:
+      "Explora cámaras panorámicas en vivo 24/7, clima local en tiempo real y mapa mundial por países y ciudades.",
+    countriesTitle: "Cámaras en Vivo por País y Ciudad — Directorio y Mapa",
+    countriesDesc:
+      "Explora cámaras verificadas 24/7 por país y ciudad en un mapa interactivo mundial.",
+    countryTitle: "Cámaras en Vivo en {country}",
+    countryDesc: "Mira {count} cámaras en vivo verificadas en {country} con clima y hora local.",
+    cityTitle: "Cámaras en Vivo en {city}, {country}",
+    cityDesc: "Mira cámaras en vivo en {city}, {country} con clima y hora local en tiempo real.",
+    categoryTitle: "Cámaras en Vivo de {category}",
+    categoryDesc: "Mira cámaras en vivo 24/7 de {category} de todo el mundo con clima en tiempo real.",
+    webcamTitle: "{title} ({city}, {country})",
+    webcamDesc: "Mira {title} en vivo desde {city}, {country} con hora local y clima.",
+    submitTitle: "Enviar una Cámara en Vivo",
+    submitDesc: "Portal para socios y operadores para enviar cámaras públicas gratuitas a LiveCam Global.",
+    privacyTitle: "Política de Privacidad",
+    privacyDesc: "Cómo protege LiveCam Global la privacidad y revisa las transmisiones públicas.",
+    termsTitle: "Términos de Servicio",
+    termsDesc: "Términos de servicio para visitantes, operadores y socios de LiveCam Global.",
+    contactTitle: "Contáctanos",
+    contactDesc: "Contacta con LiveCam Global para alianzas, privacidad o soporte técnico.",
   },
   categories: {
     all: "Todas",
@@ -1455,6 +1586,31 @@ const fr: Messages = {
     citiesBadge: "{count} Villes",
     camCount: "{count} cams",
   },
+  seo: {
+    homeTitle: "LiveCam Global — Webcams en Direct Vérifiées dans le Monde",
+    homeTemplate: "%s | LiveCam Global",
+    homeDesc:
+      "Explorez des webcams panoramiques en direct 24/7, la météo locale en temps réel et la carte du monde.",
+    countriesTitle: "Webcams en Direct par Pays & Ville — Répertoire & Carte",
+    countriesDesc:
+      "Parcourez des webcams vérifiées 24/7 par pays et ville sur une carte interactive mondiale.",
+    countryTitle: "Webcams en Direct — {country}",
+    countryDesc: "Regardez {count} webcams en direct vérifiées en {country} avec météo et heure locale.",
+    cityTitle: "Webcams en Direct à {city}, {country}",
+    cityDesc: "Regardez des webcams en direct à {city}, {country} avec météo et heure locale.",
+    categoryTitle: "Webcams en Direct {category}",
+    categoryDesc: "Regardez des webcams 24/7 {category} du monde entier avec météo en temps réel.",
+    webcamTitle: "{title} ({city}, {country})",
+    webcamDesc: "Regardez {title} en direct depuis {city}, {country} avec heure locale et météo.",
+    submitTitle: "Soumettre une Webcam en Direct",
+    submitDesc: "Portail partenaires pour soumettre gratuitement vos webcams publiques sur LiveCam Global.",
+    privacyTitle: "Politique de Confidentialité",
+    privacyDesc: "Comment LiveCam Global protège la vie privée et examine les flux publics.",
+    termsTitle: "Conditions d'Utilisation",
+    termsDesc: "Conditions d'utilisation pour les visiteurs, opérateurs et partenaires de LiveCam Global.",
+    contactTitle: "Nous Contacter",
+    contactDesc: "Contactez LiveCam Global pour un partenariat, un retrait ou le support technique.",
+  },
   categories: {
     all: "Toutes",
     city: "Ville",
@@ -1476,6 +1632,23 @@ export function getMessages(locale: Locale): Messages {
 }
 
 export { getCountryLabel, getCityLabel } from "./geo-i18n";
+
+export function stripLocalePrefix(pathname: string): { locale: Locale; path: string } {
+  const clean = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  const segments = clean.split("/");
+  const first = segments[1]?.toLowerCase();
+  if (first && first !== DEFAULT_LOCALE && (SUPPORTED_LOCALES as readonly string[]).includes(first)) {
+    const rest = "/" + segments.slice(2).join("/");
+    return { locale: first as Locale, path: rest === "/" ? "/" : rest.replace(/\/+$/, "") || "/" };
+  }
+  return { locale: DEFAULT_LOCALE, path: clean };
+}
+
+export function localizePath(path: string, locale: Locale): string {
+  const { path: barePath } = stripLocalePrefix(path);
+  if (locale === DEFAULT_LOCALE) return barePath;
+  return barePath === "/" ? `/${locale}` : `/${locale}${barePath}`;
+}
 
 export function getCategoryLabel(
   locale: Locale,

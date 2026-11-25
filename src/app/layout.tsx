@@ -4,53 +4,56 @@ import { SiteShell } from "@/components/SiteShell";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { I18nProvider } from "@/components/I18nProvider";
 import { buildAlternates, getSiteUrl } from "@/lib/seo";
+import { getServerLocale } from "@/lib/i18n-server";
+import { getMessages } from "@/lib/i18n";
 
 const siteUrl = getSiteUrl();
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: "LiveCam Global — Verified Live Webcams Around the World",
-    template: "%s | LiveCam Global",
-  },
-  description:
-    "Explore verified 24/7 live scenic webcams, real-time local weather, and world map views across countries and cities worldwide.",
-  keywords: [
-    "live webcam",
-    "world webcams",
-    "live camera",
-    "scenic webcam",
-    "tokyo live cam",
-    "times square live cam",
-    "beach webcam",
-    "weather cam",
-  ],
-  alternates: buildAlternates("/"),
-  openGraph: {
-    type: "website",
-    siteName: "LiveCam Global",
-    title: "LiveCam Global — Verified Live Webcams Around the World",
-    description:
-      "Explore verified 24/7 live scenic webcams, real-time local weather, and world map views across countries and cities worldwide.",
-    url: "/",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "LiveCam Global — Verified Live Webcams Around the World",
-    description:
-      "Explore verified 24/7 live scenic webcams, real-time local weather, and world map views worldwide.",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getServerLocale();
+  const seo = getMessages(locale).seo;
+  return {
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: seo.homeTitle,
+      template: seo.homeTemplate,
+    },
+    description: seo.homeDesc,
+    keywords: [
+      "live webcam",
+      "world webcams",
+      "live camera",
+      "scenic webcam",
+      "tokyo live cam",
+      "times square live cam",
+      "beach webcam",
+      "weather cam",
+    ],
+    alternates: buildAlternates("/", locale),
+    openGraph: {
+      type: "website",
+      siteName: "LiveCam Global",
+      title: seo.homeTitle,
+      description: seo.homeDesc,
+      url: "/",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.homeTitle,
+      description: seo.homeDesc,
+    },
+    robots: {
       index: true,
       follow: true,
-      "max-image-preview": "large",
-      "max-video-preview": -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-video-preview": -1,
+      },
     },
-  },
-};
+  };
+}
 
 const websiteJsonLd = {
   "@context": "https://schema.org",

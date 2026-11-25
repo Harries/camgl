@@ -4,12 +4,15 @@ import { getServerLocale } from "@/lib/i18n-server";
 import { getMessages } from "@/lib/i18n";
 import { buildAlternates } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Terms of Service | LiveCam Global",
-  description:
-    "Terms of Service governing the use of LiveCam Global, official webcam embeds, partner submissions, and content attribution.",
-  alternates: buildAlternates("/terms"),
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getServerLocale();
+  const seo = getMessages(locale).seo;
+  return {
+    title: seo.termsTitle,
+    description: seo.termsDesc,
+    alternates: buildAlternates("/terms", locale),
+  };
+}
 
 export default async function TermsPage() {
   const locale = await getServerLocale();

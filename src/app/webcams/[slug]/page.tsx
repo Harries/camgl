@@ -18,33 +18,49 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const webcam = await getWebcamBySlug(slug);
+  const [webcam, locale] = await Promise.all([getWebcamBySlug(slug), getServerLocale()]);
   if (!webcam) return { title: "Webcam Not Found" };
-  const title = `${webcam.title} (${webcam.city.name}, ${webcam.country.name})`;
+  const seo = getMessages(locale).seo;
+  const countryLabel = getCountryLabel(locale, webcam.country.slug, webcam.country.name, webcam.country.isoCode);
+  const cityLabel = getCityLabel(locale, webcam.city.slug, webcam.city.name);
+  const title = formatMessage(seo.webcamTitle, {
+    title: webcam.title,
+    city: cityLabel,
+    country: countryLabel,
+  });
+  const description =
+    locale === "en"
+      ? webcam.description
+      : formatMessage(seo.webcamDesc, {
+          title: webcam.title,
+          city: cityLabel,
+          country: countryLabel,
+        });
   const thumbnail = getYouTubeThumbnail(webcam.stream?.externalId);
   const canonical = `/webcams/${webcam.slug}`;
+  const alternates = buildAlternates(canonical, locale);
 
   return {
     title,
-    description: webcam.description,
+    description,
     keywords: [
       webcam.title,
-      `${webcam.city.name} live cam`,
-      `${webcam.country.name} webcam`,
-      ...webcam.categories.map((c) => `${c.name.toLowerCase()} webcam`),
+      `${cityLabel} live cam`,
+      `${countryLabel} webcam`,
+      ...webcam.categories.map((c) => `${getCategoryLabel(locale, c.slug, c.name)} webcam`),
     ],
-    alternates: buildAlternates(canonical),
+    alternates,
     openGraph: {
       type: "video.other",
       title,
-      description: webcam.description,
-      url: canonical,
+      description,
+      url: alternates.canonical,
       ...(thumbnail ? { images: [{ url: thumbnail, width: 480, height: 360, alt: webcam.title }] } : {}),
     },
     twitter: {
       card: "summary_large_image",
       title,
-      description: webcam.description,
+      description,
       ...(thumbnail ? { images: [thumbnail] } : {}),
     },
   };

@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
 import { buildAlternates } from "@/lib/seo";
+import { getServerLocale } from "@/lib/i18n-server";
+import { getMessages } from "@/lib/i18n";
 
-export const metadata: Metadata = {
-  title: "Submit a Live Webcam",
-  description:
-    "Partner & operator portal to submit official public scenic live webcams for free listing on LiveCam Global.",
-  alternates: buildAlternates("/submit"),
-  openGraph: {
-    title: "Submit a Live Webcam | LiveCam Global",
-    description:
-      "Partner & operator portal to submit official public scenic live webcams for free listing on LiveCam Global.",
-    url: "/submit",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getServerLocale();
+  const seo = getMessages(locale).seo;
+  return {
+    title: seo.submitTitle,
+    description: seo.submitDesc,
+    alternates: buildAlternates("/submit", locale),
+    openGraph: {
+      title: `${seo.submitTitle} | LiveCam Global`,
+      description: seo.submitDesc,
+      url: buildAlternates("/submit", locale).canonical,
+    },
+  };
+}
 
 export default function SubmitLayout({ children }: { children: React.ReactNode }) {
   return children;

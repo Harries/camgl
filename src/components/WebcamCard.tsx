@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { PublicWebcam } from "@/lib/types";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
-import { getCategoryLabel, getCityLabel, getCountryLabel } from "@/lib/i18n";
+import { getCategoryLabel, getCityLabel, getCountryLabel, localizePath } from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
 import { WebcamThumbnail } from "./WebcamThumbnail";
 
@@ -32,7 +32,7 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
 
   return (
     <Link
-      href={`/webcams/${webcam.slug}`}
+      href={localizePath(`/webcams/${webcam.slug}`, locale)}
       className="group rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all shadow-sm flex flex-col"
     >
       <div className="relative aspect-video bg-slate-900 overflow-hidden">

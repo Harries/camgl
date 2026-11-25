@@ -16,21 +16,30 @@ export async function generateMetadata({
   params: Promise<{ country: string }>;
 }): Promise<Metadata> {
   const { country } = await params;
-  const webcams = await listApprovedWebcams({ country });
+  const [webcams, locale] = await Promise.all([
+    listApprovedWebcams({ country }),
+    getServerLocale(),
+  ]);
   if (webcams.length === 0) return { title: "Country Not Found" };
-  const countryName = webcams[0].country.name;
-  const title = `${countryName} Live Webcams`;
-  const description = `Watch ${webcams.length} verified live webcams across cities in ${countryName} with real-time local weather and time.`;
+  const seo = getMessages(locale).seo;
+  const cInfo = webcams[0].country;
+  const countryName = getCountryLabel(locale, cInfo.slug, cInfo.name, cInfo.isoCode);
+  const title = formatMessage(seo.countryTitle, { country: countryName });
+  const description = formatMessage(seo.countryDesc, {
+    count: webcams.length,
+    country: countryName,
+  });
   const canonical = `/countries/${country}`;
+  const alternates = buildAlternates(canonical, locale);
 
   return {
     title,
     description,
-    alternates: buildAlternates(canonical),
+    alternates,
     openGraph: {
       title: `${title} | LiveCam Global`,
       description,
-      url: canonical,
+      url: alternates.canonical,
     },
   };
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { createContext, useContext, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   DEFAULT_LOCALE,
   getMessages,
   LOCALE_COOKIE,
-  normalizeLocale,
+  localizePath,
+  stripLocalePrefix,
   type Locale,
   type Messages,
 } from "@/lib/i18n";
@@ -23,35 +24,24 @@ const I18nContext = createContext<I18nContextValue>({
   messages: getMessages(DEFAULT_LOCALE),
 });
 
-function readClientLocale(): Locale {
-  if (typeof document === "undefined") return DEFAULT_LOCALE;
-  const match = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith(`${LOCALE_COOKIE}=`));
-  if (match) {
-    return normalizeLocale(decodeURIComponent(match.split("=")[1] ?? ""));
-  }
-  try {
-    const stored = localStorage.getItem(LOCALE_COOKIE);
-    if (stored) return normalizeLocale(stored);
-  } catch {
-    // ignore storage errors
-  }
-  return DEFAULT_LOCALE;
-}
-
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
+  const pathname = usePathname() || "/";
+  const { locale } = stripLocalePrefix(pathname);
 
   useEffect(() => {
-    const initial = readClientLocale();
-    setLocaleState(initial);
-    document.documentElement.lang = initial;
-  }, []);
+    document.documentElement.lang = locale;
+    document.cookie = `${LOCALE_COOKIE}=${encodeURIComponent(locale)}; path=/; max-age=31536000; SameSite=Lax`;
+    try {
+      localStorage.setItem(LOCALE_COOKIE, locale);
+    } catch {
+      // ignore storage errors
+    }
+  }, [locale]);
 
   const setLocale = (next: Locale) => {
-    setLocaleState(next);
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    const target = `${localizePath(pathname, next)}${search}`;
     document.cookie = `${LOCALE_COOKIE}=${encodeURIComponent(next)}; path=/; max-age=31536000; SameSite=Lax`;
     try {
       localStorage.setItem(LOCALE_COOKIE, next);
@@ -59,7 +49,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       // ignore storage errors
     }
     document.documentElement.lang = next;
-    router.refresh();
+    router.push(target);
   };
 
   return (
