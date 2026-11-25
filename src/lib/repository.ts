@@ -871,41 +871,28 @@ export async function syncAllSourceCandidates() {
         (item) => !existingKeys.has(`${item.sourceType}:${item.externalId}`)
       );
 
-      for (const item of newItems) {
-        await prisma.candidate.upsert({
-          where: { source_externalId: { source: item.source, externalId: item.externalId } },
-          update: {
-            title: item.title,
-            sourceType: item.sourceType,
-            mediaType: item.mediaType as "LIVE_VIDEO" | "SNAPSHOT",
-            embedUrl: item.embedUrl,
-            sourceUrl: item.sourceUrl,
-            lat: item.lat,
-            lng: item.lng,
-            stabilityScore: item.stabilityScore,
-            lastProbedAt: now,
-          },
-          create: {
-            source: item.source,
-            sourceType: item.sourceType,
-            mediaType: item.mediaType as "LIVE_VIDEO" | "SNAPSHOT",
-            externalId: item.externalId,
-            title: item.title,
-            countryName: item.countryName,
-            cityName: item.cityName,
-            lat: item.lat,
-            lng: item.lng,
-            categorySlug: item.categorySlug,
-            embedUrl: item.embedUrl,
-            sourceUrl: item.sourceUrl,
-            licenseNote: item.licenseNote,
-            privacyNote: item.privacyNote,
-            stabilityScore: item.stabilityScore,
-            lastProbedAt: now,
-            reviewStatus: "PENDING",
-          },
-        });
-      }
+      await prisma.candidate.createMany({
+        data: newItems.map((item) => ({
+          source: item.source,
+          sourceType: item.sourceType,
+          mediaType: item.mediaType as "LIVE_VIDEO" | "SNAPSHOT",
+          externalId: item.externalId,
+          title: item.title,
+          countryName: item.countryName,
+          cityName: item.cityName,
+          lat: item.lat,
+          lng: item.lng,
+          categorySlug: item.categorySlug,
+          embedUrl: item.embedUrl,
+          sourceUrl: item.sourceUrl,
+          licenseNote: item.licenseNote,
+          privacyNote: item.privacyNote,
+          stabilityScore: item.stabilityScore,
+          lastProbedAt: now,
+          reviewStatus: "PENDING",
+        })),
+        skipDuplicates: true,
+      });
 
       await prisma.discoveryJob.upsert({
         where: { id: "job-multi-source" },

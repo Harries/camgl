@@ -173,79 +173,92 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
         </div>
       </div>
 
-      {/* Unified Real Map + Active Preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div className="lg:col-span-8 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden flex flex-col shadow-sm">
-          <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400">
-            <span>MapLibre GL · {filtered.length} matching cameras</span>
-            <span className="inline-flex items-center gap-3 text-slate-600 dark:text-slate-300">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Live
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Selected
-              </span>
+      {/* Full-Width Real Map */}
+      <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden flex flex-col shadow-sm">
+        <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400">
+          <span>MapLibre GL · {filtered.length} matching cameras</span>
+          <span className="inline-flex items-center gap-3 text-slate-600 dark:text-slate-300">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Live
             </span>
-          </div>
-          <RealMap
-            webcams={filtered}
-            selectedSlug={activePin?.slug ?? ""}
-            onSelect={handleSelectPin}
-            focusCoords={focusCoords}
-          />
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Selected
+            </span>
+          </span>
         </div>
+        <RealMap
+          webcams={filtered}
+          selectedSlug={activePin?.slug ?? ""}
+          onSelect={handleSelectPin}
+          focusCoords={focusCoords}
+        />
+      </div>
 
-        {/* Selected Pin Preview + Countries Quick List */}
-        <div className="lg:col-span-4 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 flex flex-col justify-between gap-4 shadow-sm">
-          {activePin ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                <span>
-                  {activePin.country.flag} {activePin.country.name} · {activePin.city.name}
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400 font-semibold">
-                  {activePin.stream?.status ?? "LIVE"}
-                </span>
-              </div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{activePin.title}</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-3">{activePin.description}</p>
-              <div className="text-sm text-slate-600 dark:text-slate-300">{activePin.weatherSummary}</div>
-              <Link
-                href={`/webcams/${activePin.slug}`}
-                className="block w-full text-center py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
-              >
-                Open Live Stream →
-              </Link>
+      {/* Selected Pin Preview Bar */}
+      {activePin && (
+        <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5 min-w-0 flex-1">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <span>
+                {activePin.country.flag} {activePin.country.name} · {activePin.city.name}
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400 font-semibold">
+                {activePin.stream?.status ?? "LIVE"}
+              </span>
+              <span>{activePin.weatherSummary}</span>
             </div>
-          ) : (
-            <div className="text-xs text-slate-500 dark:text-slate-400">No cameras match this filter.</div>
-          )}
-
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
-            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Countries ({countries.length})</div>
-            <div className="flex flex-wrap gap-1.5">
-              {countries.map((ct) => {
-                const active = selectedCountry === ct.slug;
-                return (
-                  <button
-                    key={ct.slug}
-                    onClick={() => handleSelectCountry(ct.slug)}
-                    className={`px-2.5 py-1 rounded-lg text-xs border transition-colors flex items-center gap-1 ${
-                      active
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700"
-                    }`}
-                  >
-                    <span>{ct.flag}</span>
-                    <span>{ct.name}</span>
-                    <span className={active ? "text-blue-100" : "text-slate-400 dark:text-slate-500"}>
-                      ({ct.count})
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white truncate">
+              {activePin.title}
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
+              {activePin.description}
+            </p>
           </div>
+          <Link
+            href={`/webcams/${activePin.slug}`}
+            className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 text-center shadow-sm"
+          >
+            Open Live Stream →
+          </Link>
+        </div>
+      )}
+
+      {/* Countries Filter Bar */}
+      <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+            Countries ({countries.length})
+          </h2>
+          {selectedCountry && (
+            <button
+              onClick={resetAll}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            >
+              Show all countries
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {countries.map((ct) => {
+            const active = selectedCountry === ct.slug;
+            return (
+              <button
+                key={ct.slug}
+                onClick={() => handleSelectCountry(ct.slug)}
+                className={`px-3 py-1.5 rounded-xl text-xs border transition-colors flex items-center gap-1.5 ${
+                  active
+                    ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700"
+                }`}
+              >
+                <span>{ct.flag}</span>
+                <span className="font-medium">{ct.name}</span>
+                <span className={active ? "text-blue-100" : "text-slate-400 dark:text-slate-500"}>
+                  ({ct.count})
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

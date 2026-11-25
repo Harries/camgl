@@ -191,39 +191,50 @@ export async function collectFromWindy(): Promise<CollectedCandidateInput[]> {
   const apiKey = process.env.WINDY_API_KEY;
   if (!apiKey) return [];
 
-  try {
-    const res = await fetch(
-      "https://api.windy.com/webcams/api/v3/webcams?limit=12&include=player,location,categories,urls",
-      {
-        headers: { "x-windy-api-key": apiKey },
-        signal: AbortSignal.timeout(6000),
-      }
-    );
-    if (!res.ok) return [];
+  // Windy API v3 has ~70,000 webcams; fetch multiple 50-item pages with rotating offsets
+  const randomOffset = Math.floor(Math.random() * 300) * 50;
+  const offsets = [randomOffset, randomOffset + 50];
 
-    const json = (await res.json()) as {
-      webcams?: Array<{
-        webcamId: number;
-        title: string;
-        categories?: Array<{ id: string }>;
-        location?: {
-          city?: string;
-          country?: string;
-          latitude?: number;
-          longitude?: number;
+  try {
+    const pages = await Promise.all(
+      offsets.map(async (offset) => {
+        const res = await fetch(
+          `https://api.windy.com/webcams/api/v3/webcams?limit=50&offset=${offset}&include=player,location,categories,urls`,
+          {
+            headers: { "x-windy-api-key": apiKey },
+            signal: AbortSignal.timeout(6000),
+          }
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          webcams?: Array<{
+            webcamId: number;
+            title: string;
+            categories?: Array<{ id: string }>;
+            location?: {
+              city?: string;
+              country?: string;
+              latitude?: number;
+              longitude?: number;
+            };
+            player?: {
+              live?: string;
+              day?: string;
+            };
+            urls?: {
+              detail?: string;
+            };
+          }>;
         };
-        player?: {
-          live?: string;
-          day?: string;
-        };
-        urls?: {
-          detail?: string;
-        };
-      }>;
-    };
+        return json.webcams ?? [];
+      })
+    );
 
     const items: CollectedCandidateInput[] = [];
-    for (const w of json.webcams ?? []) {
+    const seen = new Set<number>();
+    for (const w of pages.flat()) {
+      if (seen.has(w.webcamId)) continue;
+      seen.add(w.webcamId);
       const embed = w.player?.live || w.player?.day;
       if (!embed) continue;
       items.push({
@@ -239,7 +250,9 @@ export async function collectFromWindy(): Promise<CollectedCandidateInput[]> {
         categorySlug: w.categories?.[0]?.id || "nature",
         embedUrl: embed,
         sourceUrl: w.urls?.detail || embed,
-        licenseNote: "Windy API v3 Official Player",
+        licenseNote: w.player?.live
+          ? "Windy API v3 Live Player"
+          : "Windy API v3 Daylight Player",
         privacyNote: "Pass · Windy Verified",
       });
     }
@@ -249,30 +262,51 @@ export async function collectFromWindy(): Promise<CollectedCandidateInput[]> {
   }
 }
 
+const YOUTUBE_DISCOVERY_QUERIES = [
+  "live webcam beach 4k",
+  "live city skyline webcam 24/7",
+  "live wildlife waterhole camera",
+  "live mountain ski webcam",
+  "live train railway webcam",
+  "live harbour port webcam",
+];
+
 export async function collectFromYouTube(): Promise<CollectedCandidateInput[]> {
   const apiKey = process.env.YOUTUBE_API_KEY;
   if (!apiKey) return [];
 
-  try {
-    const res = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&eventType=live&type=video&videoEmbeddable=true&maxResults=8&q=${encodeURIComponent(
-        "live scenic webcam 4k"
-      )}&key=${apiKey}`,
-      { signal: AbortSignal.timeout(6000) }
-    );
-    if (!res.ok) return [];
+  // Rotate 3 scenic queries per sync to discover diverse live streams
+  const startIdx = Math.floor(Math.random() * YOUTUBE_DISCOVERY_QUERIES.length);
+  const queries = [0, 1, 2].map(
+    (i) => YOUTUBE_DISCOVERY_QUERIES[(startIdx + i) % YOUTUBE_DISCOVERY_QUERIES.length]
+  );
 
-    const json = (await res.json()) as {
-      items?: Array<{
-        id?: { videoId?: string };
-        snippet?: { title?: string; channelTitle?: string };
-      }>;
-    };
+  try {
+    const pages = await Promise.all(
+      queries.map(async (q) => {
+        const res = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&eventType=live&type=video&videoEmbeddable=true&maxResults=10&q=${encodeURIComponent(
+            q
+          )}&key=${apiKey}`,
+          { signal: AbortSignal.timeout(6000) }
+        );
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          items?: Array<{
+            id?: { videoId?: string };
+            snippet?: { title?: string; channelTitle?: string };
+          }>;
+        };
+        return json.items ?? [];
+      })
+    );
 
     const items: CollectedCandidateInput[] = [];
-    for (const item of json.items ?? []) {
+    const seen = new Set<string>();
+    for (const item of pages.flat()) {
       const vid = item.id?.videoId;
-      if (!vid) continue;
+      if (!vid || seen.has(vid)) continue;
+      seen.add(vid);
       items.push({
         source: `YouTube API · ${item.snippet?.channelTitle || "Live"}`,
         sourceType: "youtube",
@@ -305,20 +339,27 @@ export async function collectAndProbeAllSources(): Promise<
   ]);
 
   const combined = [...windyItems, ...ytItems, ...PUBLIC_FEED_CATALOG];
-  const probed = await Promise.all(
-    combined.map(async (item) => {
-      const probe = await probeSourceStability(
-        item.sourceType,
-        item.embedUrl,
-        item.sourceUrl
-      );
-      return {
-        ...item,
-        stabilityScore: probe.stabilityScore,
-        lastProbedAt: new Date().toISOString(),
-      };
-    })
-  );
+  const probed: Array<Omit<AdminCandidate, "id" | "createdAt" | "reviewStatus">> = [];
+  const CHUNK_SIZE = 20;
+
+  for (let i = 0; i < combined.length; i += CHUNK_SIZE) {
+    const chunk = combined.slice(i, i + CHUNK_SIZE);
+    const results = await Promise.all(
+      chunk.map(async (item) => {
+        const probe = await probeSourceStability(
+          item.sourceType,
+          item.embedUrl,
+          item.sourceUrl
+        );
+        return {
+          ...item,
+          stabilityScore: probe.stabilityScore,
+          lastProbedAt: new Date().toISOString(),
+        };
+      })
+    );
+    probed.push(...results);
+  }
 
   // Sort by stabilityScore descending so admin sees the most stable sources first
   return probed.sort((a, b) => b.stabilityScore - a.stabilityScore);
