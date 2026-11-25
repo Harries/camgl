@@ -8,7 +8,7 @@ import { absoluteUrl, getYouTubeThumbnail, withOutboundSource } from "@/lib/seo"
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
 import { WebcamThumbnail } from "@/components/WebcamThumbnail";
 import { getServerLocale } from "@/lib/i18n-server";
-import { formatMessage, getMessages } from "@/lib/i18n";
+import { formatMessage, getCategoryLabel, getMessages } from "@/lib/i18n";
 
 export const revalidate = 300;
 
@@ -231,7 +231,7 @@ export default async function WebcamDetailPage({
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           {webcam.country.flag} {webcam.city.name}, {webcam.country.name} ·{" "}
-          {webcam.categories.map((c) => c.name).join(", ")}
+          {webcam.categories.map((c) => getCategoryLabel(locale, c.slug, c.name)).join(", ")}
         </p>
       </div>
 
@@ -305,7 +305,9 @@ export default async function WebcamDetailPage({
                   href={`/categories/${cat.slug}`}
                   className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 >
-                  {formatMessage(tw.categoryWebcams, { name: cat.name })}
+                  {formatMessage(tw.categoryWebcams, {
+                    name: getCategoryLabel(locale, cat.slug, cat.name),
+                  })}
                 </Link>
               ))}
               <Link

@@ -176,6 +176,7 @@ export interface Messages {
     faq4Q: string;
     faq4A: string;
   };
+  categories: Record<string, string>;
 }
 
 const en: Messages = {
@@ -349,6 +350,18 @@ const en: Messages = {
     faq4A:
       "Yes. All public scenic webcams on LiveCam Global are free to watch with no registration required, embedded from official or public-domain sources.",
   },
+  categories: {
+    all: "All",
+    city: "City",
+    beach: "Beach",
+    nature: "Nature",
+    wildlife: "Wildlife",
+    rail: "Rail",
+    ski: "Ski",
+    volcano: "Volcano",
+    port: "Port",
+    live: "Live",
+  },
 };
 
 const zh: Messages = {
@@ -509,6 +522,18 @@ const zh: Messages = {
     faq4Q: "观看 {city} 的这个实景摄像头需要付费或注册吗？",
     faq4A: "不需要。LiveCam Global 上的所有公开风景摄像头均免费免注册观看，视频均来自官方或公开授权嵌入源。",
   },
+  categories: {
+    all: "全部",
+    city: "城市",
+    beach: "海滩",
+    nature: "自然",
+    wildlife: "野生动物",
+    rail: "铁路",
+    ski: "滑雪",
+    volcano: "火山",
+    port: "港口",
+    live: "直播",
+  },
 };
 
 const ja: Messages = {
@@ -667,6 +692,18 @@ const ja: Messages = {
     faq3A: "{provider} 提供の {format}（{mediaType}）形式で配信されており、稼働状況は自動監視されています。",
     faq4Q: "この {city} のライブカメラは無料で視聴できますか？",
     faq4A: "はい。LiveCam Global の公開風景カメラは登録不要で無料視聴できます。",
+  },
+  categories: {
+    all: "すべて",
+    city: "都市",
+    beach: "ビーチ",
+    nature: "自然",
+    wildlife: "野生動物",
+    rail: "鉄道",
+    ski: "スキー",
+    volcano: "火山",
+    port: "港湾",
+    live: "ライブ",
   },
 };
 
@@ -828,6 +865,18 @@ const es: Messages = {
     faq4Q: "¿Es gratis ver esta cámara en vivo de {city}?",
     faq4A: "Sí, todas las cámaras públicas en LiveCam Global son gratuitas y sin registro.",
   },
+  categories: {
+    all: "Todas",
+    city: "Ciudad",
+    beach: "Playa",
+    nature: "Naturaleza",
+    wildlife: "Fauna",
+    rail: "Ferrocarril",
+    ski: "Esquí",
+    volcano: "Volcán",
+    port: "Puerto",
+    live: "En vivo",
+  },
 };
 
 const fr: Messages = {
@@ -988,12 +1037,34 @@ const fr: Messages = {
     faq4Q: "Cette webcam de {city} est-elle gratuite ?",
     faq4A: "Oui, toutes les webcams panoramiques publiques sur LiveCam Global sont gratuites et sans inscription.",
   },
+  categories: {
+    all: "Toutes",
+    city: "Ville",
+    beach: "Plage",
+    nature: "Nature",
+    wildlife: "Faune",
+    rail: "Train",
+    ski: "Ski",
+    volcano: "Volcan",
+    port: "Port",
+    live: "Direct",
+  },
 };
 
 const DICTIONARIES: Record<Locale, Messages> = { en, zh, ja, es, fr };
 
 export function getMessages(locale: Locale): Messages {
   return DICTIONARIES[locale] ?? en;
+}
+
+export function getCategoryLabel(
+  locale: Locale,
+  slug: string,
+  fallback?: string
+): string {
+  const key = slug.toLowerCase().trim();
+  const dict = getMessages(locale).categories;
+  return dict[key] ?? en.categories[key] ?? fallback ?? slug;
 }
 
 export function formatMessage(

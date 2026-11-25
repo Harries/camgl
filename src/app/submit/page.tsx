@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { getCategoryLabel } from "@/lib/i18n";
 import { useI18n } from "@/components/I18nProvider";
 
 export default function SubmitPage() {
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   const ts = messages.submit;
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -87,14 +88,14 @@ export default function SubmitPage() {
               onChange={(e) => setForm({ ...form, category: e.target.value })}
               className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-800"
             >
-              <option>City</option>
-              <option>Beach</option>
-              <option>Nature</option>
-              <option>Wildlife</option>
-              <option>Rail</option>
-              <option>Ski</option>
-              <option>Volcano</option>
-              <option>Port</option>
+              <option value="City">{getCategoryLabel(locale, "city", "City")}</option>
+              <option value="Beach">{getCategoryLabel(locale, "beach", "Beach")}</option>
+              <option value="Nature">{getCategoryLabel(locale, "nature", "Nature")}</option>
+              <option value="Wildlife">{getCategoryLabel(locale, "wildlife", "Wildlife")}</option>
+              <option value="Rail">{getCategoryLabel(locale, "rail", "Rail")}</option>
+              <option value="Ski">{getCategoryLabel(locale, "ski", "Ski")}</option>
+              <option value="Volcano">{getCategoryLabel(locale, "volcano", "Volcano")}</option>
+              <option value="Port">{getCategoryLabel(locale, "port", "Port")}</option>
             </select>
           </label>
         </div>

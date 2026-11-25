@@ -1,16 +1,25 @@
+"use client";
+
 import Link from "next/link";
 import type { PublicWebcam } from "@/lib/types";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
+import { getCategoryLabel } from "@/lib/i18n";
+import { useI18n } from "./I18nProvider";
 import { WebcamThumbnail } from "./WebcamThumbnail";
 
 export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
+  const { locale } = useI18n();
   const { isDaylight, localTime } = getDaylightInfo(
     webcam.city.lat,
     webcam.city.lng,
     webcam.city.timezone
   );
-  const primaryCat = webcam.categories[0]?.name ?? "Live";
+  const primaryCat = getCategoryLabel(
+    locale,
+    webcam.categories[0]?.slug ?? "live",
+    webcam.categories[0]?.name ?? "Live"
+  );
   const isLive = webcam.stream?.status === "LIVE";
   const sourceMeta = getSourceTypeMeta(webcam.stream?.sourceType);
 

@@ -5,9 +5,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { PublicWebcam } from "@/lib/types";
 import { RealMap } from "./RealMap";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
+import { getCategoryLabel } from "@/lib/i18n";
+import { useI18n } from "./I18nProvider";
 import { WebcamThumbnail } from "./WebcamThumbnail";
 
 export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
+  const { locale } = useI18n();
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedSlug, setSelectedSlug] = useState<string>(webcams[0]?.slug ?? "");
@@ -190,7 +193,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
                   : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
               }`}
             >
-              {cat}
+              {getCategoryLabel(locale, cat, cat)}
             </button>
           ))}
         </div>

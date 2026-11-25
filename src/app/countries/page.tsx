@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { listApprovedWebcams, listCategories } from "@/lib/repository";
 import { WorldExplorerClient } from "@/components/WorldExplorerClient";
 import { absoluteUrl } from "@/lib/seo";
+import { getServerLocale } from "@/lib/i18n-server";
+import { formatMessage, getCategoryLabel, getMessages } from "@/lib/i18n";
 
 export const revalidate = 600;
 
@@ -27,10 +29,12 @@ export const metadata: Metadata = {
 };
 
 export default async function CountriesPage() {
-  const [webcams, categories] = await Promise.all([
+  const [webcams, categories, locale] = await Promise.all([
     listApprovedWebcams(),
     listCategories(),
+    getServerLocale(),
   ]);
+  const tw = getMessages(locale).webcam;
 
   // Build hierarchical Country -> Cities directory for SSR SEO links
   const directoryMap = new Map<
@@ -178,7 +182,7 @@ export default async function CountriesPage() {
         {/* Category Directory Links */}
         <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400 mr-1">
-            Browse by Category:
+            {tw.categoriesLabel}
           </span>
           {categories.map((cat) => (
             <Link
@@ -186,7 +190,9 @@ export default async function CountriesPage() {
               href={`/categories/${cat.slug}`}
               className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
             >
-              {cat.name} Webcams
+              {formatMessage(tw.categoryWebcams, {
+                name: getCategoryLabel(locale, cat.slug, cat.name),
+              })}
             </Link>
           ))}
         </div>

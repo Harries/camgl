@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { listApprovedWebcams, listCategories } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
+import { getServerLocale } from "@/lib/i18n-server";
+import { formatMessage, getCategoryLabel, getMessages } from "@/lib/i18n";
 
 export const revalidate = 600;
 
@@ -37,22 +39,27 @@ export default async function CategoryPage({
   params: Promise<{ category: string }>;
 }) {
   const { category } = await params;
-  const [webcams, categories] = await Promise.all([
+  const [webcams, categories, locale] = await Promise.all([
     listApprovedWebcams({ category }),
     listCategories(),
+    getServerLocale(),
   ]);
   const catInfo = categories.find((c) => c.slug === category);
   if (!catInfo) notFound();
+  const catLabel = getCategoryLabel(locale, catInfo.slug, catInfo.name);
+  const tw = getMessages(locale).webcam;
 
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-sm space-y-2">
         <div className="text-xs text-slate-500 dark:text-slate-400">
-          <Link href="/" className="hover:underline">Home</Link> / Categories / {catInfo.name}
+          <Link href="/" className="hover:underline">{tw.home}</Link> / {catLabel}
         </div>
-        <h1 className="text-xl font-bold text-slate-900 dark:text-white">{catInfo.name} Live Webcams</h1>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+          {formatMessage(tw.categoryWebcams, { name: catLabel })}
+        </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          {webcams.length} verified {catInfo.name.toLowerCase()} live stream{webcams.length === 1 ? "" : "s"}
+          {formatMessage(getMessages(locale).home.showingWebcams, { count: webcams.length })}
         </p>
       </div>
 

@@ -3,7 +3,7 @@ import { listApprovedWebcamsPage, listCategories, listCountriesSummary } from "@
 import { InfiniteWebcamGrid } from "@/components/InfiniteWebcamGrid";
 import { getWebcamPreviewUrl } from "@/lib/source-badge";
 import { getServerLocale } from "@/lib/i18n-server";
-import { formatMessage, getMessages } from "@/lib/i18n";
+import { formatMessage, getCategoryLabel, getMessages } from "@/lib/i18n";
 
 export const revalidate = 300;
 
@@ -142,7 +142,7 @@ export default async function HomePage({
                   : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
               }`}
             >
-              {cat.name}
+              {getCategoryLabel(locale, cat.slug, cat.name)}
             </Link>
           ))}
         </div>
