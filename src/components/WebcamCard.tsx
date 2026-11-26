@@ -16,7 +16,13 @@ import {
 import { useI18n } from "./I18nProvider";
 import { WebcamThumbnail } from "./WebcamThumbnail";
 
-export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
+export function WebcamCard({
+  webcam,
+  videoBottomLeft,
+}: {
+  webcam: PublicWebcam;
+  videoBottomLeft?: React.ReactNode;
+}) {
   const { locale } = useI18n();
   const { isDaylight, localTime } = getDaylightInfo(
     webcam.city.lat,
@@ -68,6 +74,11 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
             {primaryCat}
           </span>
         </div>
+        {videoBottomLeft && (
+          <div className="absolute bottom-2.5 left-2.5 z-10 flex items-center gap-1.5">
+            {videoBottomLeft}
+          </div>
+        )}
         <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded text-xs bg-black/60 text-white backdrop-blur tabular-nums">
           {isDaylight ? "☀️" : "🌙"} {localTime}
         </div>
