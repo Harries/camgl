@@ -1384,6 +1384,119 @@ export async function listCountriesSummary() {
   }));
 }
 
+export interface NavCountryItem {
+  name: string;
+  slug: string;
+  isoCode: string;
+  flag: string;
+  webcamCount: number;
+  cities: Array<{ name: string; slug: string; webcamCount: number }>;
+}
+
+export async function listCountriesWithCities(): Promise<NavCountryItem[]> {
+  const buildFromRows = (
+    rows: Array<{
+      country: { name: string; slug: string; isoCode: string; flag: string };
+      city: { name: string; slug: string };
+    }>
+  ): NavCountryItem[] => {
+    const map = new Map<
+      string,
+      {
+        name: string;
+        slug: string;
+        isoCode: string;
+        flag: string;
+        webcamCount: number;
+        cities: Map<string, { name: string; slug: string; webcamCount: number }>;
+      }
+    >();
+
+    for (const r of rows) {
+      let c = map.get(r.country.slug);
+      if (!c) {
+        c = {
+          name: r.country.name,
+          slug: r.country.slug,
+          isoCode: r.country.isoCode,
+          flag: r.country.flag,
+          webcamCount: 0,
+          cities: new Map(),
+        };
+        map.set(r.country.slug, c);
+      }
+      c.webcamCount += 1;
+      const existingCity = c.cities.get(r.city.slug) ?? {
+        name: r.city.name,
+        slug: r.city.slug,
+        webcamCount: 0,
+      };
+      existingCity.webcamCount += 1;
+      c.cities.set(r.city.slug, existingCity);
+    }
+
+    return Array.from(map.values())
+      .map((c) => ({
+        name: c.name,
+        slug: c.slug,
+        isoCode: c.isoCode,
+        flag: c.flag,
+        webcamCount: c.webcamCount,
+        cities: Array.from(c.cities.values()).sort((a, b) => b.webcamCount - a.webcamCount),
+      }))
+      .sort((a, b) => b.webcamCount - a.webcamCount);
+  };
+
+  if (isDbConfigured()) {
+    try {
+      const rows = await prisma.webcam.findMany({
+        where: {
+          reviewStatus: "APPROVED",
+          streams: {
+            some: { isPrimary: true, status: "LIVE", mediaType: "LIVE_VIDEO" },
+          },
+          city: {
+            country: { slug: { not: "international" } },
+            NOT: { AND: [{ lat: 0 }, { lng: 0 }] },
+          },
+        },
+        select: {
+          city: {
+            select: {
+              name: true,
+              slug: true,
+              country: {
+                select: { name: true, slug: true, isoCode: true, flag: true },
+              },
+            },
+          },
+        },
+      });
+      return buildFromRows(
+        rows.map((r) => ({
+          country: r.city.country,
+          city: { name: r.city.name, slug: r.city.slug },
+        }))
+      );
+    } catch {
+      // Fallback
+    }
+  }
+
+  return buildFromRows(
+    memStore.webcams
+      .filter((w) => {
+        if (w.reviewStatus && w.reviewStatus !== "APPROVED") return false;
+        if (w.stream?.status !== "LIVE") return false;
+        return isFixedLocationWebcam(w);
+      })
+      .map((w) => ({
+        country: w.country,
+        city: { name: w.city.name, slug: w.city.slug },
+      }))
+  );
+}
+
 export async function listCategories() {
   if (isDbConfigured()) {
     try {

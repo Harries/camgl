@@ -22,7 +22,16 @@ import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useI18n } from "./I18nProvider";
-import { localizePath, stripLocalePrefix } from "@/lib/i18n";
+import { getCityLabel, getCountryLabel, localizePath, stripLocalePrefix } from "@/lib/i18n";
+
+interface NavCountryNode {
+  name: string;
+  slug: string;
+  isoCode: string;
+  flag: string;
+  webcamCount: number;
+  cities: Array<{ name: string; slug: string; webcamCount: number }>;
+}
 
 export function Navbar() {
   const pathname = usePathname();
@@ -32,6 +41,11 @@ export function Navbar() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [countriesOpen, setCountriesOpen] = useState(false);
+  const [navCountries, setNavCountries] = useState<NavCountryNode[]>([]);
+  const [activeCountrySlug, setActiveCountrySlug] = useState<string>("");
+  const countriesLoadedRef = useRef(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { locale, messages } = useI18n();
   const t = messages.nav;
   const ta = messages.auth;
@@ -60,7 +74,41 @@ export function Navbar() {
 
   useEffect(() => {
     setMenuOpen(false);
+    setCountriesOpen(false);
   }, [pathname]);
+
+  const openCountriesMenu = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setCountriesOpen(true);
+    if (!countriesLoadedRef.current) {
+      countriesLoadedRef.current = true;
+      fetch("/api/v1/countries")
+        .then((res) => (res.ok ? res.json() : { countries: [] }))
+        .then((data: { countries?: NavCountryNode[] }) => {
+          const list = data.countries ?? [];
+          setNavCountries(list);
+          if (list.length > 0) {
+            setActiveCountrySlug((prev) => prev || list[0].slug);
+          }
+        })
+        .catch(() => {
+          countriesLoadedRef.current = false;
+        });
+    }
+  };
+
+  const scheduleCloseCountriesMenu = () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = setTimeout(() => {
+      setCountriesOpen(false);
+    }, 150);
+  };
+
+  const activeCountry =
+    navCountries.find((c) => c.slug === activeCountrySlug) ?? navCountries[0] ?? null;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -147,7 +195,125 @@ export function Navbar() {
 
           <nav className="flex items-center gap-1 sm:gap-1.5">
             {navLink("/", t.discover, <Compass className="w-4 h-4 shrink-0" />, true)}
-            {navLink("/countries", t.mapAndCountries, <MapPin className="w-4 h-4 shrink-0" />)}
+            <div
+              className="relative"
+              onMouseEnter={openCountriesMenu}
+              onMouseLeave={scheduleCloseCountriesMenu}
+            >
+              {navLink("/countries", t.mapAndCountries, <MapPin className="w-4 h-4 shrink-0" />)}
+              {countriesOpen && (
+                <div className="hidden md:block absolute left-0 top-full pt-2 z-50">
+                  <div className="w-[560px] max-w-[90vw] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
+                    <div className="grid grid-cols-12 h-[360px]">
+                      {/* Left: Countries */}
+                      <div className="col-span-5 border-r border-slate-100 dark:border-slate-800 overflow-y-auto p-2 space-y-0.5 bg-slate-50/60 dark:bg-slate-950/40">
+                        {navCountries.length === 0 ? (
+                          <div className="p-4 text-xs text-slate-400">Loading...</div>
+                        ) : (
+                          navCountries.map((co) => {
+                            const isActive = activeCountry?.slug === co.slug;
+                            return (
+                              <Link
+                                key={co.slug}
+                                href={localizePath(`/countries/${co.slug}`, locale)}
+                                onMouseEnter={() => setActiveCountrySlug(co.slug)}
+                                onClick={() => setCountriesOpen(false)}
+                                className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs transition-colors ${
+                                  isActive
+                                    ? "bg-blue-600 text-white font-semibold shadow-sm"
+                                    : "text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800"
+                                }`}
+                              >
+                                <span className="flex items-center gap-2 min-w-0">
+                                  <span className="shrink-0">{co.flag}</span>
+                                  <span className="truncate">
+                                    {getCountryLabel(locale, co.slug, co.name, co.isoCode)}
+                                  </span>
+                                </span>
+                                <span
+                                  className={`shrink-0 text-[11px] tabular-nums px-1.5 py-0.5 rounded-full ${
+                                    isActive
+                                      ? "bg-white/20 text-white"
+                                      : "bg-slate-200/70 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                                  }`}
+                                >
+                                  {co.webcamCount}
+                                </span>
+                              </Link>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {/* Right: Cities of hovered country */}
+                      <div className="col-span-7 overflow-y-auto p-3.5 space-y-3">
+                        {activeCountry ? (
+                          <>
+                            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                              <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
+                                <span>{activeCountry.flag}</span>
+                                <span>
+                                  {getCountryLabel(
+                                    locale,
+                                    activeCountry.slug,
+                                    activeCountry.name,
+                                    activeCountry.isoCode
+                                  )}
+                                </span>
+                              </div>
+                              <Link
+                                href={localizePath(`/countries/${activeCountry.slug}`, locale)}
+                                onClick={() => setCountriesOpen(false)}
+                                className="text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                              >
+                                {messages.home.viewAllCountries.replace("countries", "").trim() || "View all →"}
+                              </Link>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {activeCountry.cities.map((ci) => (
+                                <Link
+                                  key={ci.slug}
+                                  href={localizePath(
+                                    `/countries/${activeCountry.slug}/${ci.slug}`,
+                                    locale
+                                  )}
+                                  onClick={() => setCountriesOpen(false)}
+                                  className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-slate-800 dark:hover:text-blue-400 transition-colors"
+                                >
+                                  <span className="truncate font-medium">
+                                    {getCityLabel(locale, ci.slug, ci.name)}
+                                  </span>
+                                  <span className="text-[11px] text-slate-400 dark:text-slate-500 tabular-nums shrink-0">
+                                    {ci.webcamCount}
+                                  </span>
+                                </Link>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="p-4 text-xs text-slate-400">
+                            {messages.countries.heroSubtitle}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="px-4 py-2.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 flex items-center justify-between text-xs">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        {navCountries.length} {messages.home.countries}
+                      </span>
+                      <Link
+                        href={localizePath("/countries", locale)}
+                        onClick={() => setCountriesOpen(false)}
+                        className="font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {messages.home.exploreMap} →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <span className="hidden lg:inline-flex">
               {navLink("/popular", t.popular, <Flame className="w-4 h-4 shrink-0" />)}
             </span>
