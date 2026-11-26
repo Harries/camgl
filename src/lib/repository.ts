@@ -2256,12 +2256,13 @@ export async function approveCandidate(id: string) {
       if (!cand) return null;
 
       // If this stream is already in the database, mark candidate approved and ensure webcam is live
-      const existingStream = await prisma.stream.findUnique({
+      const existingStream = await prisma.stream.findFirst({
         where: {
-          sourceType_externalId: {
-            sourceType: cand.sourceType,
-            externalId: cand.externalId,
-          },
+          OR: [
+            { sourceType: cand.sourceType, externalId: cand.externalId },
+            { embedUrl: cand.embedUrl },
+            { sourceUrl: cand.sourceUrl },
+          ],
         },
         include: { webcam: true },
       });
@@ -2340,11 +2341,19 @@ export async function approveCandidate(id: string) {
             create: {
               sourceType: cand.sourceType,
               externalId: cand.externalId,
+              channelId: cand.channelId ?? null,
               embedUrl: cand.embedUrl,
               sourceUrl: cand.sourceUrl,
               mediaType: cand.mediaType,
               status: "LIVE",
               lastCheckedAt: new Date(),
+            },
+          },
+          licenses: {
+            create: {
+              permissionType: cand.licenseNote || "Official Public Embed",
+              evidence: cand.sourceUrl,
+              status: "ACTIVE",
             },
           },
           ...(category
@@ -2374,6 +2383,24 @@ export async function approveCandidate(id: string) {
   const idx = memStore.candidates.findIndex((c) => c.id === id);
   if (idx === -1) return null;
   const cand = memStore.candidates.splice(idx, 1)[0];
+
+  const existingMem = memStore.webcams.find(
+    (w) =>
+      (w.stream?.sourceType === cand.sourceType && w.stream?.externalId === cand.externalId) ||
+      w.stream?.embedUrl === cand.embedUrl ||
+      w.stream?.sourceUrl === cand.sourceUrl ||
+      (w.title.toLowerCase() === cand.title.toLowerCase() &&
+        w.city.name.toLowerCase() === cand.cityName.toLowerCase())
+  );
+  if (existingMem) {
+    existingMem.reviewStatus = "APPROVED";
+    if (existingMem.stream) {
+      existingMem.stream.status = "LIVE";
+      existingMem.stream.lastCheckedAt = new Date().toISOString();
+    }
+    return existingMem;
+  }
+
   const slug = slugify(cand.title);
   const newCam: PublicWebcam & { reviewStatus?: string } = {
     id: `cam-${Date.now()}`,
@@ -2693,15 +2720,34 @@ export async function syncAllSourceCandidates() {
   if (isDbConfigured()) {
     try {
       const now = new Date();
-      const existingStreams = await prisma.stream.findMany({
-        select: { sourceType: true, externalId: true },
+      const [existingStreams, existingCandidates] = await Promise.all([
+        prisma.stream.findMany({
+          select: { sourceType: true, externalId: true, embedUrl: true, sourceUrl: true },
+        }),
+        prisma.candidate.findMany({
+          select: { sourceType: true, externalId: true, embedUrl: true },
+        }),
+      ]);
+      const existingKeys = new Set([
+        ...existingStreams.map((s) => `${s.sourceType}:${s.externalId}`),
+        ...existingCandidates.map((c) => `${c.sourceType}:${c.externalId}`),
+      ]);
+      const existingUrls = new Set([
+        ...existingStreams.map((s) => s.embedUrl),
+        ...existingStreams.map((s) => s.sourceUrl),
+        ...existingCandidates.map((c) => c.embedUrl),
+      ]);
+      const seenBatch = new Set<string>();
+      const newItems = items.filter((item) => {
+        const key = `${item.sourceType}:${item.externalId}`;
+        if (existingKeys.has(key) || existingUrls.has(item.embedUrl) || existingUrls.has(item.sourceUrl)) {
+          return false;
+        }
+        if (seenBatch.has(key) || seenBatch.has(item.embedUrl)) return false;
+        seenBatch.add(key);
+        seenBatch.add(item.embedUrl);
+        return true;
       });
-      const existingKeys = new Set(
-        existingStreams.map((s) => `${s.sourceType}:${s.externalId}`)
-      );
-      const newItems = items.filter(
-        (item) => !existingKeys.has(`${item.sourceType}:${item.externalId}`)
-      );
 
       await prisma.candidate.createMany({
         data: newItems.map((item) => ({
@@ -2760,8 +2806,19 @@ export async function syncAllSourceCandidates() {
   }
 
   for (const item of items) {
+    const alreadyInWebcams = memStore.webcams.some(
+      (w) =>
+        (w.stream?.sourceType === item.sourceType && w.stream?.externalId === item.externalId) ||
+        w.stream?.embedUrl === item.embedUrl ||
+        w.stream?.sourceUrl === item.sourceUrl
+    );
+    if (alreadyInWebcams) continue;
+
     const existing = memStore.candidates.find(
-      (c) => c.source === item.source && c.externalId === item.externalId
+      (c) =>
+        (c.sourceType === item.sourceType && c.externalId === item.externalId) ||
+        c.embedUrl === item.embedUrl ||
+        c.sourceUrl === item.sourceUrl
     );
     if (existing) {
       existing.stabilityScore = item.stabilityScore;
@@ -3439,4 +3496,110 @@ export async function backfillMissingLicensesAdmin(): Promise<{ created: number 
     }
   }
   return { created };
+}
+
+export async function deduplicateWebcamsAdmin(): Promise<{
+  removedWebcams: number;
+  removedCandidates: number;
+}> {
+  if (isDbConfigured()) {
+    try {
+      const [webcams, candidates] = await Promise.all([
+        prisma.webcam.findMany({
+          include: { streams: { where: { isPrimary: true }, take: 1 } },
+          orderBy: [{ viewCount: "desc" }, { createdAt: "asc" }],
+        }),
+        prisma.candidate.findMany({
+          where: { reviewStatus: "PENDING" },
+          orderBy: [{ stabilityScore: "desc" }, { createdAt: "asc" }],
+        }),
+      ]);
+
+      const seenCamKeys = new Set<string>();
+      const dupWebcamIds: string[] = [];
+      for (const w of webcams) {
+        const s = w.streams[0];
+        const keys = [
+          s ? `${s.sourceType}:${s.externalId}` : "",
+          s?.embedUrl || "",
+          s?.sourceUrl || "",
+          `${w.title.trim().toLowerCase()}::${w.cityId}`,
+        ].filter(Boolean);
+
+        if (keys.some((k) => seenCamKeys.has(k))) {
+          dupWebcamIds.push(w.id);
+        } else {
+          for (const k of keys) seenCamKeys.add(k);
+        }
+      }
+
+      if (dupWebcamIds.length > 0) {
+        await prisma.webcam.deleteMany({ where: { id: { in: dupWebcamIds } } });
+      }
+
+      const seenCandKeys = new Set<string>();
+      const dupCandIds: string[] = [];
+      for (const c of candidates) {
+        const keys = [`${c.sourceType}:${c.externalId}`, c.embedUrl, c.sourceUrl].filter(Boolean);
+        if (keys.some((k) => seenCamKeys.has(k) || seenCandKeys.has(k))) {
+          dupCandIds.push(c.id);
+        } else {
+          for (const k of keys) seenCandKeys.add(k);
+        }
+      }
+
+      if (dupCandIds.length > 0) {
+        await prisma.candidate.deleteMany({ where: { id: { in: dupCandIds } } });
+      }
+
+      if (dupWebcamIds.length > 0 || dupCandIds.length > 0) {
+        await prisma.auditLog.create({
+          data: {
+            actor: "admin@livecam",
+            action: "DEDUPLICATE_WEBCAMS",
+            targetType: "webcam",
+            targetId: `${dupWebcamIds.length} webcams, ${dupCandIds.length} candidates removed`,
+          },
+        });
+      }
+
+      return { removedWebcams: dupWebcamIds.length, removedCandidates: dupCandIds.length };
+    } catch {
+      return { removedWebcams: 0, removedCandidates: 0 };
+    }
+  }
+
+  const seenCam = new Set<string>();
+  const keptWebcams: typeof memStore.webcams = [];
+  let removedWebcams = 0;
+  for (const w of memStore.webcams) {
+    const keys = [
+      w.stream ? `${w.stream.sourceType}:${w.stream.externalId}` : "",
+      w.stream?.embedUrl || "",
+      w.stream?.sourceUrl || "",
+      `${w.title.trim().toLowerCase()}::${w.city.slug}`,
+    ].filter(Boolean);
+    if (keys.some((k) => seenCam.has(k))) {
+      removedWebcams += 1;
+    } else {
+      for (const k of keys) seenCam.add(k);
+      keptWebcams.push(w);
+    }
+  }
+  memStore.webcams = keptWebcams;
+
+  const seenCand = new Set<string>();
+  const keptCands: typeof memStore.candidates = [];
+  let removedCandidates = 0;
+  for (const c of memStore.candidates) {
+    const keys = [`${c.sourceType}:${c.externalId}`, c.embedUrl, c.sourceUrl].filter(Boolean);
+    if (keys.some((k) => seenCam.has(k) || seenCand.has(k))) {
+      removedCandidates += 1;
+    } else {
+      for (const k of keys) seenCand.add(k);
+      keptCands.push(c);
+    }
+  }
+  memStore.candidates = keptCands;
+  return { removedWebcams, removedCandidates };
 }

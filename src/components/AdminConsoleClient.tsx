@@ -28,7 +28,6 @@ import {
   FileCheck2,
   Languages,
   Building2,
-  TrendingUp,
 } from "lucide-react";
 import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -44,8 +43,6 @@ import type {
   AdminLicense,
   AdminProvider,
   AdminReport,
-  AdminSeoIssue,
-  AdminSeoRedirect,
   AdminSubmission,
   AdminTranslation,
   AdminUser,
@@ -69,8 +66,6 @@ interface AdminData {
   translations?: AdminTranslation[];
   providers?: AdminProvider[];
   submissions?: AdminSubmission[];
-  seoRedirects?: AdminSeoRedirect[];
-  seoIssues?: AdminSeoIssue[];
   telemetry?: {
     sampleCount: number;
     lcpP75Ms: number | null;
@@ -100,7 +95,6 @@ export function AdminConsoleClient({
     | "licenses"
     | "translations"
     | "partners"
-    | "seo"
     | "categories"
     | "locations"
     | "users"
@@ -128,11 +122,6 @@ export function AdminConsoleClient({
     website: "",
     contact: "",
     verified: true,
-  });
-  const [redirectForm, setRedirectForm] = useState({
-    fromPath: "",
-    toPath: "",
-    statusCode: 301,
   });
   const [userSearch, setUserSearch] = useState("");
   const [collapsed, setCollapsed] = useState(false);
@@ -394,12 +383,6 @@ export function AdminConsoleClient({
       label: "Partners & Submissions",
       badge: (data.submissions ?? []).filter((s) => s.status === "PENDING").length,
       icon: Building2,
-    },
-    {
-      key: "seo" as const,
-      label: "SEO & Redirects",
-      badge: (data.seoIssues ?? []).length,
-      icon: TrendingUp,
     },
     {
       key: "categories" as const,
@@ -1089,6 +1072,14 @@ export function AdminConsoleClient({
                     <option value="hls">HLS .m3u8</option>
                     <option value="snapshot">Snapshot</option>
                   </select>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => runAction({ action: "deduplicateWebcams" })}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300 disabled:opacity-50"
+                  >
+                    Remove Duplicates
+                  </button>
                 </div>
               </div>
 
@@ -2240,152 +2231,6 @@ export function AdminConsoleClient({
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
-
-          {tab === "seo" && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm">
-                  <div className="text-xs text-slate-500">Indexable Sitemaps</div>
-                  <div className="text-lg font-bold text-slate-900 dark:text-white mt-1">
-                    5 Locales + Index
-                  </div>
-                  <a
-                    href="/sitemap.xml"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1 mt-1"
-                  >
-                    Open /sitemap.xml <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm">
-                  <div className="text-xs text-slate-500">Quality Issues Detected</div>
-                  <div className="text-lg font-bold text-amber-600 mt-1">
-                    {(data.seoIssues ?? []).length}
-                  </div>
-                  <div className="text-xs text-slate-400 mt-1">
-                    Thin descriptions, missing licenses, offline streams
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm">
-                  <div className="text-xs text-slate-500">Active Redirects</div>
-                  <div className="text-lg font-bold text-slate-900 dark:text-white mt-1">
-                    {(data.seoRedirects ?? []).length}
-                  </div>
-                  <div className="text-xs text-slate-400 mt-1">301 / 302 URL preservation rules</div>
-                </div>
-              </div>
-
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const ok = await runAction({ action: "saveSeoRedirect", ...redirectForm });
-                  if (ok) setRedirectForm({ fromPath: "", toPath: "", statusCode: 301 });
-                }}
-                className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm space-y-3"
-              >
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Add Redirect Rule
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                  <input
-                    type="text"
-                    required
-                    value={redirectForm.fromPath}
-                    onChange={(e) => setRedirectForm((f) => ({ ...f, fromPath: e.target.value }))}
-                    placeholder="/old-webcam-slug"
-                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-                  />
-                  <input
-                    type="text"
-                    required
-                    value={redirectForm.toPath}
-                    onChange={(e) => setRedirectForm((f) => ({ ...f, toPath: e.target.value }))}
-                    placeholder="/webcams/new-slug"
-                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-                  />
-                  <select
-                    value={redirectForm.statusCode}
-                    onChange={(e) =>
-                      setRedirectForm((f) => ({ ...f, statusCode: Number(e.target.value) }))
-                    }
-                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-                  >
-                    <option value={301}>301 Permanent</option>
-                    <option value={302}>302 Temporary</option>
-                  </select>
-                  <button
-                    type="submit"
-                    disabled={busy}
-                    className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    Save Redirect
-                  </button>
-                </div>
-              </form>
-
-              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-x-auto shadow-sm">
-                <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  SEO Quality Issues ({(data.seoIssues ?? []).length})
-                </div>
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                    <tr>
-                      <th className="px-4 py-2.5 font-medium">Webcam</th>
-                      <th className="px-4 py-2.5 font-medium">Slug</th>
-                      <th className="px-4 py-2.5 font-medium">Issues</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {(data.seoIssues ?? []).slice(0, 30).map((issue) => (
-                      <tr key={issue.webcamId}>
-                        <td className="px-4 py-2.5 font-medium text-slate-900 dark:text-white">
-                          {issue.title}
-                        </td>
-                        <td className="px-4 py-2.5 font-mono text-slate-500">{issue.slug}</td>
-                        <td className="px-4 py-2.5 text-amber-600 dark:text-amber-400">
-                          {issue.issues.join(" · ")}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {(data.seoRedirects ?? []).length > 0 && (
-                <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-x-auto shadow-sm">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                      <tr>
-                        <th className="px-4 py-2.5 font-medium">From</th>
-                        <th className="px-4 py-2.5 font-medium">To</th>
-                        <th className="px-4 py-2.5 font-medium">Code</th>
-                        <th className="px-4 py-2.5 font-medium text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {(data.seoRedirects ?? []).map((r) => (
-                        <tr key={r.id}>
-                          <td className="px-4 py-2.5 font-mono">{r.fromPath}</td>
-                          <td className="px-4 py-2.5 font-mono">{r.toPath}</td>
-                          <td className="px-4 py-2.5">{r.statusCode}</td>
-                          <td className="px-4 py-2.5 text-right">
-                            <button
-                              type="button"
-                              onClick={() => runAction({ action: "deleteSeoRedirect", id: r.id })}
-                              className="text-rose-600 hover:underline font-medium"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
             </div>
           )}
 

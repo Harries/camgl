@@ -5,6 +5,7 @@ import {
   approveCandidate,
   approveCandidatesBatch,
   backfillMissingLicensesAdmin,
+  deduplicateWebcamsAdmin,
   deleteCategoryAdmin,
   deleteCityAdmin,
   deleteCountryAdmin,
@@ -259,6 +260,10 @@ export async function POST(request: Request) {
       }
       case "backfillLicenses": {
         await backfillMissingLicensesAdmin();
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "deduplicateWebcams": {
+        await deduplicateWebcamsAdmin();
         return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }
       default:
