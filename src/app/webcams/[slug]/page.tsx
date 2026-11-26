@@ -628,44 +628,6 @@ export default async function WebcamDetailPage({
             </div>
           </section>
 
-          {/* H2: Nearby Live Webcams */}
-          {nearbyCams.length > 0 && (
-            <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {tw.nearbyWebcamsTitle}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {nearbyCams.map(({ cam, km }) => (
-                  <Link
-                    key={cam.id}
-                    href={localizePath(`/webcams/${cam.slug}`, locale)}
-                    className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors"
-                  >
-                    <div className="w-24 h-14 rounded-lg bg-slate-900 overflow-hidden shrink-0">
-                      <WebcamThumbnail
-                        src={getWebcamPreviewUrl(cam.stream)}
-                        alt={cam.title}
-                        flag={cam.country.flag}
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
-                        {cam.title}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                        {getCityLabel(locale, cam.city.slug, cam.city.name)},{" "}
-                        {getCountryLabel(locale, cam.country.slug, cam.country.name, cam.country.isoCode)}
-                      </div>
-                      <div className="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5 tabular-nums">
-                        {formatMessage(tw.distanceKm, { km })}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-
           {/* H2: More Webcams in {country} */}
           {sameCountryCams.length > 0 && (
             <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
@@ -729,36 +691,43 @@ export default async function WebcamDetailPage({
         {/* Sticky Sidebar */}
         <aside className="lg:col-span-4 space-y-6">
           <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm lg:sticky lg:top-20">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{tw.nearbyRelated}</h3>
-              <Link href={localizePath("/random", locale)} className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{tw.nearbyWebcamsTitle}</h2>
+              <Link href={localizePath("/random", locale)} className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium shrink-0">
                 {tw.random}
               </Link>
             </div>
-            <div className="space-y-2.5">
-              {nearbyCams.slice(0, 5).map(({ cam }) => (
-                <Link
-                  key={cam.id}
-                  href={localizePath(`/webcams/${cam.slug}`, locale)}
-                  className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <div className="w-20 h-12 rounded-lg bg-slate-900 overflow-hidden shrink-0">
-                    <WebcamThumbnail
-                      src={getWebcamPreviewUrl(cam.stream)}
-                      alt={cam.title}
-                      flag={cam.country.flag}
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">{cam.title}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {getCityLabel(locale, cam.city.slug, cam.city.name)},{" "}
-                      {getCountryLabel(locale, cam.country.slug, cam.country.name, cam.country.isoCode)}
+            {nearbyCams.length > 0 && (
+              <div className="space-y-2.5">
+                {nearbyCams.map(({ cam, km }) => (
+                  <Link
+                    key={cam.id}
+                    href={localizePath(`/webcams/${cam.slug}`, locale)}
+                    className="flex items-center gap-3 p-2 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors"
+                  >
+                    <div className="w-24 h-14 rounded-lg bg-slate-900 overflow-hidden shrink-0">
+                      <WebcamThumbnail
+                        src={getWebcamPreviewUrl(cam.stream)}
+                        alt={cam.title}
+                        flag={cam.country.flag}
+                      />
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
+                        {cam.title}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {getCityLabel(locale, cam.city.slug, cam.city.name)},{" "}
+                        {getCountryLabel(locale, cam.country.slug, cam.country.name, cam.country.isoCode)}
+                      </div>
+                      <div className="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5 tabular-nums">
+                        {formatMessage(tw.distanceKm, { km })}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </aside>
       </div>
