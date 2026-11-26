@@ -59,11 +59,8 @@ export function Navbar() {
         <Link href={localizePath("/", locale)} className="flex items-center gap-2.5 shrink-0 group">
           <BrandLogo className="w-9 h-9 drop-shadow-sm transition-transform group-hover:scale-105" />
           <div>
-            <div className="font-semibold text-base tracking-tight leading-none flex items-center gap-1.5 text-slate-900 dark:text-white">
+            <div className="font-semibold text-base tracking-tight leading-none text-slate-900 dark:text-white">
               LiveCam Global
-              <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-normal border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
-                MVP
-              </span>
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.brandSubtitle}</div>
           </div>
