@@ -5,6 +5,25 @@ import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { PublicWebcam } from "@/lib/types";
 
+function buildGeoJson(webcams: PublicWebcam[], selectedSlug: string) {
+  return {
+    type: "FeatureCollection" as const,
+    features: webcams.map((cam) => ({
+      type: "Feature" as const,
+      geometry: {
+        type: "Point" as const,
+        coordinates: [cam.city.lng, cam.city.lat] as [number, number],
+      },
+      properties: {
+        slug: cam.slug,
+        title: cam.title,
+        selected: cam.slug === selectedSlug ? 1 : 0,
+        status: cam.stream?.status ?? "LIVE",
+      },
+    })),
+  };
+}
+
 export function RealMap({
   webcams,
   selectedSlug,
@@ -18,7 +37,12 @@ export function RealMap({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const markersRef = useRef<maplibregl.Marker[]>([]);
+  const loadedRef = useRef(false);
+  const latestDataRef = useRef({ webcams, selectedSlug });
+  const onSelectRef = useRef(onSelect);
+
+  latestDataRef.current = { webcams, selectedSlug };
+  onSelectRef.current = onSelect;
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -55,11 +79,115 @@ export function RealMap({
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
+
+    map.on("load", () => {
+      loadedRef.current = true;
+      const { webcams: currentCams, selectedSlug: currentSlug } = latestDataRef.current;
+
+      map.addSource("webcams", {
+        type: "geojson",
+        data: buildGeoJson(currentCams, currentSlug),
+        cluster: true,
+        clusterMaxZoom: 11,
+        clusterRadius: 44,
+      });
+
+      map.addLayer({
+        id: "clusters",
+        type: "circle",
+        source: "webcams",
+        filter: ["has", "point_count"],
+        paint: {
+          "circle-color": [
+            "step",
+            ["get", "point_count"],
+            "#2563eb",
+            10,
+            "#1d4ed8",
+            30,
+            "#1e40af",
+          ],
+          "circle-radius": ["step", ["get", "point_count"], 16, 10, 21, 30, 26],
+          "circle-stroke-width": 2.5,
+          "circle-stroke-color": "#ffffff",
+        },
+      });
+
+      map.addLayer({
+        id: "cluster-count",
+        type: "symbol",
+        source: "webcams",
+        filter: ["has", "point_count"],
+        layout: {
+          "text-field": ["get", "point_count_abbreviated"],
+          "text-size": 12,
+          "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+        },
+        paint: {
+          "text-color": "#ffffff",
+        },
+      });
+
+      map.addLayer({
+        id: "unclustered-point",
+        type: "circle",
+        source: "webcams",
+        filter: ["!", ["has", "point_count"]],
+        paint: {
+          "circle-color": [
+            "case",
+            ["==", ["get", "selected"], 1],
+            "#ef4444",
+            ["!=", ["get", "status"], "LIVE"],
+            "#f59e0b",
+            "#10b981",
+          ],
+          "circle-radius": ["case", ["==", ["get", "selected"], 1], 9, 7],
+          "circle-stroke-width": 2.5,
+          "circle-stroke-color": "#ffffff",
+        },
+      });
+
+      map.on("click", "clusters", async (e) => {
+        const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
+        const feature = features[0];
+        if (!feature || feature.geometry.type !== "Point") return;
+        const clusterId = feature.properties?.cluster_id;
+        const source = map.getSource("webcams") as maplibregl.GeoJSONSource | undefined;
+        if (!source || clusterId === undefined) return;
+        try {
+          const zoom = await source.getClusterExpansionZoom(clusterId);
+          map.easeTo({
+            center: feature.geometry.coordinates as [number, number],
+            zoom,
+            duration: 500,
+          });
+        } catch {
+          // ignore expansion error
+        }
+      });
+
+      map.on("click", "unclustered-point", (e) => {
+        const slug = e.features?.[0]?.properties?.slug;
+        if (typeof slug === "string" && slug) {
+          onSelectRef.current(slug);
+        }
+      });
+
+      for (const layer of ["clusters", "unclustered-point"]) {
+        map.on("mouseenter", layer, () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", layer, () => {
+          map.getCanvas().style.cursor = "";
+        });
+      }
+    });
+
     mapRef.current = map;
 
     return () => {
-      markersRef.current.forEach((m) => m.remove());
-      markersRef.current = [];
+      loadedRef.current = false;
       map.remove();
       mapRef.current = null;
     };
@@ -67,39 +195,12 @@ export function RealMap({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
-
-    markersRef.current.forEach((m) => m.remove());
-    markersRef.current = [];
-
-    for (const cam of webcams) {
-      const isSelected = cam.slug === selectedSlug;
-      const el = document.createElement("button");
-      el.type = "button";
-      el.title = `${cam.title} (${cam.city.name}, ${cam.country.name})`;
-      el.style.width = isSelected ? "18px" : "14px";
-      el.style.height = isSelected ? "18px" : "14px";
-      el.style.borderRadius = "9999px";
-      el.style.backgroundColor = isSelected ? "#ef4444" : "#10b981";
-      el.style.border = "2.5px solid #ffffff";
-      el.style.boxShadow = isSelected
-        ? "0 0 0 5px rgba(37,99,235,0.28), 0 2px 6px rgba(0,0,0,0.3)"
-        : "0 2px 5px rgba(0,0,0,0.28)";
-      el.style.cursor = "pointer";
-      el.style.transition = "transform 150ms ease";
-
-      el.addEventListener("click", (e) => {
-        e.stopPropagation();
-        onSelect(cam.slug);
-      });
-
-      const marker = new maplibregl.Marker({ element: el })
-        .setLngLat([cam.city.lng, cam.city.lat])
-        .addTo(map);
-
-      markersRef.current.push(marker);
+    if (!map || !loadedRef.current) return;
+    const source = map.getSource("webcams") as maplibregl.GeoJSONSource | undefined;
+    if (source) {
+      source.setData(buildGeoJson(webcams, selectedSlug));
     }
-  }, [webcams, selectedSlug, onSelect]);
+  }, [webcams, selectedSlug]);
 
   useEffect(() => {
     const map = mapRef.current;

@@ -29,6 +29,9 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <Link href={localizePath("/countries", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.mapAndCountries}</Link>
+            <Link href={localizePath("/popular", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.popular}</Link>
+            <Link href={localizePath("/new", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.newCams}</Link>
+            <Link href={localizePath("/favorites", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.favorites}</Link>
             <Link href={localizePath("/submit", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.partnersAndSubmit}</Link>
             <Link href={localizePath("/privacy", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.privacy}</Link>
             <Link href={localizePath("/terms", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.terms}</Link>

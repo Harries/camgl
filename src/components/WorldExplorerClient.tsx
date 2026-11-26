@@ -25,6 +25,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedSlug, setSelectedSlug] = useState<string>(webcams[0]?.slug ?? "");
   const [catFilter, setCatFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "LIVE">("all");
   const [visibleCount, setVisibleCount] = useState<number>(12);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [focusCoords, setFocusCoords] = useState<{
@@ -82,9 +83,10 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
       if (selectedCountry && w.country.slug !== selectedCountry) return false;
       if (selectedCity && w.city.slug !== selectedCity) return false;
       if (catFilter !== "all" && !w.categories.some((c) => c.slug === catFilter)) return false;
+      if (statusFilter === "LIVE" && (w.stream?.status ?? "LIVE") !== "LIVE") return false;
       return true;
     });
-  }, [webcams, selectedCountry, selectedCity, catFilter]);
+  }, [webcams, selectedCountry, selectedCity, catFilter, statusFilter]);
 
   const activePin = filtered.find((w) => w.slug === selectedSlug) ?? filtered[0] ?? webcams[0];
   const categories = ["all", "city", "beach", "nature", "wildlife", "rail", "ski", "volcano", "port"];
@@ -93,7 +95,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
 
   useEffect(() => {
     setVisibleCount(12);
-  }, [selectedCountry, selectedCity, catFilter]);
+  }, [selectedCountry, selectedCity, catFilter, statusFilter]);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -114,6 +116,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
     setSelectedCountry(null);
     setSelectedCity(null);
     setCatFilter("all");
+    setStatusFilter("all");
     setFocusCoords({ lng: 15, lat: 22, zoom: 1.45 });
   }
 
@@ -192,20 +195,55 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCatFilter(cat)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium border capitalize transition-colors ${
-                catFilter === cat
-                  ? "bg-blue-600 text-white border-transparent"
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-              }`}
+        <div className="flex flex-col items-start sm:items-end gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              aria-label={tco.allCountries}
+              value={selectedCountry ?? ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!val) {
+                  setSelectedCountry(null);
+                  setSelectedCity(null);
+                  setFocusCoords({ lng: 15, lat: 22, zoom: 1.45 });
+                } else {
+                  handleSelectCountry(val);
+                }
+              }}
+              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             >
-              {getCategoryLabel(locale, cat, cat)}
-            </button>
-          ))}
+              <option value="">{tco.allCountries}</option>
+              {countries.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.flag} {getCountryLabel(locale, c.slug, c.name)} ({c.count})
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label={tco.allStatuses}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as "all" | "LIVE")}
+              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            >
+              <option value="all">{tco.allStatuses}</option>
+              <option value="LIVE">{tco.statusLive}</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCatFilter(cat)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium border capitalize transition-colors ${
+                  catFilter === cat
+                    ? "bg-blue-600 text-white border-transparent"
+                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                }`}
+              >
+                {getCategoryLabel(locale, cat, cat)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

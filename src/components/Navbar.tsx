@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Compass, MapPin, PlusCircle, Shuffle, Search } from "lucide-react";
+import { Compass, Flame, Heart, MapPin, PlusCircle, Shuffle, Search } from "lucide-react";
 import { useState } from "react";
 import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -86,6 +86,12 @@ export function Navbar() {
         <nav className="flex items-center gap-1 sm:gap-1.5">
           {navLink("/", t.discover, <Compass className="w-4 h-4 shrink-0" />, true)}
           {navLink("/countries", t.mapAndCountries, <MapPin className="w-4 h-4 shrink-0" />)}
+          <span className="hidden lg:inline-flex">
+            {navLink("/popular", t.popular, <Flame className="w-4 h-4 shrink-0" />)}
+          </span>
+          <span className="hidden lg:inline-flex">
+            {navLink("/favorites", t.favorites, <Heart className="w-4 h-4 shrink-0" />)}
+          </span>
           <span className="hidden sm:inline-flex">
             {navLink("/submit", t.submit, <PlusCircle className="w-4 h-4 shrink-0" />)}
           </span>

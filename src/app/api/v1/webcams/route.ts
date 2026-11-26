@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
-import { listApprovedWebcams, listApprovedWebcamsPage } from "@/lib/repository";
+import { listApprovedWebcams, listApprovedWebcamsPage, listWebcamsBySlugs } from "@/lib/repository";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+  const slugsParam = searchParams.get("slugs");
+  if (slugsParam !== null) {
+    const slugs = slugsParam
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const items = await listWebcamsBySlugs(slugs);
+    return NextResponse.json({ total: items.length, items, hasMore: false });
+  }
+
   const country = searchParams.get("country") ?? undefined;
   const city = searchParams.get("city") ?? undefined;
   const category = searchParams.get("category") ?? undefined;

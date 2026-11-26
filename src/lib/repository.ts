@@ -465,12 +465,113 @@ export async function incrementWebcamViewCount(slug: string): Promise<number | n
   return cam.viewCount;
 }
 
-export async function getRandomWebcam(excludeSlug?: string): Promise<PublicWebcam | null> {
+export async function getRandomWebcam(
+  input?: string | { excludeSlug?: string; country?: string; category?: string }
+): Promise<PublicWebcam | null> {
+  const opts = typeof input === "string" ? { excludeSlug: input } : input ?? {};
+  const scoped = await listApprovedWebcams({
+    country: opts.country,
+    category: opts.category,
+  });
+  const liveScoped = scoped.filter(
+    (w) => w.slug !== opts.excludeSlug && w.stream?.status === "LIVE"
+  );
+  if (liveScoped.length > 0) {
+    return liveScoped[Math.floor(Math.random() * liveScoped.length)];
+  }
+  if (scoped.length > 0) {
+    const fallbackScoped = scoped.filter((w) => w.slug !== opts.excludeSlug);
+    const pool = fallbackScoped.length > 0 ? fallbackScoped : scoped;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
   const all = await listApprovedWebcams();
-  const pool = all.filter((w) => w.slug !== excludeSlug && w.stream?.status === "LIVE");
+  const pool = all.filter((w) => w.slug !== opts.excludeSlug && w.stream?.status === "LIVE");
   const target = pool.length > 0 ? pool : all;
   if (target.length === 0) return null;
   return target[Math.floor(Math.random() * target.length)];
+}
+
+export async function listPopularWebcams(limit = 36): Promise<PublicWebcam[]> {
+  if (isDbConfigured()) {
+    try {
+      const rows = await prisma.webcam.findMany({
+        where: {
+          reviewStatus: "APPROVED",
+          streams: {
+            some: {
+              isPrimary: true,
+              status: "LIVE",
+              mediaType: "LIVE_VIDEO",
+            },
+          },
+          city: {
+            country: { slug: { not: "international" } },
+            NOT: { AND: [{ lat: 0 }, { lng: 0 }] },
+          },
+        },
+        include: {
+          city: { include: { country: true } },
+          provider: true,
+          categories: { include: { category: true } },
+          streams: {
+            where: { isPrimary: true, status: "LIVE" },
+            orderBy: { lastCheckedAt: "desc" },
+            take: 1,
+          },
+        },
+        orderBy: [{ viewCount: "desc" }, { isFeatured: "desc" }, { createdAt: "desc" }],
+        take: limit,
+      });
+      return enrichWeather(rows.map(mapDbWebcam));
+    } catch {
+      // Fallback
+    }
+  }
+
+  const all = await listApprovedWebcams();
+  return [...all]
+    .sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0))
+    .slice(0, limit);
+}
+
+export async function listNewWebcams(limit = 36): Promise<PublicWebcam[]> {
+  const { items } = await listApprovedWebcamsPage({ page: 1, pageSize: Math.min(48, limit) });
+  return items;
+}
+
+export async function listWebcamsBySlugs(slugs: string[]): Promise<PublicWebcam[]> {
+  const clean = Array.from(new Set(slugs.map((s) => s.trim()).filter(Boolean))).slice(0, 50);
+  if (clean.length === 0) return [];
+
+  if (isDbConfigured()) {
+    try {
+      const rows = await prisma.webcam.findMany({
+        where: {
+          slug: { in: clean },
+          reviewStatus: "APPROVED",
+        },
+        include: {
+          city: { include: { country: true } },
+          provider: true,
+          categories: { include: { category: true } },
+          streams: {
+            where: { isPrimary: true },
+            orderBy: { lastCheckedAt: "desc" },
+            take: 1,
+          },
+        },
+      });
+      const enriched = await enrichWeather(rows.map(mapDbWebcam));
+      const order = new Map(clean.map((s, i) => [s, i]));
+      return enriched.sort((a, b) => (order.get(a.slug) ?? 0) - (order.get(b.slug) ?? 0));
+    } catch {
+      // Fallback
+    }
+  }
+
+  const all = await listApprovedWebcams();
+  const bySlug = new Map(all.map((w) => [w.slug, w]));
+  return clean.map((s) => bySlug.get(s)).filter((w): w is PublicWebcam => Boolean(w));
 }
 
 export async function listCountriesSummary() {

@@ -31,6 +31,9 @@ export interface Messages {
     searchPlaceholder: string;
     discover: string;
     mapAndCountries: string;
+    popular: string;
+    newCams: string;
+    favorites: string;
     submit: string;
     random: string;
     live: string;
@@ -38,6 +41,9 @@ export interface Messages {
   footer: {
     tagline: string;
     mapAndCountries: string;
+    popular: string;
+    newCams: string;
+    favorites: string;
     partnersAndSubmit: string;
     privacy: string;
     terms: string;
@@ -230,6 +236,22 @@ export interface Messages {
     countriesBadge: string;
     citiesBadge: string;
     camCount: string;
+    allCountries: string;
+    allStatuses: string;
+    statusLive: string;
+  };
+  collections: {
+    popularTitle: string;
+    popularSubtitle: string;
+    newTitle: string;
+    newSubtitle: string;
+    favoritesTitle: string;
+    favoritesSubtitle: string;
+    favoritesEmptyTitle: string;
+    favoritesEmptyBody: string;
+    removeFavorite: string;
+    clearFavorites: string;
+    exploreDiscover: string;
   };
   seo: {
     homeTitle: string;
@@ -263,6 +285,9 @@ const en: Messages = {
     searchPlaceholder: "Search city, country, landmark, or category...",
     discover: "Discover",
     mapAndCountries: "Map & Countries",
+    popular: "Popular",
+    newCams: "New",
+    favorites: "Favorites",
     submit: "Submit",
     random: "Random",
     live: "LIVE",
@@ -270,6 +295,9 @@ const en: Messages = {
   footer: {
     tagline: "LiveCam Global. Official embed player platform · No unauthorized surveillance streams.",
     mapAndCountries: "Map & Countries",
+    popular: "Popular",
+    newCams: "New",
+    favorites: "Favorites",
     partnersAndSubmit: "Partners & Submit",
     privacy: "Privacy Policy",
     terms: "Terms",
@@ -562,6 +590,22 @@ const en: Messages = {
     countriesBadge: "{count} Countries",
     citiesBadge: "{count} Cities",
     camCount: "{count} cams",
+    allCountries: "All countries",
+    allStatuses: "All statuses",
+    statusLive: "Live only",
+  },
+  collections: {
+    popularTitle: "Popular Live Webcams",
+    popularSubtitle: "Most-watched verified live streams around the world.",
+    newTitle: "New Live Webcams",
+    newSubtitle: "Recently added and verified scenic webcams worldwide.",
+    favoritesTitle: "Saved Favorites",
+    favoritesSubtitle: "Your bookmarked live webcams stored locally in this browser.",
+    favoritesEmptyTitle: "No saved webcams yet",
+    favoritesEmptyBody: "Tap Favorite on any webcam page to bookmark it here for quick access.",
+    removeFavorite: "Remove from favorites",
+    clearFavorites: "Clear all",
+    exploreDiscover: "Explore Live Webcams",
   },
   seo: {
     homeTitle: "LiveCam Global — Verified Live Webcams Around the World",
@@ -616,6 +660,9 @@ const zh: Messages = {
     searchPlaceholder: "搜索城市、国家、地标或分类...",
     discover: "发现",
     mapAndCountries: "地图与国家",
+    popular: "热门榜",
+    newCams: "最新",
+    favorites: "收藏",
     submit: "提交摄像头",
     random: "随机漫游",
     live: "直播",
@@ -623,6 +670,9 @@ const zh: Messages = {
   footer: {
     tagline: "LiveCam Global · 官方授权嵌入播放平台 · 严禁未授权监控视频流",
     mapAndCountries: "地图与国家",
+    popular: "热门榜",
+    newCams: "最新上线",
+    favorites: "我的收藏",
     partnersAndSubmit: "合作与提交",
     privacy: "隐私政策",
     terms: "服务条款",
@@ -901,6 +951,22 @@ const zh: Messages = {
     countriesBadge: "{count} 个国家",
     citiesBadge: "{count} 座城市",
     camCount: "{count} 路",
+    allCountries: "全部国家/地区",
+    allStatuses: "全部状态",
+    statusLive: "仅看直播中",
+  },
+  collections: {
+    popularTitle: "热门直播榜",
+    popularSubtitle: "全球观看热度最高的已审核实景摄像头。",
+    newTitle: "最新上线摄像头",
+    newSubtitle: "最新通过授权与隐私审核的全球实景镜头。",
+    favoritesTitle: "我的收藏",
+    favoritesSubtitle: "保存在当前浏览器本地的常用实景摄像头。",
+    favoritesEmptyTitle: "暂无收藏的摄像头",
+    favoritesEmptyBody: "在任意摄像头详情页点击“收藏”，即可快速保存到这里。",
+    removeFavorite: "取消收藏",
+    clearFavorites: "清空收藏",
+    exploreDiscover: "去发现页逛逛",
   },
   seo: {
     homeTitle: "LiveCam Global — 全球实景高清实时摄像头",
@@ -947,6 +1013,9 @@ const ja: Messages = {
     searchPlaceholder: "都市・国・ランドマーク・カテゴリで検索...",
     discover: "発見",
     mapAndCountries: "地図と国",
+    popular: "人気",
+    newCams: "新着",
+    favorites: "お気に入り",
     submit: "投稿",
     random: "ランダム",
     live: "LIVE",
@@ -954,6 +1023,9 @@ const ja: Messages = {
   footer: {
     tagline: "LiveCam Global · 公式埋め込みプラットフォーム · 無許可監視カメラ配信禁止",
     mapAndCountries: "地図と国",
+    popular: "人気ランキング",
+    newCams: "新着カメラ",
+    favorites: "お気に入り",
     partnersAndSubmit: "パートナー・投稿",
     privacy: "プライバシーポリシー",
     terms: "利用規約",
@@ -1203,6 +1275,22 @@ const ja: Messages = {
     countriesBadge: "{count} か国",
     citiesBadge: "{count} 都市",
     camCount: "{count} 件",
+    allCountries: "すべての国・地域",
+    allStatuses: "すべてのステータス",
+    statusLive: "ライブ配信中のみ",
+  },
+  collections: {
+    popularTitle: "人気ライブカメラ",
+    popularSubtitle: "視聴数の多い世界の認証済みライブカメラ。",
+    newTitle: "新着ライブカメラ",
+    newSubtitle: "新しく登録・承認された世界のライブカメラ。",
+    favoritesTitle: "お気に入り",
+    favoritesSubtitle: "このブラウザに保存されたお気に入りのライブカメラ。",
+    favoritesEmptyTitle: "お気に入りはまだありません",
+    favoritesEmptyBody: "カメラページで「お気に入り」を押すと、ここに保存されます。",
+    removeFavorite: "お気に入りから削除",
+    clearFavorites: "すべて削除",
+    exploreDiscover: "ライブカメラを探す",
   },
   seo: {
     homeTitle: "LiveCam Global — 世界の認証済みライブカメラ",
@@ -1249,6 +1337,9 @@ const es: Messages = {
     searchPlaceholder: "Buscar ciudad, país, lugar o categoría...",
     discover: "Descubrir",
     mapAndCountries: "Mapa y Países",
+    popular: "Populares",
+    newCams: "Nuevas",
+    favorites: "Favoritos",
     submit: "Enviar",
     random: "Aleatorio",
     live: "EN VIVO",
@@ -1256,6 +1347,9 @@ const es: Messages = {
   footer: {
     tagline: "LiveCam Global · Plataforma oficial de cámaras en vivo · Sin vigilancia no autorizada.",
     mapAndCountries: "Mapa y Países",
+    popular: "Populares",
+    newCams: "Nuevas",
+    favorites: "Favoritos",
     partnersAndSubmit: "Socios y Envío",
     privacy: "Privacidad",
     terms: "Términos",
@@ -1491,6 +1585,22 @@ const es: Messages = {
     countriesBadge: "{count} Países",
     citiesBadge: "{count} Ciudades",
     camCount: "{count} cám.",
+    allCountries: "Todos los países",
+    allStatuses: "Todos los estados",
+    statusLive: "Solo en vivo",
+  },
+  collections: {
+    popularTitle: "Cámaras Populares",
+    popularSubtitle: "Las transmisiones en vivo más vistas del mundo.",
+    newTitle: "Nuevas Cámaras",
+    newSubtitle: "Cámaras panorámicas recién añadidas y verificadas.",
+    favoritesTitle: "Favoritos Guardados",
+    favoritesSubtitle: "Tus cámaras guardadas localmente en este navegador.",
+    favoritesEmptyTitle: "Aún no tienes favoritos",
+    favoritesEmptyBody: "Pulsa Favorito en cualquier cámara para guardarla aquí.",
+    removeFavorite: "Quitar de favoritos",
+    clearFavorites: "Borrar todo",
+    exploreDiscover: "Explorar Cámaras",
   },
   seo: {
     homeTitle: "LiveCam Global — Cámaras en Vivo Verificadas del Mundo",
@@ -1537,6 +1647,9 @@ const fr: Messages = {
     searchPlaceholder: "Rechercher ville, pays, lieu ou catégorie...",
     discover: "Découvrir",
     mapAndCountries: "Carte & Pays",
+    popular: "Populaires",
+    newCams: "Nouvelles",
+    favorites: "Favoris",
     submit: "Soumettre",
     random: "Aléatoire",
     live: "DIRECT",
@@ -1544,6 +1657,9 @@ const fr: Messages = {
   footer: {
     tagline: "LiveCam Global · Plateforme officielle d'intégration · Aucune surveillance non autorisée.",
     mapAndCountries: "Carte & Pays",
+    popular: "Populaires",
+    newCams: "Nouvelles",
+    favorites: "Favoris",
     partnersAndSubmit: "Partenaires & Soumission",
     privacy: "Confidentialité",
     terms: "Conditions",
@@ -1779,6 +1895,22 @@ const fr: Messages = {
     countriesBadge: "{count} Pays",
     citiesBadge: "{count} Villes",
     camCount: "{count} cams",
+    allCountries: "Tous les pays",
+    allStatuses: "Tous les statuts",
+    statusLive: "En direct uniquement",
+  },
+  collections: {
+    popularTitle: "Webcams Populaires",
+    popularSubtitle: "Les flux en direct vérifiés les plus regardés dans le monde.",
+    newTitle: "Nouvelles Webcams",
+    newSubtitle: "Webcams panoramiques récemment ajoutées et vérifiées.",
+    favoritesTitle: "Favoris Enregistrés",
+    favoritesSubtitle: "Vos webcams enregistrées localement dans ce navigateur.",
+    favoritesEmptyTitle: "Aucun favori pour le moment",
+    favoritesEmptyBody: "Cliquez sur Favori sur n'importe quelle webcam pour l'ajouter ici.",
+    removeFavorite: "Retirer des favoris",
+    clearFavorites: "Tout effacer",
+    exploreDiscover: "Explorer les Webcams",
   },
   seo: {
     homeTitle: "LiveCam Global — Webcams en Direct Vérifiées dans le Monde",
