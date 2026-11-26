@@ -42,6 +42,7 @@ export interface PublicWebcam {
   mapX: number;
   mapY: number;
   isFeatured?: boolean;
+  viewCount?: number;
 }
 
 export interface AdminCandidate {

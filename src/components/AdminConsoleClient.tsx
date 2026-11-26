@@ -826,13 +826,14 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                         <th className="px-4 py-3 font-medium">Location</th>
                         <th className="px-4 py-3 font-medium">Review</th>
                         <th className="px-4 py-3 font-medium">Stream</th>
+                        <th className="px-4 py-3 font-medium">Views</th>
                         <th className="px-4 py-3 font-medium text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                       {pagedWebcams.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="px-4 py-10 text-center text-xs text-slate-500 dark:text-slate-400">
+                          <td colSpan={7} className="px-4 py-10 text-center text-xs text-slate-500 dark:text-slate-400">
                             No webcams match your search filter.
                           </td>
                         </tr>
@@ -876,6 +877,9 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                                 >
                                   {w.stream?.status ?? "UNKNOWN"}
                                 </span>
+                              </td>
+                              <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 tabular-nums">
+                                {(w.viewCount ?? 0).toLocaleString()}
                               </td>
                               <td className="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
                                 <button

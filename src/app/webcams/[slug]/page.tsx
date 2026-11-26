@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getWebcamBySlug, listApprovedWebcamsPage } from "@/lib/repository";
 import { WebcamPlayer } from "@/components/WebcamPlayer";
+import { WebcamViewTracker } from "@/components/WebcamViewTracker";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { absoluteUrl, buildAlternates, getYouTubeThumbnail, withOutboundSource } from "@/lib/seo";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
@@ -258,26 +259,21 @@ export default async function WebcamDetailPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
-          <Link href={localizePath("/", locale)} className="hover:underline">{tw.home}</Link>
-          <span>/</span>
-          <Link href={localizePath(`/countries/${webcam.country.slug}`, locale)} className="hover:underline">
-            {countryLabel}
-          </Link>
-          <span>/</span>
-          <Link
-            href={localizePath(`/countries/${webcam.country.slug}/${webcam.city.slug}`, locale)}
-            className="hover:underline"
-          >
-            {cityLabel}
-          </Link>
-          <span>/</span>
-          <span className="text-slate-900 dark:text-white font-medium">{webcam.title}</span>
-        </div>
-        <Link href={localizePath("/", locale)} className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium">
-          {tw.backToDiscover}
+      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+        <Link href={localizePath("/", locale)} className="hover:underline">{tw.home}</Link>
+        <span>/</span>
+        <Link href={localizePath(`/countries/${webcam.country.slug}`, locale)} className="hover:underline">
+          {countryLabel}
         </Link>
+        <span>/</span>
+        <Link
+          href={localizePath(`/countries/${webcam.country.slug}/${webcam.city.slug}`, locale)}
+          className="hover:underline"
+        >
+          {cityLabel}
+        </Link>
+        <span>/</span>
+        <span className="text-slate-900 dark:text-white font-medium">{webcam.title}</span>
       </div>
 
       <div>
@@ -287,9 +283,17 @@ export default async function WebcamDetailPage({
             {sourceMeta.label}
           </span>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          {webcam.country.flag} {cityLabel}, {countryLabel} · {categoriesText}
-        </p>
+        <div className="flex items-center gap-3 flex-wrap mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {webcam.country.flag} {cityLabel}, {countryLabel} · {categoriesText}
+          </p>
+          <span className="text-slate-300 dark:text-slate-700 text-xs">·</span>
+          <WebcamViewTracker
+            slug={webcam.slug}
+            initialViews={webcam.viewCount ?? 0}
+            label={tw.views}
+          />
+        </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">

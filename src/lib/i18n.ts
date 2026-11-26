@@ -181,6 +181,7 @@ export interface Messages {
     faq4A: string;
     localizedDescription: string;
     bestTimeDefault: string;
+    views: string;
   };
   countries: {
     worldExplorer: string;
@@ -483,6 +484,7 @@ const en: Messages = {
       "Watch {title} live from {city}, {country} ({categories}). Local time is {localTime} ({phase}) with current weather {weather}.",
     bestTimeDefault:
       "Daylight hours between {sunrise} and {sunset} ({timezone}) offer the clearest visibility, with golden hour around {goldenHour}.",
+    views: "views",
   },
   countries: {
     worldExplorer: "World Explorer",
@@ -794,6 +796,7 @@ const zh: Messages = {
       "来自 {country}{city} 的「{title}」实时风景直播（分类：{categories}）。当前为{phase}（当地时间 {localTime}），实时天气 {weather}，您可免费在线观看并查看日照与气象信息。",
     bestTimeDefault:
       "当地时间 {sunrise} 至 {sunset}（{timezone}）的白天光线最清晰，黄金时段约为 {goldenHour}。",
+    views: "次浏览",
   },
   countries: {
     worldExplorer: "全球地图探索",
@@ -1067,6 +1070,7 @@ const ja: Messages = {
       "{country}・{city} の「{title}」ライブカメラ映像です（カテゴリ：{categories}）。現在の現地時刻は {localTime}（{phase}）、天気は {weather} です。登録不要・無料でリアルタイムの風景や日照状況をご覧いただけます。",
     bestTimeDefault:
       "日の出（{sunrise}）から日の入り（{sunset}・{timezone}）までの日中が最も見やすく、ゴールデンアワーは {goldenHour} 頃です。",
+    views: "回閲覧",
   },
   countries: {
     worldExplorer: "ワールドエクスプローラー",
@@ -1326,6 +1330,7 @@ const es: Messages = {
       "Transmisión en vivo de {title} desde {city}, {country} ({categories}). Hora local actual: {localTime} ({phase}), clima: {weather}. Disfruta de esta vista panorámica gratuita en tiempo real.",
     bestTimeDefault:
       "Entre {sunrise} y {sunset} ({timezone}) ofrece la mejor visibilidad, con la hora dorada alrededor de {goldenHour}.",
+    views: "vistas",
   },
   countries: {
     worldExplorer: "Explorador Mundial",
@@ -1585,6 +1590,7 @@ const fr: Messages = {
       "Vue en direct de {title} depuis {city}, {country} ({categories}). Heure locale actuelle : {localTime} ({phase}), météo : {weather}. Profitez gratuitement de ce panorama en temps réel.",
     bestTimeDefault:
       "Les heures de jour entre {sunrise} et {sunset} ({timezone}) offrent la meilleure visibilité, avec l'heure dorée vers {goldenHour}.",
+    views: "vues",
   },
   countries: {
     worldExplorer: "Explorateur Mondial",

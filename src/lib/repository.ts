@@ -84,6 +84,7 @@ function mapDbWebcam(r: {
   lng: number;
   reviewStatus: string;
   isFeatured?: boolean;
+  viewCount?: number;
   city: {
     name: string;
     slug: string;
@@ -112,6 +113,7 @@ function mapDbWebcam(r: {
     bestTime: r.bestTime,
     reviewStatus: r.reviewStatus,
     isFeatured: Boolean(r.isFeatured),
+    viewCount: r.viewCount ?? 0,
     country: {
       name: r.city.country.name,
       slug: r.city.country.slug,
@@ -441,6 +443,26 @@ export async function getWebcamBySlug(slug: string): Promise<PublicWebcam | null
   if (!found) return null;
   const [enriched] = await enrichWeather([found]);
   return enriched ?? null;
+}
+
+export async function incrementWebcamViewCount(slug: string): Promise<number | null> {
+  if (isDbConfigured()) {
+    try {
+      const updated = await prisma.webcam.update({
+        where: { slug },
+        data: { viewCount: { increment: 1 } },
+        select: { viewCount: true },
+      });
+      return updated.viewCount;
+    } catch {
+      // Fallback
+    }
+  }
+
+  const cam = memStore.webcams.find((w) => w.slug === slug);
+  if (!cam) return null;
+  cam.viewCount = (cam.viewCount ?? 0) + 1;
+  return cam.viewCount;
 }
 
 export async function getRandomWebcam(excludeSlug?: string): Promise<PublicWebcam | null> {

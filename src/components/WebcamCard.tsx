@@ -87,6 +87,9 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
             {sourceMeta.label}
           </span>
         </div>
+        <div className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">
+          👁️ {(webcam.viewCount ?? 0).toLocaleString()}
+        </div>
       </div>
     </Link>
   );
