@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Eye } from "lucide-react";
 import type { PublicWebcam } from "@/lib/types";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
@@ -87,8 +88,9 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
             {sourceMeta.label}
           </span>
         </div>
-        <div className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">
-          👁️ {(webcam.viewCount ?? 0).toLocaleString()}
+        <div className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+          <Eye className="w-3.5 h-3.5" />
+          <span>{(webcam.viewCount ?? 0).toLocaleString()}</span>
         </div>
       </div>
     </Link>
