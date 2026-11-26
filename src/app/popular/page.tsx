@@ -61,13 +61,8 @@ export default async function PopularPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {webcams.map((cam, index) => (
-          <div key={cam.id} className="relative">
-            <span className="absolute top-3 left-3 z-10 px-2 py-0.5 rounded-md bg-slate-900/80 text-white text-[11px] font-bold tabular-nums backdrop-blur">
-              #{index + 1}
-            </span>
-            <WebcamCard webcam={cam} />
-          </div>
+        {webcams.map((cam) => (
+          <WebcamCard key={cam.id} webcam={cam} />
         ))}
       </div>
     </div>

@@ -135,22 +135,8 @@ export function FavoritesClient({ initialRanked }: { initialRanked: PublicWebcam
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {list.map((cam, index) => (
-            <WebcamCard
-              key={cam.id}
-              webcam={cam}
-              videoBottomLeft={
-                <>
-                  <span className="px-2 py-0.5 rounded-md bg-slate-900/80 text-white text-[11px] font-bold tabular-nums backdrop-blur">
-                    #{index + 1}
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-600/90 text-white text-[11px] font-semibold tabular-nums backdrop-blur">
-                    <Heart className="w-3 h-3 fill-current" />
-                    {cam.favoriteCount ?? 0}
-                  </span>
-                </>
-              }
-            />
+          {list.map((cam) => (
+            <WebcamCard key={cam.id} webcam={cam} />
           ))}
         </div>
       )}

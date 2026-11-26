@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Eye } from "lucide-react";
+import { Eye, Heart } from "lucide-react";
 import type { PublicWebcam } from "@/lib/types";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
@@ -16,13 +16,7 @@ import {
 import { useI18n } from "./I18nProvider";
 import { WebcamThumbnail } from "./WebcamThumbnail";
 
-export function WebcamCard({
-  webcam,
-  videoBottomLeft,
-}: {
-  webcam: PublicWebcam;
-  videoBottomLeft?: React.ReactNode;
-}) {
+export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
   const { locale } = useI18n();
   const { isDaylight, localTime } = getDaylightInfo(
     webcam.city.lat,
@@ -74,11 +68,6 @@ export function WebcamCard({
             {primaryCat}
           </span>
         </div>
-        {videoBottomLeft && (
-          <div className="absolute bottom-2.5 left-2.5 z-10 flex items-center gap-1.5">
-            {videoBottomLeft}
-          </div>
-        )}
         <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded text-xs bg-black/60 text-white backdrop-blur tabular-nums">
           {isDaylight ? "☀️" : "🌙"} {localTime}
         </div>
@@ -99,9 +88,15 @@ export function WebcamCard({
             {sourceMeta.label}
           </span>
         </div>
-        <div className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-          <Eye className="w-3.5 h-3.5" />
-          <span>{(webcam.viewCount ?? 0).toLocaleString()}</span>
+        <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+          <span className="inline-flex items-center gap-1">
+            <Eye className="w-3.5 h-3.5" />
+            <span>{(webcam.viewCount ?? 0).toLocaleString()}</span>
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Heart className="w-3.5 h-3.5 text-rose-500" />
+            <span>{(webcam.favoriteCount ?? 0).toLocaleString()}</span>
+          </span>
         </div>
       </div>
     </Link>

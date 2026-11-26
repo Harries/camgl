@@ -235,7 +235,7 @@ export function ProfileClient({
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {favorites.map((cam, index) => (
+                {favorites.map((cam) => (
                   <div key={cam.id} className="relative group">
                     <button
                       type="button"
@@ -246,20 +246,7 @@ export function ProfileClient({
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
-                    <WebcamCard
-                      webcam={cam}
-                      videoBottomLeft={
-                        <>
-                          <span className="px-2 py-0.5 rounded-md bg-slate-900/80 text-white text-[11px] font-bold tabular-nums backdrop-blur">
-                            #{index + 1}
-                          </span>
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-600/90 text-white text-[11px] font-semibold tabular-nums backdrop-blur">
-                            <Heart className="w-3 h-3 fill-current" />
-                            {cam.favoriteCount ?? 0}
-                          </span>
-                        </>
-                      }
-                    />
+                    <WebcamCard webcam={cam} />
                   </div>
                 ))}
               </div>
