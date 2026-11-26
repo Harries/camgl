@@ -2297,11 +2297,18 @@ export async function approveCandidate(id: string) {
       const citySlug = slugify(cand.cityName) || "city";
       const webcamSlug = `${slugify(cand.title)}-${Date.now().toString(36)}`;
 
+      const baseIso = cand.countryName.slice(0, 2).toUpperCase();
+      const existingIso = await prisma.country.findUnique({ where: { isoCode: baseIso } });
+      const safeIso =
+        existingIso && existingIso.slug !== countrySlug
+          ? `${baseIso}${countrySlug.slice(0, 1).toUpperCase()}`
+          : baseIso;
+
       const country = await prisma.country.upsert({
         where: { slug: countrySlug },
         update: {},
         create: {
-          isoCode: cand.countryName.slice(0, 2).toUpperCase(),
+          isoCode: safeIso,
           name: cand.countryName,
           slug: countrySlug,
           flag: "🌍",
