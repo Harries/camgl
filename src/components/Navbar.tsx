@@ -2,8 +2,21 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Compass, Flame, Heart, LogIn, MapPin, PlusCircle, Search, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  ChevronDown,
+  Compass,
+  Flame,
+  Heart,
+  LogIn,
+  LogOut,
+  MapPin,
+  PlusCircle,
+  Search,
+  Settings,
+  ShieldCheck,
+  User,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type { AuthUser } from "@/lib/types";
 import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -16,17 +29,24 @@ export function Navbar() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const { locale, messages } = useI18n();
   const t = messages.nav;
+  const ta = messages.auth;
   const { path: barePathname } = stripLocalePrefix(pathname);
 
   useEffect(() => {
     let cancelled = false;
     const loadUser = () => {
       fetch("/api/v1/auth/me")
-        .then((res) => (res.ok ? res.json() : { user: null }))
-        .then((data: { user?: AuthUser | null }) => {
-          if (!cancelled) setUser(data.user ?? null);
+        .then((res) => (res.ok ? res.json() : { user: null, isAdmin: false }))
+        .then((data: { user?: AuthUser | null; isAdmin?: boolean }) => {
+          if (!cancelled) {
+            setUser(data.user ?? null);
+            setIsAdmin(Boolean(data.isAdmin));
+          }
         })
         .catch(() => {});
     };
@@ -37,6 +57,38 @@ export function Navbar() {
       window.removeEventListener("camgl-auth-changed", loadUser);
     };
   }, [pathname]);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [menuOpen]);
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await fetch("/api/v1/auth/logout", { method: "POST" });
+    setUser(null);
+    setIsAdmin(false);
+    window.dispatchEvent(new Event("camgl-auth-changed"));
+    router.push(localizePath("/", locale));
+    router.refresh();
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,14 +174,105 @@ export function Navbar() {
           <LanguageSwitcher />
           <ThemeToggle />
           {user ? (
-            <Link
-              href={localizePath("/profile", locale)}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
-              title={t.profile}
-            >
-              <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <span className="hidden sm:inline max-w-[84px] truncate">{user.name}</span>
-            </Link>
+            <div ref={menuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((prev) => !prev)}
+                aria-expanded={menuOpen}
+                aria-haspopup="menu"
+                className="px-2.5 py-1.5 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.name}
+                    className="w-5 h-5 rounded-full object-cover shrink-0"
+                  />
+                ) : (
+                  <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                    {user.name.slice(0, 1).toUpperCase()}
+                  </span>
+                )}
+                <span className="max-w-[96px] truncate">{user.name}</span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
+                    menuOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {menuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-lg py-1.5 z-50"
+                >
+                  <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-slate-800">
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                      {user.name}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                      {user.email}
+                    </div>
+                  </div>
+
+                  <div className="p-1.5 space-y-0.5">
+                    <Link
+                      href={localizePath("/profile", locale)}
+                      onClick={() => setMenuOpen(false)}
+                      role="menuitem"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span>{t.enterProfile}</span>
+                    </Link>
+
+                    <Link
+                      href={localizePath("/profile?tab=favorites", locale)}
+                      onClick={() => setMenuOpen(false)}
+                      role="menuitem"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <Heart className="w-4 h-4 text-rose-500" />
+                      <span>{ta.menuFavorites}</span>
+                    </Link>
+
+                    <Link
+                      href={localizePath("/profile?tab=settings", locale)}
+                      onClick={() => setMenuOpen(false)}
+                      role="menuitem"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <Settings className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                      <span>{ta.menuSettings}</span>
+                    </Link>
+
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setMenuOpen(false)}
+                        role="menuitem"
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
+                      >
+                        <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        <span>{t.adminConsole}</span>
+                      </Link>
+                    )}
+                  </div>
+
+                  <div className="p-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      role="menuitem"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>{ta.logoutBtn}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <Link
               href={localizePath("/login", locale)}

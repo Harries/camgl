@@ -39,6 +39,8 @@ export interface Messages {
     live: string;
     login: string;
     profile: string;
+    enterProfile: string;
+    adminConsole: string;
   };
   footer: {
     tagline: string;
@@ -335,6 +337,8 @@ const en: Messages = {
     live: "LIVE",
     login: "Sign In",
     profile: "Profile",
+    enterProfile: "Personal Center",
+    adminConsole: "Admin Console",
   },
   footer: {
     tagline: "LiveCam Global. Official embed player platform · No unauthorized surveillance streams.",
@@ -752,6 +756,8 @@ const zh: Messages = {
     live: "直播",
     login: "登录",
     profile: "个人中心",
+    enterProfile: "进入个人中心",
+    adminConsole: "Admin 后台",
   },
   footer: {
     tagline: "LiveCam Global · 官方授权嵌入播放平台 · 严禁未授权监控视频流",
@@ -1147,6 +1153,8 @@ const ja: Messages = {
     live: "LIVE",
     login: "ログイン",
     profile: "マイページ",
+    enterProfile: "マイページへ",
+    adminConsole: "管理画面",
   },
   footer: {
     tagline: "LiveCam Global · 公式埋め込みプラットフォーム · 無許可監視カメラ配信禁止",
@@ -1513,6 +1521,8 @@ const es: Messages = {
     live: "EN VIVO",
     login: "Iniciar Sesión",
     profile: "Mi Perfil",
+    enterProfile: "Centro Personal",
+    adminConsole: "Panel Admin",
   },
   footer: {
     tagline: "LiveCam Global · Plataforma oficial de cámaras en vivo · Sin vigilancia no autorizada.",
@@ -1865,6 +1875,8 @@ const fr: Messages = {
     live: "DIRECT",
     login: "Connexion",
     profile: "Mon Profil",
+    enterProfile: "Espace Personnel",
+    adminConsole: "Console Admin",
   },
   footer: {
     tagline: "LiveCam Global · Plateforme officielle d'intégration · Aucune surveillance non autorisée.",

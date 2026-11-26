@@ -16,8 +16,16 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function ProfilePage() {
-  const [userId, locale] = await Promise.all([getSessionUserId(), getServerLocale()]);
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const [userId, locale, sp] = await Promise.all([
+    getSessionUserId(),
+    getServerLocale(),
+    searchParams,
+  ]);
   if (!userId) {
     redirect(localizePath("/login?next=/profile", locale));
   }
@@ -33,12 +41,15 @@ export default async function ProfilePage() {
   }
 
   const submissions = await listUserSubmissions(user.email);
+  const initialTab =
+    sp.tab === "webcams" || sp.tab === "settings" ? sp.tab : "favorites";
 
   return (
     <ProfileClient
       initialUser={user}
       initialFavorites={favorites}
       initialSubmissions={submissions}
+      initialTab={initialTab}
     />
   );
 }

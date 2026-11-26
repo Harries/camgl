@@ -28,16 +28,23 @@ export function ProfileClient({
   initialUser,
   initialFavorites,
   initialSubmissions,
+  initialTab = "favorites",
 }: {
   initialUser: AuthUser;
   initialFavorites: PublicWebcam[];
   initialSubmissions: UserSubmission[];
+  initialTab?: ProfileSection;
 }) {
   const router = useRouter();
   const { locale, messages } = useI18n();
   const ta = messages.auth;
 
-  const [section, setSection] = useState<ProfileSection>("favorites");
+  const [section, setSection] = useState<ProfileSection>(initialTab);
+  const [prevInitialTab, setPrevInitialTab] = useState<ProfileSection>(initialTab);
+  if (initialTab !== prevInitialTab) {
+    setPrevInitialTab(initialTab);
+    setSection(initialTab);
+  }
   const [user, setUser] = useState(initialUser);
   const [favorites, setFavorites] = useState(initialFavorites);
   const [name, setName] = useState(initialUser.name);
