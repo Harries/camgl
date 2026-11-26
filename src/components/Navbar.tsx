@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Compass, Flame, Heart, MapPin, PlusCircle, Shuffle, Search } from "lucide-react";
-import { useState } from "react";
+import { Compass, Flame, Heart, LogIn, MapPin, PlusCircle, Shuffle, Search, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { AuthUser } from "@/lib/types";
 import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -14,9 +15,28 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [user, setUser] = useState<AuthUser | null>(null);
   const { locale, messages } = useI18n();
   const t = messages.nav;
   const { path: barePathname } = stripLocalePrefix(pathname);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadUser = () => {
+      fetch("/api/v1/auth/me")
+        .then((res) => (res.ok ? res.json() : { user: null }))
+        .then((data: { user?: AuthUser | null }) => {
+          if (!cancelled) setUser(data.user ?? null);
+        })
+        .catch(() => {});
+    };
+    loadUser();
+    window.addEventListener("camgl-auth-changed", loadUser);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("camgl-auth-changed", loadUser);
+    };
+  }, [pathname]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +121,24 @@ export function Navbar() {
           </form>
           <LanguageSwitcher />
           <ThemeToggle />
+          {user ? (
+            <Link
+              href={localizePath("/profile", locale)}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+              title={t.profile}
+            >
+              <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span className="hidden sm:inline max-w-[84px] truncate">{user.name}</span>
+            </Link>
+          ) : (
+            <Link
+              href={localizePath("/login", locale)}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+            >
+              <LogIn className="w-4 h-4" />
+              <span className="hidden sm:inline">{t.login}</span>
+            </Link>
+          )}
           <Link
             href={localizePath("/random", locale)}
             className="px-3.5 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-sm"

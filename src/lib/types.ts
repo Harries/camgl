@@ -43,6 +43,16 @@ export interface PublicWebcam {
   mapY: number;
   isFeatured?: boolean;
   viewCount?: number;
+  favoriteCount?: number;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  avatarUrl?: string | null;
+  role: string;
+  createdAt: string;
 }
 
 export interface AdminCandidate {

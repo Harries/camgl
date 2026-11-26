@@ -2,9 +2,12 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Heart } from "lucide-react";
 import { FavoritesClient } from "@/components/FavoritesClient";
+import { listMostLikedWebcams } from "@/lib/repository";
 import { buildAlternates } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n-server";
 import { getMessages, localizePath } from "@/lib/i18n";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getServerLocale();
@@ -14,12 +17,11 @@ export async function generateMetadata(): Promise<Metadata> {
     title: tc.favoritesTitle,
     description: tc.favoritesSubtitle,
     alternates,
-    robots: { index: false, follow: true },
   };
 }
 
 export default async function FavoritesPage() {
-  const locale = await getServerLocale();
+  const [ranked, locale] = await Promise.all([listMostLikedWebcams(48), getServerLocale()]);
   const msgs = getMessages(locale);
   const tc = msgs.collections;
   const tw = msgs.webcam;
@@ -40,7 +42,7 @@ export default async function FavoritesPage() {
         <p className="text-sm text-slate-500 dark:text-slate-400">{tc.favoritesSubtitle}</p>
       </div>
 
-      <FavoritesClient />
+      <FavoritesClient initialRanked={ranked} />
     </div>
   );
 }

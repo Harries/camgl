@@ -16,11 +16,24 @@ import type {
   AdminCountry,
   AdminDiscoveryJob,
   AdminReport,
+  AuthUser,
   PublicWebcam,
   StreamStatus,
 } from "./types";
 import { coordKey, fetchWeatherBatch } from "./weather";
 import { collectAndProbeAllSources, probeSourceStability } from "./collectors";
+import { hashPassword, verifyPassword } from "./user-auth";
+
+interface MemUser {
+  id: string;
+  email: string;
+  name: string;
+  passwordHash: string | null;
+  githubId?: string | null;
+  avatarUrl?: string | null;
+  role: string;
+  createdAt: string;
+}
 
 // In-memory store fallback when PostgreSQL is unreachable (e.g., offline build)
 const memStore = {
@@ -30,6 +43,8 @@ const memStore = {
   reports: structuredClone(SEED_REPORTS) as AdminReport[],
   contactMessages: [] as AdminContactMessage[],
   auditLogs: structuredClone(SEED_AUDIT_LOGS) as AdminAuditLog[],
+  users: [] as MemUser[],
+  userFavorites: new Map<string, Set<string>>(),
   youtubeQuotaUsed: 0,
 };
 
@@ -85,6 +100,7 @@ function mapDbWebcam(r: {
   reviewStatus: string;
   isFeatured?: boolean;
   viewCount?: number;
+  favoriteCount?: number;
   city: {
     name: string;
     slug: string;
@@ -114,6 +130,7 @@ function mapDbWebcam(r: {
     reviewStatus: r.reviewStatus,
     isFeatured: Boolean(r.isFeatured),
     viewCount: r.viewCount ?? 0,
+    favoriteCount: r.favoriteCount ?? 0,
     country: {
       name: r.city.country.name,
       slug: r.city.country.slug,
@@ -572,6 +589,360 @@ export async function listWebcamsBySlugs(slugs: string[]): Promise<PublicWebcam[
   const all = await listApprovedWebcams();
   const bySlug = new Map(all.map((w) => [w.slug, w]));
   return clean.map((s) => bySlug.get(s)).filter((w): w is PublicWebcam => Boolean(w));
+}
+
+export async function listMostLikedWebcams(limit = 48): Promise<PublicWebcam[]> {
+  if (isDbConfigured()) {
+    try {
+      const rows = await prisma.webcam.findMany({
+        where: {
+          reviewStatus: "APPROVED",
+          streams: {
+            some: {
+              isPrimary: true,
+              status: "LIVE",
+              mediaType: "LIVE_VIDEO",
+            },
+          },
+          city: {
+            country: { slug: { not: "international" } },
+            NOT: { AND: [{ lat: 0 }, { lng: 0 }] },
+          },
+        },
+        include: {
+          city: { include: { country: true } },
+          provider: true,
+          categories: { include: { category: true } },
+          streams: {
+            where: { isPrimary: true, status: "LIVE" },
+            orderBy: { lastCheckedAt: "desc" },
+            take: 1,
+          },
+        },
+        orderBy: [{ favoriteCount: "desc" }, { viewCount: "desc" }, { createdAt: "desc" }],
+        take: limit,
+      });
+      return enrichWeather(rows.map(mapDbWebcam));
+    } catch {
+      // Fallback
+    }
+  }
+
+  const all = await listApprovedWebcams();
+  return [...all]
+    .sort((a, b) => (b.favoriteCount ?? 0) - (a.favoriteCount ?? 0) || (b.viewCount ?? 0) - (a.viewCount ?? 0))
+    .slice(0, limit);
+}
+
+function toAuthUser(u: {
+  id: string;
+  email: string;
+  name: string;
+  avatarUrl?: string | null;
+  role: string;
+  createdAt: Date | string;
+}): AuthUser {
+  return {
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    avatarUrl: u.avatarUrl ?? null,
+    role: u.role,
+    createdAt: typeof u.createdAt === "string" ? u.createdAt : u.createdAt.toISOString(),
+  };
+}
+
+export async function registerUser(input: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<{ ok: true; user: AuthUser } | { ok: false; error: string }> {
+  const email = input.email.trim().toLowerCase();
+  const name = input.name.trim();
+  if (!name || !email || input.password.length < 6) {
+    return { ok: false, error: "Name, valid email, and password (min 6 chars) are required." };
+  }
+  const passwordHash = hashPassword(input.password);
+
+  if (isDbConfigured()) {
+    try {
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (existing) {
+        return { ok: false, error: "An account with this email already exists." };
+      }
+      const created = await prisma.user.create({
+        data: { email, name, passwordHash, role: "USER" },
+      });
+      return { ok: true, user: toAuthUser(created) };
+    } catch {
+      // Fallback
+    }
+  }
+
+  if (memStore.users.some((u) => u.email === email)) {
+    return { ok: false, error: "An account with this email already exists." };
+  }
+  const created: MemUser = {
+    id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    email,
+    name,
+    passwordHash,
+    role: "USER",
+    createdAt: new Date().toISOString(),
+  };
+  memStore.users.push(created);
+  return { ok: true, user: toAuthUser(created) };
+}
+
+export async function authenticateUser(input: {
+  email: string;
+  password: string;
+}): Promise<AuthUser | null> {
+  const email = input.email.trim().toLowerCase();
+  if (!email || !input.password) return null;
+
+  if (isDbConfigured()) {
+    try {
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user || !user.passwordHash || !verifyPassword(input.password, user.passwordHash)) {
+        return null;
+      }
+      return toAuthUser(user);
+    } catch {
+      // Fallback
+    }
+  }
+
+  const user = memStore.users.find((u) => u.email === email);
+  if (!user || !user.passwordHash || !verifyPassword(input.password, user.passwordHash)) {
+    return null;
+  }
+  return toAuthUser(user);
+}
+
+export async function findOrCreateGithubUser(input: {
+  githubId: string;
+  email: string;
+  name: string;
+  avatarUrl?: string | null;
+}): Promise<AuthUser> {
+  const email = input.email.trim().toLowerCase();
+  const name = input.name.trim() || "GitHub User";
+
+  if (isDbConfigured()) {
+    try {
+      const byGithub = await prisma.user.findUnique({
+        where: { githubId: input.githubId },
+      });
+      if (byGithub) {
+        const updated = await prisma.user.update({
+          where: { id: byGithub.id },
+          data: {
+            avatarUrl: input.avatarUrl ?? byGithub.avatarUrl,
+            name: byGithub.name || name,
+          },
+        });
+        return toAuthUser(updated);
+      }
+
+      const byEmail = await prisma.user.findUnique({ where: { email } });
+      if (byEmail) {
+        const linked = await prisma.user.update({
+          where: { id: byEmail.id },
+          data: {
+            githubId: input.githubId,
+            avatarUrl: input.avatarUrl ?? byEmail.avatarUrl,
+          },
+        });
+        return toAuthUser(linked);
+      }
+
+      const created = await prisma.user.create({
+        data: {
+          email,
+          name,
+          githubId: input.githubId,
+          avatarUrl: input.avatarUrl ?? null,
+          role: "USER",
+        },
+      });
+      return toAuthUser(created);
+    } catch {
+      // Fallback
+    }
+  }
+
+  const existing =
+    memStore.users.find((u) => u.githubId === input.githubId) ??
+    memStore.users.find((u) => u.email === email);
+  if (existing) {
+    existing.githubId = input.githubId;
+    existing.avatarUrl = input.avatarUrl ?? existing.avatarUrl ?? null;
+    return toAuthUser(existing);
+  }
+
+  const created: MemUser = {
+    id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    email,
+    name,
+    passwordHash: null,
+    githubId: input.githubId,
+    avatarUrl: input.avatarUrl ?? null,
+    role: "USER",
+    createdAt: new Date().toISOString(),
+  };
+  memStore.users.push(created);
+  return toAuthUser(created);
+}
+
+export async function getUserById(userId: string): Promise<AuthUser | null> {
+  if (!userId) return null;
+  if (isDbConfigured()) {
+    try {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      return user ? toAuthUser(user) : null;
+    } catch {
+      // Fallback
+    }
+  }
+  const user = memStore.users.find((u) => u.id === userId);
+  return user ? toAuthUser(user) : null;
+}
+
+export async function updateUserProfile(
+  userId: string,
+  input: { name: string }
+): Promise<AuthUser | null> {
+  const name = input.name.trim();
+  if (!userId || !name) return null;
+  if (isDbConfigured()) {
+    try {
+      const updated = await prisma.user.update({
+        where: { id: userId },
+        data: { name },
+      });
+      return toAuthUser(updated);
+    } catch {
+      // Fallback
+    }
+  }
+  const user = memStore.users.find((u) => u.id === userId);
+  if (!user) return null;
+  user.name = name;
+  return toAuthUser(user);
+}
+
+export async function getUserFavoriteSlugs(userId: string): Promise<string[]> {
+  if (!userId) return [];
+  if (isDbConfigured()) {
+    try {
+      const rows = await prisma.userFavorite.findMany({
+        where: { userId },
+        include: { webcam: { select: { slug: true } } },
+      });
+      return rows.map((r) => r.webcam.slug);
+    } catch {
+      // Fallback
+    }
+  }
+  return Array.from(memStore.userFavorites.get(userId) ?? []);
+}
+
+export async function listUserFavoriteWebcams(userId: string): Promise<PublicWebcam[]> {
+  if (!userId) return [];
+  if (isDbConfigured()) {
+    try {
+      const rows = await prisma.webcam.findMany({
+        where: {
+          reviewStatus: "APPROVED",
+          favorites: { some: { userId } },
+        },
+        include: {
+          city: { include: { country: true } },
+          provider: true,
+          categories: { include: { category: true } },
+          streams: {
+            where: { isPrimary: true },
+            orderBy: { lastCheckedAt: "desc" },
+            take: 1,
+          },
+        },
+        orderBy: [{ favoriteCount: "desc" }, { viewCount: "desc" }, { createdAt: "desc" }],
+      });
+      return enrichWeather(rows.map(mapDbWebcam));
+    } catch {
+      // Fallback
+    }
+  }
+  const slugs = await getUserFavoriteSlugs(userId);
+  const cams = await listWebcamsBySlugs(slugs);
+  return [...cams].sort(
+    (a, b) => (b.favoriteCount ?? 0) - (a.favoriteCount ?? 0) || (b.viewCount ?? 0) - (a.viewCount ?? 0)
+  );
+}
+
+export async function toggleUserFavorite(
+  userId: string,
+  slug: string
+): Promise<{ favorited: boolean; favoriteCount: number } | null> {
+  if (!userId || !slug) return null;
+  if (isDbConfigured()) {
+    try {
+      const webcam = await prisma.webcam.findUnique({
+        where: { slug },
+        select: { id: true, favoriteCount: true },
+      });
+      if (!webcam) return null;
+
+      const existing = await prisma.userFavorite.findUnique({
+        where: { userId_webcamId: { userId, webcamId: webcam.id } },
+      });
+
+      if (existing) {
+        const [, updated] = await prisma.$transaction([
+          prisma.userFavorite.delete({
+            where: { userId_webcamId: { userId, webcamId: webcam.id } },
+          }),
+          prisma.webcam.update({
+            where: { id: webcam.id },
+            data: { favoriteCount: { decrement: webcam.favoriteCount > 0 ? 1 : 0 } },
+            select: { favoriteCount: true },
+          }),
+        ]);
+        return { favorited: false, favoriteCount: Math.max(0, updated.favoriteCount) };
+      }
+
+      const [, updated] = await prisma.$transaction([
+        prisma.userFavorite.create({
+          data: { userId, webcamId: webcam.id },
+        }),
+        prisma.webcam.update({
+          where: { id: webcam.id },
+          data: { favoriteCount: { increment: 1 } },
+          select: { favoriteCount: true },
+        }),
+      ]);
+      return { favorited: true, favoriteCount: updated.favoriteCount };
+    } catch {
+      // Fallback
+    }
+  }
+
+  const cam = memStore.webcams.find((w) => w.slug === slug);
+  if (!cam) return null;
+  let set = memStore.userFavorites.get(userId);
+  if (!set) {
+    set = new Set<string>();
+    memStore.userFavorites.set(userId, set);
+  }
+  if (set.has(slug)) {
+    set.delete(slug);
+    cam.favoriteCount = Math.max(0, (cam.favoriteCount ?? 0) - 1);
+    return { favorited: false, favoriteCount: cam.favoriteCount };
+  }
+  set.add(slug);
+  cam.favoriteCount = (cam.favoriteCount ?? 0) + 1;
+  return { favorited: true, favoriteCount: cam.favoriteCount };
 }
 
 export async function listCountriesSummary() {

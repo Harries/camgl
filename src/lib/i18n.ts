@@ -37,6 +37,8 @@ export interface Messages {
     submit: string;
     random: string;
     live: string;
+    login: string;
+    profile: string;
   };
   footer: {
     tagline: string;
@@ -252,6 +254,40 @@ export interface Messages {
     removeFavorite: string;
     clearFavorites: string;
     exploreDiscover: string;
+    mostLikedTab: string;
+    myLikesTab: string;
+  };
+  auth: {
+    loginTitle: string;
+    loginSubtitle: string;
+    registerTitle: string;
+    registerSubtitle: string;
+    nameLabel: string;
+    namePlaceholder: string;
+    emailLabel: string;
+    passwordLabel: string;
+    loginBtn: string;
+    registerBtn: string;
+    submitting: string;
+    authError: string;
+    noAccount: string;
+    goRegister: string;
+    hasAccount: string;
+    goLogin: string;
+    profileTitle: string;
+    logoutBtn: string;
+    saveProfileBtn: string;
+    savedBtn: string;
+    likedCountLabel: string;
+    memberSince: string;
+    myFavoritesTitle: string;
+    viewRanking: string;
+    loginToFavorite: string;
+    loginPromptBody: string;
+    continueWithGithub: string;
+    orWithEmail: string;
+    githubNotConfigured: string;
+    githubFailed: string;
   };
   seo: {
     homeTitle: string;
@@ -291,6 +327,8 @@ const en: Messages = {
     submit: "Submit",
     random: "Random",
     live: "LIVE",
+    login: "Sign In",
+    profile: "Profile",
   },
   footer: {
     tagline: "LiveCam Global. Official embed player platform · No unauthorized surveillance streams.",
@@ -606,6 +644,40 @@ const en: Messages = {
     removeFavorite: "Remove from favorites",
     clearFavorites: "Clear all",
     exploreDiscover: "Explore Live Webcams",
+    mostLikedTab: "Most Liked Ranking",
+    myLikesTab: "My Favorites",
+  },
+  auth: {
+    loginTitle: "Sign In",
+    loginSubtitle: "Sign in to favorite live webcams and manage your personal center.",
+    registerTitle: "Create Account",
+    registerSubtitle: "Join LiveCam Global to save your favorite live views.",
+    nameLabel: "Display Name",
+    namePlaceholder: "Your name",
+    emailLabel: "Email",
+    passwordLabel: "Password",
+    loginBtn: "Sign In",
+    registerBtn: "Create Account",
+    submitting: "Please wait...",
+    authError: "Authentication failed. Please check your input.",
+    noAccount: "Don't have an account?",
+    goRegister: "Sign up",
+    hasAccount: "Already have an account?",
+    goLogin: "Sign in",
+    profileTitle: "Personal Center",
+    logoutBtn: "Sign Out",
+    saveProfileBtn: "Save Profile",
+    savedBtn: "Saved",
+    likedCountLabel: "liked webcams",
+    memberSince: "Member since",
+    myFavoritesTitle: "My Liked Webcams (Ranked by Likes)",
+    viewRanking: "View Global Likes Ranking",
+    loginToFavorite: "Sign in to favorite",
+    loginPromptBody: "Sign in to your account to view and manage your liked webcams.",
+    continueWithGithub: "Continue with GitHub",
+    orWithEmail: "or",
+    githubNotConfigured: "GitHub login is not configured yet (missing GITHUB_CLIENT_ID).",
+    githubFailed: "GitHub sign-in failed. Please try again.",
   },
   seo: {
     homeTitle: "LiveCam Global — Verified Live Webcams Around the World",
@@ -666,6 +738,8 @@ const zh: Messages = {
     submit: "提交摄像头",
     random: "随机漫游",
     live: "直播",
+    login: "登录",
+    profile: "个人中心",
   },
   footer: {
     tagline: "LiveCam Global · 官方授权嵌入播放平台 · 严禁未授权监控视频流",
@@ -967,6 +1041,40 @@ const zh: Messages = {
     removeFavorite: "取消收藏",
     clearFavorites: "清空收藏",
     exploreDiscover: "去发现页逛逛",
+    mostLikedTab: "按喜欢数排名",
+    myLikesTab: "我的喜欢",
+  },
+  auth: {
+    loginTitle: "登录账号",
+    loginSubtitle: "登录后即可点赞收藏实时摄像头并进入个人中心。",
+    registerTitle: "注册账号",
+    registerSubtitle: "创建 LiveCam Global 账号，保存你喜欢的全球实景。",
+    nameLabel: "昵称",
+    namePlaceholder: "请输入昵称",
+    emailLabel: "邮箱",
+    passwordLabel: "密码",
+    loginBtn: "立即登录",
+    registerBtn: "注册并登录",
+    submitting: "提交中...",
+    authError: "操作失败，请检查输入信息。",
+    noAccount: "还没有账号？",
+    goRegister: "去注册",
+    hasAccount: "已有账号？",
+    goLogin: "去登录",
+    profileTitle: "个人中心",
+    logoutBtn: "退出登录",
+    saveProfileBtn: "保存资料",
+    savedBtn: "已保存",
+    likedCountLabel: "个喜欢的摄像头",
+    memberSince: "加入于",
+    myFavoritesTitle: "我喜欢的摄像头（按喜欢数排序）",
+    viewRanking: "查看全站喜欢排行榜",
+    loginToFavorite: "登录后即可喜欢",
+    loginPromptBody: "登录账号后即可查看和管理你喜欢的实时摄像头。",
+    continueWithGithub: "使用 GitHub 登录",
+    orWithEmail: "或",
+    githubNotConfigured: "暂未配置 GitHub 登录（缺少 GITHUB_CLIENT_ID）。",
+    githubFailed: "GitHub 登录失败，请重试。",
   },
   seo: {
     homeTitle: "LiveCam Global — 全球实景高清实时摄像头",
@@ -1019,6 +1127,8 @@ const ja: Messages = {
     submit: "投稿",
     random: "ランダム",
     live: "LIVE",
+    login: "ログイン",
+    profile: "マイページ",
   },
   footer: {
     tagline: "LiveCam Global · 公式埋め込みプラットフォーム · 無許可監視カメラ配信禁止",
@@ -1291,6 +1401,40 @@ const ja: Messages = {
     removeFavorite: "お気に入りから削除",
     clearFavorites: "すべて削除",
     exploreDiscover: "ライブカメラを探す",
+    mostLikedTab: "いいね数ランキング",
+    myLikesTab: "お気に入り一覧",
+  },
+  auth: {
+    loginTitle: "ログイン",
+    loginSubtitle: "ログインしてライブカメラをお気に入り登録・管理できます。",
+    registerTitle: "新規登録",
+    registerSubtitle: "LiveCam Global に登録してお気に入りを保存しましょう。",
+    nameLabel: "表示名",
+    namePlaceholder: "お名前",
+    emailLabel: "メールアドレス",
+    passwordLabel: "パスワード",
+    loginBtn: "ログイン",
+    registerBtn: "アカウント作成",
+    submitting: "送信中...",
+    authError: "認証に失敗しました。入力内容をご確認ください。",
+    noAccount: "アカウントをお持ちでないですか？",
+    goRegister: "新規登録",
+    hasAccount: "すでにアカウントをお持ちですか？",
+    goLogin: "ログイン",
+    profileTitle: "マイページ",
+    logoutBtn: "ログアウト",
+    saveProfileBtn: "保存する",
+    savedBtn: "保存しました",
+    likedCountLabel: "件のお気に入り",
+    memberSince: "登録日",
+    myFavoritesTitle: "お気に入りカメラ（いいね数順）",
+    viewRanking: "全体のランキングを見る",
+    loginToFavorite: "お気に入り登録にはログインが必要です",
+    loginPromptBody: "ログインするとお気に入りのカメラを保存・管理できます。",
+    continueWithGithub: "GitHub でログイン",
+    orWithEmail: "または",
+    githubNotConfigured: "GitHub ログインがまだ設定されていません（GITHUB_CLIENT_ID 未設定）。",
+    githubFailed: "GitHub ログインに失敗しました。もう一度お試しください。",
   },
   seo: {
     homeTitle: "LiveCam Global — 世界の認証済みライブカメラ",
@@ -1343,6 +1487,8 @@ const es: Messages = {
     submit: "Enviar",
     random: "Aleatorio",
     live: "EN VIVO",
+    login: "Iniciar Sesión",
+    profile: "Mi Perfil",
   },
   footer: {
     tagline: "LiveCam Global · Plataforma oficial de cámaras en vivo · Sin vigilancia no autorizada.",
@@ -1601,6 +1747,40 @@ const es: Messages = {
     removeFavorite: "Quitar de favoritos",
     clearFavorites: "Borrar todo",
     exploreDiscover: "Explorar Cámaras",
+    mostLikedTab: "Ranking por Me Gusta",
+    myLikesTab: "Mis Favoritos",
+  },
+  auth: {
+    loginTitle: "Iniciar Sesión",
+    loginSubtitle: "Inicia sesión para dar me gusta a cámaras y gestionar tu perfil.",
+    registerTitle: "Crear Cuenta",
+    registerSubtitle: "Únete a LiveCam Global para guardar tus vistas favoritas.",
+    nameLabel: "Nombre",
+    namePlaceholder: "Tu nombre",
+    emailLabel: "Correo electrónico",
+    passwordLabel: "Contraseña",
+    loginBtn: "Iniciar Sesión",
+    registerBtn: "Crear Cuenta",
+    submitting: "Procesando...",
+    authError: "Error de autenticación. Revisa tus datos.",
+    noAccount: "¿No tienes cuenta?",
+    goRegister: "Regístrate",
+    hasAccount: "¿Ya tienes cuenta?",
+    goLogin: "Inicia sesión",
+    profileTitle: "Centro Personal",
+    logoutBtn: "Cerrar Sesión",
+    saveProfileBtn: "Guardar Perfil",
+    savedBtn: "Guardado",
+    likedCountLabel: "cámaras favoritas",
+    memberSince: "Miembro desde",
+    myFavoritesTitle: "Mis Favoritos (Ordenados por Me Gusta)",
+    viewRanking: "Ver Ranking Global",
+    loginToFavorite: "Inicia sesión para dar me gusta",
+    loginPromptBody: "Inicia sesión para ver y gestionar tus cámaras favoritas.",
+    continueWithGithub: "Continuar con GitHub",
+    orWithEmail: "o",
+    githubNotConfigured: "El inicio con GitHub aún no está configurado (falta GITHUB_CLIENT_ID).",
+    githubFailed: "Error al iniciar sesión con GitHub. Inténtalo de nuevo.",
   },
   seo: {
     homeTitle: "LiveCam Global — Cámaras en Vivo Verificadas del Mundo",
@@ -1653,6 +1833,8 @@ const fr: Messages = {
     submit: "Soumettre",
     random: "Aléatoire",
     live: "DIRECT",
+    login: "Connexion",
+    profile: "Mon Profil",
   },
   footer: {
     tagline: "LiveCam Global · Plateforme officielle d'intégration · Aucune surveillance non autorisée.",
@@ -1911,6 +2093,40 @@ const fr: Messages = {
     removeFavorite: "Retirer des favoris",
     clearFavorites: "Tout effacer",
     exploreDiscover: "Explorer les Webcams",
+    mostLikedTab: "Classement par J'aime",
+    myLikesTab: "Mes Favoris",
+  },
+  auth: {
+    loginTitle: "Connexion",
+    loginSubtitle: "Connectez-vous pour aimer des webcams et accéder à votre profil.",
+    registerTitle: "Créer un Compte",
+    registerSubtitle: "Rejoignez LiveCam Global pour sauvegarder vos webcams favorites.",
+    nameLabel: "Nom d'affichage",
+    namePlaceholder: "Votre nom",
+    emailLabel: "E-mail",
+    passwordLabel: "Mot de passe",
+    loginBtn: "Se Connecter",
+    registerBtn: "Créer un Compte",
+    submitting: "Veuillez patienter...",
+    authError: "Échec de l'authentification. Vérifiez vos informations.",
+    noAccount: "Pas encore de compte ?",
+    goRegister: "S'inscrire",
+    hasAccount: "Déjà un compte ?",
+    goLogin: "Se connecter",
+    profileTitle: "Espace Personnel",
+    logoutBtn: "Déconnexion",
+    saveProfileBtn: "Enregistrer",
+    savedBtn: "Enregistré",
+    likedCountLabel: "webcams aimées",
+    memberSince: "Membre depuis le",
+    myFavoritesTitle: "Mes Favoris (Classés par J'aime)",
+    viewRanking: "Voir le Classement Global",
+    loginToFavorite: "Connectez-vous pour aimer",
+    loginPromptBody: "Connectez-vous pour voir et gérer vos webcams favorites.",
+    continueWithGithub: "Continuer avec GitHub",
+    orWithEmail: "ou",
+    githubNotConfigured: "La connexion GitHub n'est pas configurée (GITHUB_CLIENT_ID manquant).",
+    githubFailed: "Échec de la connexion GitHub. Veuillez réessayer.",
   },
   seo: {
     homeTitle: "LiveCam Global — Webcams en Direct Vérifiées dans le Monde",

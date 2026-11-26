@@ -382,7 +382,11 @@ export default async function WebcamDetailPage({
             </span>
           </div>
 
-          <WebcamActionsBar slug={webcam.slug} title={`${webcam.title}, ${cityLabel}`} />
+          <WebcamActionsBar
+            slug={webcam.slug}
+            title={`${webcam.title}, ${cityLabel}`}
+            initialFavoriteCount={webcam.favoriteCount ?? 0}
+          />
         </div>
 
         {/* Local Time, Live Weather, Sunrise/Sunset */}

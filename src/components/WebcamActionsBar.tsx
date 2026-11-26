@@ -1,59 +1,86 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Check, Heart, Maximize2, Share2, Shuffle } from "lucide-react";
+import { Check, Heart, Lock, Maximize2, Share2, Shuffle } from "lucide-react";
 import { localizePath } from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
-
-const FAVORITES_KEY = "camgl_favorites";
 
 export function WebcamActionsBar({
   slug,
   title,
+  initialFavoriteCount = 0,
   targetId = "webcam-player-container",
 }: {
   slug: string;
   title: string;
+  initialFavoriteCount?: number;
   targetId?: string;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const { locale, messages } = useI18n();
   const tw = messages.webcam;
+  const ta = messages.auth;
+
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [authLoaded, setAuthLoaded] = useState(false);
   const [favorited, setFavorited] = useState(false);
+  const [favoriteCount, setFavoriteCount] = useState(initialFavoriteCount);
+  const [toggling, setToggling] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(FAVORITES_KEY);
-      if (raw) {
-        const list = JSON.parse(raw) as string[];
-        if (Array.isArray(list) && list.includes(slug)) {
-          setFavorited(true);
-        }
-      }
-    } catch {
-      // ignore storage errors
-    }
+    let cancelled = false;
+    const loadAuth = () => {
+      fetch("/api/v1/auth/me")
+        .then((res) => (res.ok ? res.json() : { user: null, favoriteSlugs: [] }))
+        .then((data: { user?: unknown; favoriteSlugs?: string[] }) => {
+          if (cancelled) return;
+          setLoggedIn(Boolean(data.user));
+          setFavorited(Array.isArray(data.favoriteSlugs) && data.favoriteSlugs.includes(slug));
+          setAuthLoaded(true);
+        })
+        .catch(() => {
+          if (!cancelled) setAuthLoaded(true);
+        });
+    };
+    loadAuth();
+    window.addEventListener("camgl-auth-changed", loadAuth);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("camgl-auth-changed", loadAuth);
+    };
   }, [slug]);
 
-  const toggleFavorite = () => {
-    setFavorited((prev) => {
-      const next = !prev;
-      try {
-        const raw = localStorage.getItem(FAVORITES_KEY);
-        const list = raw ? (JSON.parse(raw) as string[]) : [];
-        const set = new Set(Array.isArray(list) ? list : []);
-        if (next) {
-          set.add(slug);
-        } else {
-          set.delete(slug);
-        }
-        localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(set)));
-      } catch {
-        // ignore storage errors
+  const toggleFavorite = async () => {
+    if (!authLoaded) return;
+    if (!loggedIn) {
+      router.push(localizePath(`/login?next=${encodeURIComponent(pathname)}`, locale));
+      return;
+    }
+    if (toggling) return;
+    setToggling(true);
+    try {
+      const res = await fetch("/api/v1/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      if (res.status === 401) {
+        setLoggedIn(false);
+        router.push(localizePath(`/login?next=${encodeURIComponent(pathname)}`, locale));
+        return;
       }
-      return next;
-    });
+      if (res.ok) {
+        const data = (await res.json()) as { favorited: boolean; favoriteCount: number };
+        setFavorited(data.favorited);
+        setFavoriteCount(data.favoriteCount);
+      }
+    } finally {
+      setToggling(false);
+    }
   };
 
   const handleShare = async () => {
@@ -93,28 +120,28 @@ export function WebcamActionsBar({
       <button
         type="button"
         onClick={toggleFavorite}
-        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+        disabled={toggling}
+        title={!loggedIn && authLoaded ? ta.loginToFavorite : undefined}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer disabled:opacity-60 ${
           favorited
             ? "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-300"
             : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         }`}
       >
-        <Heart className={`w-3.5 h-3.5 ${favorited ? "fill-current" : ""}`} />
+        {!loggedIn && authLoaded ? (
+          <Lock className="w-3.5 h-3.5 text-slate-400" />
+        ) : (
+          <Heart className={`w-3.5 h-3.5 ${favorited ? "fill-current" : ""}`} />
+        )}
         <span>{favorited ? tw.favorited : tw.favorite}</span>
+        <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700/80 text-[11px] tabular-nums">
+          {favoriteCount}
+        </span>
       </button>
 
       <button type="button" onClick={handleShare} className={btnClass}>
-        {copied ? (
-          <>
-            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>{tw.copied}</span>
-          </>
-        ) : (
-          <>
-            <Share2 className="w-3.5 h-3.5" />
-            <span>{tw.share}</span>
-          </>
-        )}
+        {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
+        <span>{copied ? tw.copied : tw.share}</span>
       </button>
 
       <button type="button" onClick={handleFullscreen} className={btnClass}>
@@ -122,9 +149,12 @@ export function WebcamActionsBar({
         <span>{tw.fullscreen}</span>
       </button>
 
-      <Link href={localizePath("/random", locale)} className={btnClass}>
+      <Link
+        href={localizePath(`/random?exclude=${encodeURIComponent(slug)}`, locale)}
+        className={btnClass}
+      >
         <Shuffle className="w-3.5 h-3.5" />
-        <span>{tw.randomLive}</span>
+        <span>{tw.random}</span>
       </Link>
     </div>
   );

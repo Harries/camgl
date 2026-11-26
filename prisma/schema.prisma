@@ -91,6 +91,7 @@ model Webcam {
   visibility   String           @default("PUBLIC")
   isFeatured   Boolean          @default(false) @map("is_featured")
   viewCount    Int              @default(0) @map("view_count")
+  favoriteCount Int             @default(0) @map("favorite_count")
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @updatedAt @map("updated_at")
 
@@ -100,6 +101,7 @@ model Webcam {
   streams    Stream[]
   licenses   License[]
   reports    Report[]
+  favorites  UserFavorite[]
 
   @@index([reviewStatus, cityId])
   @@index([lat, lng])
@@ -252,4 +254,31 @@ model AuditLog {
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@map("audit_logs")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String
+  passwordHash String?        @map("password_hash")
+  githubId     String?        @unique @map("github_id")
+  avatarUrl    String?        @map("avatar_url")
+  role         String         @default("USER")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  favorites    UserFavorite[]
+
+  @@map("users")
+}
+
+model UserFavorite {
+  userId    String   @map("user_id")
+  webcamId  String   @map("webcam_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  webcam Webcam @relation(fields: [webcamId], references: [id], onDelete: Cascade)
+
+  @@id([userId, webcamId])
+  @@map("user_favorites")
 }
