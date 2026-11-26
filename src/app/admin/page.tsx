@@ -15,10 +15,10 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const authed = await isAdminAuthenticated();
+  const [authed, userId] = await Promise.all([isAdminAuthenticated(), getSessionUserId()]);
+  const user = userId ? await getUserById(userId) : null;
+
   if (!authed) {
-    const userId = await getSessionUserId();
-    const user = userId ? await getUserById(userId) : null;
     if (!user) {
       redirect("/login?next=/admin");
     }
@@ -57,5 +57,5 @@ export default async function AdminPage() {
   }
 
   const initialData = await getAdminDashboardData();
-  return <AdminConsoleClient initialData={initialData} />;
+  return <AdminConsoleClient initialData={initialData} currentUser={user} />;
 }

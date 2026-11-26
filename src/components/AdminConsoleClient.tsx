@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -24,6 +24,7 @@ import {
   Users,
   ShieldCheck,
   Heart,
+  ChevronsUpDown,
 } from "lucide-react";
 import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -38,6 +39,7 @@ import type {
   AdminDiscoveryJob,
   AdminReport,
   AdminUser,
+  AuthUser,
   PublicWebcam,
 } from "@/lib/types";
 import { getSourceTypeMeta } from "@/lib/source-badge";
@@ -57,9 +59,17 @@ interface AdminData {
   youtubeQuotaUsed: number;
 }
 
-export function AdminConsoleClient({ initialData }: { initialData: AdminData }) {
+export function AdminConsoleClient({
+  initialData,
+  currentUser = null,
+}: {
+  initialData: AdminData;
+  currentUser?: AuthUser | null;
+}) {
   const router = useRouter();
   const [data, setData] = useState<AdminData>(initialData);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
   const [tab, setTab] = useState<
     "dashboard" | "review" | "webcams" | "categories" | "locations" | "users" | "jobs" | "messages" | "reports"
   >("dashboard");
@@ -151,9 +161,33 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
     if (ok) setEditingSlug(null);
   }
 
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setUserMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [userMenuOpen]);
+
   async function handleLogout() {
-    await fetch("/api/admin/auth", { method: "DELETE" });
+    setUserMenuOpen(false);
+    await Promise.all([
+      fetch("/api/admin/auth", { method: "DELETE" }),
+      fetch("/api/v1/auth/logout", { method: "POST" }),
+    ]);
+    window.dispatchEvent(new Event("camgl-auth-changed"));
     router.push("/");
+    router.refresh();
   }
 
   async function runAction(payload: Record<string, unknown>): Promise<boolean> {
@@ -391,23 +425,82 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
           </nav>
         </div>
 
-        {/* Sidebar Footer */}
-        <div className="p-2.5 border-t border-slate-200 dark:border-slate-800 space-y-1">
-          <Link
-            href="/"
-            title={collapsed ? "Public Site" : undefined}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
-          >
-            <ExternalLink className="w-4 h-4 shrink-0" />
-            {!collapsed && <span>Public Site</span>}
-          </Link>
+        {/* Sidebar Footer: Logged-in User Popover */}
+        <div ref={userMenuRef} className="relative p-2.5 border-t border-slate-200 dark:border-slate-800">
+          {userMenuOpen && (
+            <div
+              role="menu"
+              className={`absolute bottom-full mb-2 z-50 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-lg py-1.5 ${
+                collapsed ? "left-2 w-52" : "left-2.5 right-2.5"
+              }`}
+            >
+              <div className="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800">
+                <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                  {currentUser?.name ?? "Administrator"}
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  {currentUser?.email ?? "Admin Session"}
+                </div>
+              </div>
+              <div className="p-1.5 space-y-0.5">
+                <Link
+                  href="/"
+                  onClick={() => setUserMenuOpen(false)}
+                  role="menuitem"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  <span>返回网站</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  role="menuitem"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>退出登录</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           <button
-            onClick={handleLogout}
-            title={collapsed ? "退出登录" : undefined}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50 transition-colors"
+            type="button"
+            onClick={() => setUserMenuOpen((prev) => !prev)}
+            aria-expanded={userMenuOpen}
+            aria-haspopup="menu"
+            title={collapsed ? currentUser?.name ?? "Admin" : undefined}
+            className={`w-full flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer ${
+              collapsed ? "justify-center" : "justify-between"
+            }`}
           >
-            <LogOut className="w-4 h-4 shrink-0" />
-            {!collapsed && <span>退出登录</span>}
+            <div className="flex items-center gap-2.5 min-w-0">
+              {currentUser?.avatarUrl ? (
+                <img
+                  src={currentUser.avatarUrl}
+                  alt={currentUser.name}
+                  className="w-8 h-8 rounded-lg object-cover shrink-0 border border-slate-200 dark:border-slate-700"
+                />
+              ) : (
+                <span className="w-8 h-8 rounded-lg bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0">
+                  {(currentUser?.name ?? "A").slice(0, 1).toUpperCase()}
+                </span>
+              )}
+              {!collapsed && (
+                <div className="text-left min-w-0">
+                  <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                    {currentUser?.name ?? "Administrator"}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    {currentUser?.email ?? "Admin"}
+                  </div>
+                </div>
+              )}
+            </div>
+            {!collapsed && (
+              <ChevronsUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            )}
           </button>
         </div>
       </aside>
