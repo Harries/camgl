@@ -1,14 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   Calendar,
   Check,
   ExternalLink,
   Heart,
-  LogOut,
   Mail,
   PlusCircle,
   Save,
@@ -35,7 +33,6 @@ export function ProfileClient({
   initialSubmissions: UserSubmission[];
   initialTab?: ProfileSection;
 }) {
-  const router = useRouter();
   const { locale, messages } = useI18n();
   const ta = messages.auth;
 
@@ -77,13 +74,6 @@ export function ProfileClient({
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleLogout = async () => {
-    await fetch("/api/v1/auth/logout", { method: "POST" });
-    window.dispatchEvent(new Event("camgl-auth-changed"));
-    router.push(localizePath("/", locale));
-    router.refresh();
   };
 
   const handleUnfavorite = async (slug: string) => {
@@ -194,17 +184,6 @@ export function ProfileClient({
               );
             })}
           </nav>
-
-          <div className="p-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition-colors cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>{ta.logoutBtn}</span>
-            </button>
-          </div>
         </div>
       </aside>
 

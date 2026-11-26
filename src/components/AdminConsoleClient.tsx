@@ -147,7 +147,7 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
 
   async function handleLogout() {
     await fetch("/api/admin/auth", { method: "DELETE" });
-    router.refresh();
+    router.push("/");
   }
 
   async function runAction(payload: Record<string, unknown>): Promise<boolean> {

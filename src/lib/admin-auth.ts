@@ -1,5 +1,7 @@
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
+import { getUserById } from "./repository";
+import { getSessionUserId } from "./user-auth";
 
 export const ADMIN_COOKIE_NAME = "livecam_admin_session";
 
@@ -24,10 +26,16 @@ export function createAdminSessionToken(): string {
 export async function isAdminAuthenticated(): Promise<boolean> {
   const cookieStore = await cookies();
   const token = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
-  if (!token) return false;
+  if (token) {
+    const expected = Buffer.from(createAdminSessionToken(), "utf8");
+    const actual = Buffer.from(token, "utf8");
+    if (expected.length === actual.length && crypto.timingSafeEqual(expected, actual)) {
+      return true;
+    }
+  }
 
-  const expected = Buffer.from(createAdminSessionToken(), "utf8");
-  const actual = Buffer.from(token, "utf8");
-  if (expected.length !== actual.length) return false;
-  return crypto.timingSafeEqual(expected, actual);
+  const userId = await getSessionUserId();
+  if (!userId) return false;
+  const user = await getUserById(userId);
+  return user?.role === "ADMIN";
 }
