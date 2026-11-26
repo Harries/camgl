@@ -32,6 +32,8 @@ import type {
 import { coordKey, fetchWeatherBatch } from "./weather";
 import { getTelemetrySummary } from "./telemetry-store";
 import { getCountryFlag, resolveCountryIsoCode } from "./geo-i18n";
+import { getDaylightInfo } from "./suncalc";
+import type { WeatherThemeSlug } from "./themes";
 import {
   collectAndProbeAllSources,
   findLiveStreamForYouTubeChannel,
@@ -1359,31 +1361,28 @@ export async function mergeUserFavorites(
 }
 
 export async function listCountriesSummary() {
-  const all = await listApprovedWebcams();
-  const map = new Map<
-    string,
-    { name: string; slug: string; flag: string; cities: Set<string>; count: number }
-  >();
-  for (const w of all) {
-    const existing = map.get(w.country.slug) ?? {
-      name: w.country.name,
-      slug: w.country.slug,
-      flag: w.country.flag,
-      cities: new Set<string>(),
-      count: 0,
-    };
-    existing.cities.add(w.city.slug);
-    existing.count += 1;
-    map.set(w.country.slug, existing);
-  }
-  return Array.from(map.values()).map((c) => ({
+  const withCities = await listCountriesWithCities();
+  return withCities.map((c) => ({
     name: c.name,
     slug: c.slug,
     flag: c.flag,
-    cityCount: c.cities.size,
-    webcamCount: c.count,
+    cityCount: c.cities.length,
+    webcamCount: c.webcamCount,
   }));
 }
+
+interface ReadCacheStore {
+  countries?: { data: NavCountryItem[]; expiresAt: number };
+  categories?: { data: Array<{ slug: string; name: string }>; expiresAt: number };
+  themeCounts?: { data: Record<WeatherThemeSlug, number>; expiresAt: number };
+}
+
+const globalForReadCache = globalThis as unknown as {
+  __camglReadCache?: ReadCacheStore;
+};
+
+const readCache = (globalForReadCache.__camglReadCache ??= {});
+const READ_CACHE_TTL_MS = 60 * 1000;
 
 export interface NavCountryItem {
   name: string;
@@ -1395,6 +1394,10 @@ export interface NavCountryItem {
 }
 
 export async function listCountriesWithCities(): Promise<NavCountryItem[]> {
+  const now = Date.now();
+  if (readCache.countries && readCache.countries.expiresAt > now) {
+    return readCache.countries.data;
+  }
   const buildFromRows = (
     rows: Array<{
       country: { name: string; slug: string; isoCode: string; flag: string };
@@ -1473,7 +1476,7 @@ export async function listCountriesWithCities(): Promise<NavCountryItem[]> {
           },
         },
       });
-      return buildFromRows(
+      const data = buildFromRows(
         rows.map((r) => ({
           country: {
             ...r.city.country,
@@ -1482,12 +1485,14 @@ export async function listCountriesWithCities(): Promise<NavCountryItem[]> {
           city: { name: r.city.name, slug: r.city.slug },
         }))
       );
+      readCache.countries = { data, expiresAt: now + READ_CACHE_TTL_MS };
+      return data;
     } catch {
       // Fallback
     }
   }
 
-  return buildFromRows(
+  const fallback = buildFromRows(
     memStore.webcams
       .filter((w) => {
         if (w.reviewStatus && w.reviewStatus !== "APPROVED") return false;
@@ -1499,13 +1504,82 @@ export async function listCountriesWithCities(): Promise<NavCountryItem[]> {
         city: { name: w.city.name, slug: w.city.slug },
       }))
   );
+  readCache.countries = { data: fallback, expiresAt: now + READ_CACHE_TTL_MS };
+  return fallback;
+}
+
+export async function listThemeCounts(): Promise<Record<WeatherThemeSlug, number>> {
+  const now = Date.now();
+  if (readCache.themeCounts && readCache.themeCounts.expiresAt > now) {
+    return readCache.themeCounts.data;
+  }
+
+  const counts: Record<WeatherThemeSlug, number> = {
+    daylight: 0,
+    night: 0,
+    sunny: 0,
+    snow: 0,
+    rain: 0,
+    cloudy: 0,
+  };
+
+  let coords: Array<{ lat: number; lng: number; timezone: string }> = [];
+  if (isDbConfigured()) {
+    try {
+      const rows = await prisma.webcam.findMany({
+        where: {
+          reviewStatus: "APPROVED",
+          streams: { some: { isPrimary: true, status: "LIVE", mediaType: "LIVE_VIDEO" } },
+          city: {
+            country: { slug: { not: "international" } },
+            NOT: { AND: [{ lat: 0 }, { lng: 0 }] },
+          },
+        },
+        select: {
+          city: { select: { lat: true, lng: true, timezone: true } },
+        },
+      });
+      coords = rows.map((r) => r.city);
+    } catch {
+      // Fallback
+    }
+  }
+  if (coords.length === 0) {
+    coords = memStore.webcams
+      .filter((w) => w.stream?.status === "LIVE" && isFixedLocationWebcam(w))
+      .map((w) => w.city);
+  }
+
+  const weatherMap = await fetchWeatherBatch(coords);
+  for (const c of coords) {
+    const { isDaylight } = getDaylightInfo(c.lat, c.lng, c.timezone);
+    if (isDaylight) counts.daylight += 1;
+    else counts.night += 1;
+
+    const w = (weatherMap.get(coordKey(c.lat, c.lng)) ?? "").toLowerCase();
+    if (/clear|sunny|fair/.test(w)) counts.sunny += 1;
+    else if (/snow|rime/.test(w)) counts.snow += 1;
+    else if (/rain|drizzle|showers|thunderstorm/.test(w)) counts.rain += 1;
+    else if (/cloudy|overcast|fog/.test(w)) counts.cloudy += 1;
+  }
+
+  readCache.themeCounts = { data: counts, expiresAt: now + READ_CACHE_TTL_MS };
+  return counts;
 }
 
 export async function listCategories() {
+  const now = Date.now();
+  if (readCache.categories && readCache.categories.expiresAt > now) {
+    return readCache.categories.data;
+  }
   if (isDbConfigured()) {
     try {
       const rows = await prisma.category.findMany({ orderBy: { name: "asc" } });
-      if (rows.length > 0) return rows.map((r) => ({ slug: r.slug, name: r.name }));
+      if (rows.length > 0) {
+        const data = rows.map((r) => ({ slug: r.slug, name: r.name }));
+        readCache.categories = { data, expiresAt: now + READ_CACHE_TTL_MS };
+        return data;
+      }
     } catch {
       // Fallback
     }

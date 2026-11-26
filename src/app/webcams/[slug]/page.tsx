@@ -119,7 +119,7 @@ export default async function WebcamDetailPage({
   const cityLabel = getCityLabel(locale, webcam.city.slug, webcam.city.name);
 
   const [{ items: allWebcams }, detailedWeather, dbTranslation] = await Promise.all([
-    listApprovedWebcamsPage({ page: 1, pageSize: 48 }),
+    listApprovedWebcamsPage({ page: 1, pageSize: 24 }),
     fetchDetailedWeather(webcam.city.lat, webcam.city.lng),
     getEntityTranslation("webcam", webcam.id, locale),
   ]);

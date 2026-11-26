@@ -1,17 +1,16 @@
 import Link from "next/link";
 import {
-  listApprovedWebcams,
   listApprovedWebcamsPage,
   listCategories,
   listCountriesSummary,
   listFeaturedWebcams,
+  listThemeCounts,
 } from "@/lib/repository";
 import { InfiniteWebcamGrid } from "@/components/InfiniteWebcamGrid";
 import { HeroCarousel } from "@/components/HeroCarousel";
 import { getServerLocale } from "@/lib/i18n-server";
 import {
   getThemeSectionHeading,
-  matchesWeatherTheme,
   WEATHER_THEMES,
 } from "@/lib/themes";
 import {
@@ -31,13 +30,13 @@ export default async function HomePage({
 }) {
   const [{ category }, locale] = await Promise.all([searchParams, getServerLocale()]);
   const th = getMessages(locale).home;
-  const [pageData, allWebcams, categories, countries, featuredSlides] = await Promise.all([
+  const [pageData, themeCountsMap, categories, countries, featuredSlides] = await Promise.all([
     listApprovedWebcamsPage({
       ...(category ? { category } : {}),
       page: 1,
       pageSize: 12,
     }),
-    listApprovedWebcams(),
+    listThemeCounts(),
     listCategories(),
     listCountriesSummary(),
     listFeaturedWebcams(6),
@@ -45,7 +44,7 @@ export default async function HomePage({
   const themeHeading = getThemeSectionHeading(locale);
   const themeCounts = WEATHER_THEMES.map((t) => ({
     ...t,
-    count: allWebcams.filter((w) => matchesWeatherTheme(w, t.slug)).length,
+    count: themeCountsMap[t.slug] ?? 0,
   }));
 
   const webcams = pageData.items;

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { listApprovedWebcams, listApprovedWebcamsPage } from "@/lib/repository";
+import { listApprovedWebcams } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
 import { PaginationBar } from "@/components/PaginationBar";
 import { getDaylightInfo } from "@/lib/suncalc";
@@ -56,15 +56,15 @@ export default async function CountryDetailPage({
   const page = Math.max(1, Number(sp.page) || 1);
   const pageSize = 12;
 
-  const [allWebcams, pageData, locale] = await Promise.all([
+  const [allWebcams, locale] = await Promise.all([
     listApprovedWebcams({ country }),
-    listApprovedWebcamsPage({ country, page, pageSize }),
     getServerLocale(),
   ]);
   if (allWebcams.length === 0) notFound();
 
-  const totalPages = Math.max(1, Math.ceil(pageData.total / pageSize));
-  const webcams = pageData.items;
+  const totalPages = Math.max(1, Math.ceil(allWebcams.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const webcams = allWebcams.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const msgs = getMessages(locale);
   const countryInfo = allWebcams[0].country;
@@ -111,7 +111,7 @@ export default async function CountryDetailPage({
           {countryInfo.flag} {formatMessage(msgs.webcam.allCountryCams, { country: countryLabel })}
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          {formatMessage(msgs.home.showingWebcams, { count: pageData.total })}
+          {formatMessage(msgs.home.showingWebcams, { count: allWebcams.length })}
         </p>
       </div>
 
