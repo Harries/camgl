@@ -55,6 +55,16 @@ export interface AuthUser {
   createdAt: string;
 }
 
+export interface UserSubmission {
+  id: string;
+  title: string;
+  category: string;
+  location: string;
+  sourceUrl: string;
+  status: ReviewStatus;
+  createdAt: string;
+}
+
 export interface AdminCandidate {
   id: string;
   source: string;

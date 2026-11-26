@@ -288,6 +288,12 @@ export interface Messages {
     orWithEmail: string;
     githubNotConfigured: string;
     githubFailed: string;
+    menuFavorites: string;
+    menuWebcams: string;
+    menuSettings: string;
+    myWebcamsTitle: string;
+    myWebcamsEmpty: string;
+    submitWebcamBtn: string;
   };
   seo: {
     homeTitle: string;
@@ -678,6 +684,12 @@ const en: Messages = {
     orWithEmail: "or",
     githubNotConfigured: "GitHub login is not configured yet (missing GITHUB_CLIENT_ID).",
     githubFailed: "GitHub sign-in failed. Please try again.",
+    menuFavorites: "My Favorites",
+    menuWebcams: "My Webcams",
+    menuSettings: "Account Settings",
+    myWebcamsTitle: "My Submitted Webcams",
+    myWebcamsEmpty: "You haven't submitted any live webcams with this email yet.",
+    submitWebcamBtn: "Submit a Webcam",
   },
   seo: {
     homeTitle: "LiveCam Global — Verified Live Webcams Around the World",
@@ -1075,6 +1087,12 @@ const zh: Messages = {
     orWithEmail: "或",
     githubNotConfigured: "暂未配置 GitHub 登录（缺少 GITHUB_CLIENT_ID）。",
     githubFailed: "GitHub 登录失败，请重试。",
+    menuFavorites: "我的喜欢",
+    menuWebcams: "我的摄像头",
+    menuSettings: "个人设置",
+    myWebcamsTitle: "我提交的摄像头",
+    myWebcamsEmpty: "你还没有使用当前邮箱提交过摄像头。",
+    submitWebcamBtn: "提交摄像头",
   },
   seo: {
     homeTitle: "LiveCam Global — 全球实景高清实时摄像头",
@@ -1435,6 +1453,12 @@ const ja: Messages = {
     orWithEmail: "または",
     githubNotConfigured: "GitHub ログインがまだ設定されていません（GITHUB_CLIENT_ID 未設定）。",
     githubFailed: "GitHub ログインに失敗しました。もう一度お試しください。",
+    menuFavorites: "お気に入り",
+    menuWebcams: "投稿したカメラ",
+    menuSettings: "アカウント設定",
+    myWebcamsTitle: "投稿したライブカメラ",
+    myWebcamsEmpty: "このメールアドレスで投稿されたカメラはまだありません。",
+    submitWebcamBtn: "カメラを投稿",
   },
   seo: {
     homeTitle: "LiveCam Global — 世界の認証済みライブカメラ",
@@ -1781,6 +1805,12 @@ const es: Messages = {
     orWithEmail: "o",
     githubNotConfigured: "El inicio con GitHub aún no está configurado (falta GITHUB_CLIENT_ID).",
     githubFailed: "Error al iniciar sesión con GitHub. Inténtalo de nuevo.",
+    menuFavorites: "Mis Favoritos",
+    menuWebcams: "Mis Cámaras",
+    menuSettings: "Configuración",
+    myWebcamsTitle: "Mis Cámaras Enviadas",
+    myWebcamsEmpty: "Aún no has enviado ninguna cámara con este correo.",
+    submitWebcamBtn: "Enviar una Cámara",
   },
   seo: {
     homeTitle: "LiveCam Global — Cámaras en Vivo Verificadas del Mundo",
@@ -2127,6 +2157,12 @@ const fr: Messages = {
     orWithEmail: "ou",
     githubNotConfigured: "La connexion GitHub n'est pas configurée (GITHUB_CLIENT_ID manquant).",
     githubFailed: "Échec de la connexion GitHub. Veuillez réessayer.",
+    menuFavorites: "Mes Favoris",
+    menuWebcams: "Mes Webcams",
+    menuSettings: "Paramètres",
+    myWebcamsTitle: "Mes Webcams Soumises",
+    myWebcamsEmpty: "Vous n'avez pas encore soumis de webcam avec cet e-mail.",
+    submitWebcamBtn: "Soumettre une Webcam",
   },
   seo: {
     homeTitle: "LiveCam Global — Webcams en Direct Vérifiées dans le Monde",

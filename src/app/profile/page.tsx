@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ProfileClient } from "@/components/ProfileClient";
-import { getUserById, listUserFavoriteWebcams } from "@/lib/repository";
+import { getUserById, listUserFavoriteWebcams, listUserSubmissions } from "@/lib/repository";
 import { getSessionUserId } from "@/lib/user-auth";
 import { getServerLocale } from "@/lib/i18n-server";
 import { getMessages, localizePath } from "@/lib/i18n";
@@ -32,5 +32,13 @@ export default async function ProfilePage() {
     redirect(`/api/v1/auth/logout?next=${encodeURIComponent(loginTarget)}`);
   }
 
-  return <ProfileClient initialUser={user} initialFavorites={favorites} />;
+  const submissions = await listUserSubmissions(user.email);
+
+  return (
+    <ProfileClient
+      initialUser={user}
+      initialFavorites={favorites}
+      initialSubmissions={submissions}
+    />
+  );
 }

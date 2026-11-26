@@ -19,6 +19,7 @@ import type {
   AuthUser,
   PublicWebcam,
   StreamStatus,
+  UserSubmission,
 } from "./types";
 import { coordKey, fetchWeatherBatch } from "./weather";
 import { collectAndProbeAllSources, probeSourceStability } from "./collectors";
@@ -597,6 +598,32 @@ export async function listWebcamsBySlugs(slugs: string[]): Promise<PublicWebcam[
   const all = await listApprovedWebcams();
   const bySlug = new Map(all.map((w) => [w.slug, w]));
   return clean.map((s) => bySlug.get(s)).filter((w): w is PublicWebcam => Boolean(w));
+}
+
+export async function listUserSubmissions(email: string): Promise<UserSubmission[]> {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail) return [];
+  if (isDbConfigured()) {
+    try {
+      const rows = await prisma.submission.findMany({
+        where: { contact: { equals: cleanEmail, mode: "insensitive" } },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      });
+      return rows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        category: r.category,
+        location: r.location,
+        sourceUrl: r.sourceUrl,
+        status: r.status as UserSubmission["status"],
+        createdAt: r.createdAt.toISOString(),
+      }));
+    } catch {
+      // Fallback
+    }
+  }
+  return [];
 }
 
 export async function listMostLikedWebcams(limit = 48): Promise<PublicWebcam[]> {
