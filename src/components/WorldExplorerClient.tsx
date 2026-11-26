@@ -134,7 +134,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
   }, [bboxWebcams, webcams, selectedCountry, selectedCity, catFilter, statusFilter]);
 
   const activePin = filtered.find((w) => w.slug === selectedSlug) ?? filtered[0] ?? webcams[0];
-  const categories = ["all", "city", "beach", "nature", "wildlife", "rail", "ski", "volcano", "port"];
+  const categories = ["all", "city", "beach", "nature", "wildlife", "rail", "ski", "volcano", "port", "airport", "mountain", "landmark"];
   const visibleWebcams = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
 

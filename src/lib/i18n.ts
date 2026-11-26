@@ -769,6 +769,9 @@ const en: Messages = {
     ski: "Ski",
     volcano: "Volcano",
     port: "Port",
+    airport: "Airport",
+    mountain: "Mountain",
+    landmark: "Landmark",
     live: "Live",
   },
 };
@@ -1181,6 +1184,9 @@ const zh: Messages = {
     ski: "滑雪",
     volcano: "火山",
     port: "港口",
+    airport: "机场",
+    mountain: "山岳",
+    landmark: "地标",
     live: "直播",
   },
 };
@@ -1564,6 +1570,9 @@ const ja: Messages = {
     ski: "スキー",
     volcano: "火山",
     port: "港湾",
+    airport: "空港",
+    mountain: "山岳",
+    landmark: "名所",
     live: "ライブ",
   },
 };
@@ -1933,6 +1942,9 @@ const es: Messages = {
     ski: "Esquí",
     volcano: "Volcán",
     port: "Puerto",
+    airport: "Aeropuerto",
+    mountain: "Montaña",
+    landmark: "Monumento",
     live: "En vivo",
   },
 };
@@ -2302,6 +2314,9 @@ const fr: Messages = {
     ski: "Ski",
     volcano: "Volcan",
     port: "Port",
+    airport: "Aéroport",
+    mountain: "Montagne",
+    landmark: "Monument",
     live: "Direct",
   },
 };
@@ -2671,6 +2686,9 @@ const de: Messages = {
     ski: "Skigebiet",
     volcano: "Vulkan",
     port: "Hafen",
+    airport: "Flughafen",
+    mountain: "Berge",
+    landmark: "Wahrzeichen",
     live: "Live",
   },
 };

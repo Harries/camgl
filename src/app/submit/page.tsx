@@ -176,6 +176,9 @@ export default function SubmitPage() {
               <option value="Ski">{getCategoryLabel(locale, "ski", "Ski")}</option>
               <option value="Volcano">{getCategoryLabel(locale, "volcano", "Volcano")}</option>
               <option value="Port">{getCategoryLabel(locale, "port", "Port")}</option>
+              <option value="Airport">{getCategoryLabel(locale, "airport", "Airport")}</option>
+              <option value="Mountain">{getCategoryLabel(locale, "mountain", "Mountain")}</option>
+              <option value="Landmark">{getCategoryLabel(locale, "landmark", "Landmark")}</option>
             </select>
           </label>
         </div>

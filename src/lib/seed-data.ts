@@ -15,6 +15,9 @@ export const SEED_CATEGORIES = [
   { slug: "ski", name: "Ski" },
   { slug: "volcano", name: "Volcano" },
   { slug: "port", name: "Port" },
+  { slug: "airport", name: "Airport" },
+  { slug: "mountain", name: "Mountain" },
+  { slug: "landmark", name: "Landmark" },
 ];
 
 export const SEED_WEBCAMS: PublicWebcam[] = [

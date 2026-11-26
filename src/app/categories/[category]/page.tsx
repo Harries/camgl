@@ -64,8 +64,8 @@ export default async function CategoryPage({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
-      { "@type": "ListItem", position: 2, name: catInfo.name, item: absoluteUrl(`/categories/${category}`) },
+      { "@type": "ListItem", position: 1, name: tw.home, item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: catLabel, item: absoluteUrl(`/categories/${category}`) },
     ],
   };
 
