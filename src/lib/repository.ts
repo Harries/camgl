@@ -31,6 +31,7 @@ import type {
 } from "./types";
 import { coordKey, fetchWeatherBatch } from "./weather";
 import { getTelemetrySummary } from "./telemetry-store";
+import { getCountryFlag, resolveCountryIsoCode } from "./geo-i18n";
 import {
   collectAndProbeAllSources,
   findLiveStreamForYouTubeChannel,
@@ -189,7 +190,7 @@ function mapDbWebcam(r: {
       name: r.city.country.name,
       slug: r.city.country.slug,
       isoCode: r.city.country.isoCode,
-      flag: r.city.country.flag,
+      flag: getCountryFlag(r.city.country.slug, r.city.country.isoCode, r.city.country.flag),
     },
     city: {
       name: r.city.name,
@@ -1474,7 +1475,10 @@ export async function listCountriesWithCities(): Promise<NavCountryItem[]> {
       });
       return buildFromRows(
         rows.map((r) => ({
-          country: r.city.country,
+          country: {
+            ...r.city.country,
+            flag: getCountryFlag(r.city.country.slug, r.city.country.isoCode, r.city.country.flag),
+          },
           city: { name: r.city.name, slug: r.city.slug },
         }))
       );
@@ -2410,21 +2414,22 @@ export async function approveCandidate(id: string) {
       const citySlug = slugify(cand.cityName) || "city";
       const webcamSlug = `${slugify(cand.title)}-${Date.now().toString(36)}`;
 
-      const baseIso = cand.countryName.slice(0, 2).toUpperCase();
+      const baseIso = resolveCountryIsoCode(countrySlug, cand.countryName);
       const existingIso = await prisma.country.findUnique({ where: { isoCode: baseIso } });
       const safeIso =
         existingIso && existingIso.slug !== countrySlug
           ? `${baseIso}${countrySlug.slice(0, 1).toUpperCase()}`
           : baseIso;
+      const resolvedFlag = getCountryFlag(countrySlug, baseIso);
 
       const country = await prisma.country.upsert({
         where: { slug: countrySlug },
-        update: {},
+        update: { flag: resolvedFlag },
         create: {
           isoCode: safeIso,
           name: cand.countryName,
           slug: countrySlug,
-          flag: "🌍",
+          flag: resolvedFlag,
         },
       });
 
@@ -2533,8 +2538,8 @@ export async function approveCandidate(id: string) {
     country: {
       name: cand.countryName,
       slug: slugify(cand.countryName),
-      isoCode: cand.countryName.slice(0, 2).toUpperCase(),
-      flag: "🌍",
+      isoCode: resolveCountryIsoCode(cand.countryName),
+      flag: getCountryFlag(cand.countryName),
     },
     city: {
       name: cand.cityName,

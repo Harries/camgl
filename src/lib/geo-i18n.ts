@@ -152,3 +152,131 @@ export function getCityLabel(locale: Locale, slug: string, fallback?: string): s
   const key = slug.toLowerCase().trim();
   return CITY_NAMES[key]?.[locale] ?? CITY_NAMES[key]?.en ?? fallback ?? slug;
 }
+
+const COUNTRY_SLUG_TO_ISO: Record<string, string> = {
+  "united-states": "US",
+  "united-kingdom": "GB",
+  japan: "JP",
+  italy: "IT",
+  canada: "CA",
+  namibia: "NA",
+  australia: "AU",
+  "south-korea": "KR",
+  netherlands: "NL",
+  kenya: "KE",
+  switzerland: "CH",
+  "south-africa": "ZA",
+  norway: "NO",
+  greece: "GR",
+  finland: "FI",
+  czechia: "CZ",
+  "czech-republic": "CZ",
+  france: "FR",
+  germany: "DE",
+  spain: "ES",
+  china: "CN",
+  austria: "AT",
+  iceland: "IS",
+  mexico: "MX",
+  taiwan: "TW",
+  thailand: "TH",
+  portugal: "PT",
+  brazil: "BR",
+  sweden: "SE",
+  denmark: "DK",
+  poland: "PL",
+  turkey: "TR",
+  turkiye: "TR",
+  ireland: "IE",
+  belgium: "BE",
+  croatia: "HR",
+  slovenia: "SI",
+  slovakia: "SK",
+  hungary: "HU",
+  romania: "RO",
+  bulgaria: "BG",
+  ukraine: "UA",
+  russia: "RU",
+  "new-zealand": "NZ",
+  india: "IN",
+  indonesia: "ID",
+  malaysia: "MY",
+  philippines: "PH",
+  vietnam: "VN",
+  singapore: "SG",
+  "hong-kong": "HK",
+  argentina: "AR",
+  chile: "CL",
+  colombia: "CO",
+  peru: "PE",
+  "costa-rica": "CR",
+  panama: "PA",
+  "dominican-republic": "DO",
+  jamaica: "JM",
+  bahamas: "BS",
+  egypt: "EG",
+  morocco: "MA",
+  israel: "IL",
+  "united-arab-emirates": "AE",
+  uae: "AE",
+  malta: "MT",
+  cyprus: "CY",
+  estonia: "EE",
+  latvia: "LV",
+  lithuania: "LT",
+  luxembourg: "LU",
+  monaco: "MC",
+  andorra: "AD",
+  maldives: "MV",
+  mauritius: "MU",
+  fiji: "FJ",
+  montenegro: "ME",
+  serbia: "RS",
+  albania: "AL",
+  bosnia: "BA",
+  "bosnia-and-herzegovina": "BA",
+  scotland: "GB",
+  wales: "GB",
+  england: "GB",
+  "puerto-rico": "PR",
+  aruba: "AW",
+  curacao: "CW",
+  bermuda: "BM",
+  greenland: "GL",
+  "faroe-islands": "FO",
+};
+
+export function resolveCountryIsoCode(slugOrName: string, fallbackIso?: string | null): string {
+  const key = slugOrName
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  if (COUNTRY_SLUG_TO_ISO[key]) return COUNTRY_SLUG_TO_ISO[key];
+  if (fallbackIso && /^[A-Z]{2}$/i.test(fallbackIso.trim())) {
+    return fallbackIso.trim().toUpperCase();
+  }
+  return key.slice(0, 2).toUpperCase();
+}
+
+export function isoToFlagEmoji(iso: string): string {
+  const code = iso.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code)) return "🏳️";
+  return String.fromCodePoint(
+    0x1f1e6 + (code.charCodeAt(0) - 65),
+    0x1f1e6 + (code.charCodeAt(1) - 65)
+  );
+}
+
+export function getCountryFlag(
+  slugOrName: string,
+  isoCode?: string | null,
+  currentFlag?: string | null
+): string {
+  const resolvedIso = resolveCountryIsoCode(slugOrName, isoCode);
+  if (/^[A-Z]{2}$/.test(resolvedIso) && slugOrName.toLowerCase() !== "international") {
+    return isoToFlagEmoji(resolvedIso);
+  }
+  if (currentFlag && currentFlag !== "🌍") return currentFlag;
+  return "🌍";
+}

@@ -153,7 +153,8 @@ export function Navbar() {
     href: string,
     label: string,
     icon: React.ReactNode,
-    showLiveBadge = false
+    showLiveBadge = false,
+    trailing?: React.ReactNode
   ) => {
     const active = href === "/" ? barePathname === "/" : barePathname.startsWith(href);
     return (
@@ -169,6 +170,7 @@ export function Navbar() {
       >
         {icon}
         <span>{label}</span>
+        {trailing}
         {showLiveBadge && (
           <span className="absolute -top-1.5 -right-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[9px] font-bold leading-none tracking-wide shadow-sm ring-2 ring-white dark:ring-slate-900">
             <span className="w-1 h-1 rounded-full bg-white live-dot" />
@@ -200,7 +202,17 @@ export function Navbar() {
               onMouseEnter={openCountriesMenu}
               onMouseLeave={scheduleCloseCountriesMenu}
             >
-              {navLink("/countries", t.mapAndCountries, <MapPin className="w-4 h-4 shrink-0" />)}
+              {navLink(
+                "/countries",
+                t.mapAndCountries,
+                <MapPin className="w-4 h-4 shrink-0" />,
+                false,
+                <ChevronDown
+                  className={`hidden md:inline-block w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${
+                    countriesOpen ? "rotate-180 text-blue-600 dark:text-blue-400" : ""
+                  }`}
+                />
+              )}
               {countriesOpen && (
                 <div className="hidden md:block absolute left-0 top-full pt-2 z-50">
                   <div className="w-[560px] max-w-[90vw] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
