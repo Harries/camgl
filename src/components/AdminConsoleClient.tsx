@@ -21,6 +21,9 @@ import {
   Plus,
   Trash2,
   Pencil,
+  Users,
+  ShieldCheck,
+  Heart,
 } from "lucide-react";
 import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -34,6 +37,7 @@ import type {
   AdminCountry,
   AdminDiscoveryJob,
   AdminReport,
+  AdminUser,
   PublicWebcam,
 } from "@/lib/types";
 import { getSourceTypeMeta } from "@/lib/source-badge";
@@ -48,6 +52,7 @@ interface AdminData {
   categories?: AdminCategory[];
   countries?: AdminCountry[];
   cities?: AdminCity[];
+  users?: AdminUser[];
   auditLogs: AdminAuditLog[];
   youtubeQuotaUsed: number;
 }
@@ -56,8 +61,9 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
   const router = useRouter();
   const [data, setData] = useState<AdminData>(initialData);
   const [tab, setTab] = useState<
-    "dashboard" | "review" | "webcams" | "categories" | "locations" | "jobs" | "messages" | "reports"
+    "dashboard" | "review" | "webcams" | "categories" | "locations" | "users" | "jobs" | "messages" | "reports"
   >("dashboard");
+  const [userSearch, setUserSearch] = useState("");
   const [collapsed, setCollapsed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -287,6 +293,12 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
       label: "Countries & Cities",
       badge: (data.countries ?? []).length,
       icon: Globe,
+    },
+    {
+      key: "users" as const,
+      label: "Users",
+      badge: (data.users ?? []).length,
+      icon: Users,
     },
     {
       key: "jobs" as const,
@@ -827,13 +839,14 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                         <th className="px-4 py-3 font-medium">Review</th>
                         <th className="px-4 py-3 font-medium">Stream</th>
                         <th className="px-4 py-3 font-medium">Views</th>
+                        <th className="px-4 py-3 font-medium">Likes</th>
                         <th className="px-4 py-3 font-medium text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                       {pagedWebcams.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="px-4 py-10 text-center text-xs text-slate-500 dark:text-slate-400">
+                          <td colSpan={8} className="px-4 py-10 text-center text-xs text-slate-500 dark:text-slate-400">
                             No webcams match your search filter.
                           </td>
                         </tr>
@@ -880,6 +893,12 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                               </td>
                               <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 tabular-nums">
                                 {(w.viewCount ?? 0).toLocaleString()}
+                              </td>
+                              <td className="px-4 py-3 text-xs text-rose-600 dark:text-rose-400 tabular-nums">
+                                <span className="inline-flex items-center gap-1">
+                                  <Heart className="w-3.5 h-3.5 fill-current" />
+                                  {(w.favoriteCount ?? 0).toLocaleString()}
+                                </span>
                               </td>
                               <td className="px-4 py-3 text-right whitespace-nowrap space-x-1.5">
                                 <button
@@ -1531,6 +1550,127 @@ export function AdminConsoleClient({ initialData }: { initialData: AdminData }) 
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {tab === "users" && (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    User Management ({(data.users ?? []).length})
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Grant or revoke administrator privileges for registered users.
+                  </p>
+                </div>
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder="Search name or email..."
+                    className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-x-auto shadow-sm">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 dark:bg-slate-800/70 text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">User</th>
+                      <th className="px-4 py-3 font-medium">Email</th>
+                      <th className="px-4 py-3 font-medium">Auth</th>
+                      <th className="px-4 py-3 font-medium">Likes</th>
+                      <th className="px-4 py-3 font-medium">Role</th>
+                      <th className="px-4 py-3 font-medium">Joined</th>
+                      <th className="px-4 py-3 font-medium text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                    {(data.users ?? [])
+                      .filter((u) => {
+                        const q = userSearch.trim().toLowerCase();
+                        if (!q) return true;
+                        return (
+                          u.name.toLowerCase().includes(q) ||
+                          u.email.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((u) => {
+                        const isAdminUser = u.role === "ADMIN";
+                        return (
+                          <tr key={u.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2.5">
+                                {u.avatarUrl ? (
+                                  <img
+                                    src={u.avatarUrl}
+                                    alt={u.name}
+                                    className="w-7 h-7 rounded-full object-cover shrink-0"
+                                  />
+                                ) : (
+                                  <span className="w-7 h-7 rounded-full bg-blue-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                                    {u.name.slice(0, 1).toUpperCase()}
+                                  </span>
+                                )}
+                                <span className="font-medium text-slate-900 dark:text-white">
+                                  {u.name}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                              {u.email}
+                            </td>
+                            <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
+                              {u.githubId ? "GitHub" : "Email"}
+                            </td>
+                            <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">
+                              {u.favoritesCount}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                                  isAdminUser
+                                    ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800"
+                                    : "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                                }`}
+                              >
+                                {isAdminUser && <ShieldCheck className="w-3 h-3" />}
+                                {u.role}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-slate-500 dark:text-slate-400 tabular-nums">
+                              {new Date(u.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() =>
+                                  runAction({
+                                    action: "setUserRole",
+                                    id: u.id,
+                                    role: isAdminUser ? "USER" : "ADMIN",
+                                  })
+                                }
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer disabled:opacity-50 ${
+                                  isAdminUser
+                                    ? "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
+                                    : "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300"
+                                }`}
+                              >
+                                {isAdminUser ? "Revoke Admin" : "Make Admin"}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}

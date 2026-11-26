@@ -65,6 +65,17 @@ export interface UserSubmission {
   createdAt: string;
 }
 
+export interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  githubId: string | null;
+  avatarUrl: string | null;
+  favoritesCount: number;
+  createdAt: string;
+}
+
 export interface AdminCandidate {
   id: string;
   source: string;

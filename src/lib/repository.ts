@@ -16,6 +16,7 @@ import type {
   AdminCountry,
   AdminDiscoveryJob,
   AdminReport,
+  AdminUser,
   AuthUser,
   PublicWebcam,
   StreamStatus,
@@ -1249,7 +1250,7 @@ export async function resolveContactMessage(id: string) {
 export async function getAdminDashboardData() {
   if (isDbConfigured()) {
     try {
-      const [webcams, candidates, jobs, reports, contactMessages, auditLogs, categories, countries, cities] = await Promise.all([
+      const [webcams, candidates, jobs, reports, contactMessages, auditLogs, categories, countries, cities, users] = await Promise.all([
         prisma.webcam.findMany({
           include: {
             city: { include: { country: true } },
@@ -1295,6 +1296,10 @@ export async function getAdminDashboardData() {
             _count: { select: { webcams: true } },
           },
           orderBy: [{ country: { name: "asc" } }, { name: "asc" }],
+        }),
+        prisma.user.findMany({
+          include: { _count: { select: { favorites: true } } },
+          orderBy: { createdAt: "desc" },
         }),
       ]);
 
@@ -1388,6 +1393,16 @@ export async function getAdminDashboardData() {
           timezone: ci.timezone,
           webcamCount: ci._count.webcams,
         })),
+        users: users.map((u): AdminUser => ({
+          id: u.id,
+          email: u.email,
+          name: u.name,
+          role: u.role,
+          githubId: u.githubId,
+          avatarUrl: u.avatarUrl,
+          favoritesCount: u._count.favorites,
+          createdAt: u.createdAt.toISOString(),
+        })),
         youtubeQuotaUsed: quotaUsed,
       };
     } catch {
@@ -1455,8 +1470,51 @@ export async function getAdminDashboardData() {
     })),
     countries: Array.from(memCountryMap.values()),
     cities: Array.from(memCityMap.values()),
+    users: memStore.users.map((u): AdminUser => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      role: u.role,
+      githubId: u.githubId ?? null,
+      avatarUrl: u.avatarUrl ?? null,
+      favoritesCount: memStore.userFavorites.get(u.id)?.size ?? 0,
+      createdAt: u.createdAt,
+    })),
     youtubeQuotaUsed: memStore.youtubeQuotaUsed,
   };
+}
+
+export async function setUserRoleAdmin(
+  userId: string,
+  role: "USER" | "ADMIN"
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!userId) return { ok: false, error: "User ID is required" };
+  if (isDbConfigured()) {
+    try {
+      const existing = await prisma.user.findUnique({ where: { id: userId } });
+      if (!existing) return { ok: false, error: "User not found" };
+      await prisma.user.update({
+        where: { id: userId },
+        data: { role },
+      });
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin",
+          action: "SET_USER_ROLE",
+          targetType: "User",
+          targetId: userId,
+          detail: `${existing.email} -> ${role}`,
+        },
+      });
+      return { ok: true };
+    } catch {
+      // Fallback
+    }
+  }
+  const u = memStore.users.find((m) => m.id === userId);
+  if (!u) return { ok: false, error: "User not found" };
+  u.role = role;
+  return { ok: true };
 }
 
 export async function upsertCategoryAdmin(input: {

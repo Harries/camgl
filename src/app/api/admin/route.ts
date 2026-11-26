@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { getSessionUserId } from "@/lib/user-auth";
 import {
   approveCandidate,
   approveCandidatesBatch,
@@ -12,6 +13,7 @@ import {
   reprobeCandidates,
   resolveContactMessage,
   runHealthCheckBatch,
+  setUserRoleAdmin,
   syncAllSourceCandidates,
   toggleWebcamFeatured,
   toggleWebcamSuspend,
@@ -156,6 +158,23 @@ export async function POST(request: Request) {
           lng: body.lng !== undefined ? Number(body.lng) : undefined,
         });
         if (!updated) return NextResponse.json({ error: "Webcam not found" }, { status: 404 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "setUserRole": {
+        const targetId = String(body.id ?? "");
+        const role = body.role === "ADMIN" ? "ADMIN" : body.role === "USER" ? "USER" : null;
+        if (!targetId || !role) {
+          return NextResponse.json({ error: "Invalid user or role" }, { status: 400 });
+        }
+        const currentUserId = await getSessionUserId();
+        if (currentUserId && currentUserId === targetId && role !== "ADMIN") {
+          return NextResponse.json(
+            { error: "Cannot remove your own admin role" },
+            { status: 400 }
+          );
+        }
+        const res = await setUserRoleAdmin(targetId, role);
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 404 });
         return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }
       default:
