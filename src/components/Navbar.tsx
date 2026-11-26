@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Shuffle, Search } from "lucide-react";
+import { Compass, MapPin, PlusCircle, Shuffle, Search } from "lucide-react";
 import { useState } from "react";
 import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -29,12 +29,17 @@ export function Navbar() {
     }
   };
 
-  const navLink = (href: string, label: string, showLiveBadge = false) => {
+  const navLink = (
+    href: string,
+    label: string,
+    icon: React.ReactNode,
+    showLiveBadge = false
+  ) => {
     const active = href === "/" ? barePathname === "/" : barePathname.startsWith(href);
     return (
       <Link
         href={localizePath(href, locale)}
-        className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+        className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap inline-flex items-center gap-1.5 ${
           showLiveBadge ? "mr-1.5" : ""
         } ${
           active
@@ -42,7 +47,8 @@ export function Navbar() {
             : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800/60"
         }`}
       >
-        {label}
+        {icon}
+        <span>{label}</span>
         {showLiveBadge && (
           <span className="absolute -top-1.5 -right-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[9px] font-bold leading-none tracking-wide shadow-sm ring-2 ring-white dark:ring-slate-900">
             <span className="w-1 h-1 rounded-full bg-white live-dot" />
@@ -78,9 +84,11 @@ export function Navbar() {
         </form>
 
         <nav className="flex items-center gap-1 sm:gap-1.5">
-          {navLink("/", t.discover, true)}
-          {navLink("/countries", t.mapAndCountries)}
-          <span className="hidden sm:inline-flex">{navLink("/submit", t.submit)}</span>
+          {navLink("/", t.discover, <Compass className="w-4 h-4 shrink-0" />, true)}
+          {navLink("/countries", t.mapAndCountries, <MapPin className="w-4 h-4 shrink-0" />)}
+          <span className="hidden sm:inline-flex">
+            {navLink("/submit", t.submit, <PlusCircle className="w-4 h-4 shrink-0" />)}
+          </span>
           <LanguageSwitcher className="ml-1" />
           <ThemeToggle className="ml-1" />
           <Link
