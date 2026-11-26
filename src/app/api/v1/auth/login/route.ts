@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authenticateUser } from "@/lib/repository";
-import { createUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-auth";
+import { createUserSessionToken, isSecureRequest, USER_COOKIE_NAME } from "@/lib/user-auth";
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     response.cookies.set(USER_COOKIE_NAME, token, {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: isSecureRequest(request),
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
     });

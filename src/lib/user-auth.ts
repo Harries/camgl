@@ -68,3 +68,9 @@ export async function getSessionUserId(): Promise<string | null> {
   const token = cookieStore.get(USER_COOKIE_NAME)?.value;
   return parseUserSessionToken(token);
 }
+
+export function isSecureRequest(request: Request): boolean {
+  const proto = request.headers.get("x-forwarded-proto");
+  if (proto) return proto.split(",")[0].trim() === "https";
+  return request.url.startsWith("https://");
+}

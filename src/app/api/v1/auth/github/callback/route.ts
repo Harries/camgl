@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { findOrCreateGithubUser } from "@/lib/repository";
-import { createUserSessionToken, USER_COOKIE_NAME } from "@/lib/user-auth";
+import { createUserSessionToken, isSecureRequest, USER_COOKIE_NAME } from "@/lib/user-auth";
 
 const OAUTH_STATE_COOKIE = "livecam_github_oauth_state";
 
@@ -112,7 +112,7 @@ export async function GET(request: Request) {
     response.cookies.set(USER_COOKIE_NAME, sessionToken, {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: isSecureRequest(request),
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
     });

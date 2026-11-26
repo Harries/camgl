@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
+import { isSecureRequest } from "@/lib/user-auth";
 
 const OAUTH_STATE_COOKIE = "livecam_github_oauth_state";
 
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
     {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: isSecureRequest(request),
       path: "/",
       maxAge: 600,
     }

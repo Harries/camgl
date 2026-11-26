@@ -36,17 +36,25 @@ interface MemUser {
 }
 
 // In-memory store fallback when PostgreSQL is unreachable (e.g., offline build)
-const memStore = {
-  webcams: structuredClone(SEED_WEBCAMS) as (PublicWebcam & { reviewStatus?: string })[],
-  candidates: structuredClone(SEED_CANDIDATES) as AdminCandidate[],
-  jobs: structuredClone(SEED_JOBS) as AdminDiscoveryJob[],
-  reports: structuredClone(SEED_REPORTS) as AdminReport[],
-  contactMessages: [] as AdminContactMessage[],
-  auditLogs: structuredClone(SEED_AUDIT_LOGS) as AdminAuditLog[],
-  users: [] as MemUser[],
-  userFavorites: new Map<string, Set<string>>(),
-  youtubeQuotaUsed: 0,
+function createMemStore() {
+  return {
+    webcams: structuredClone(SEED_WEBCAMS) as (PublicWebcam & { reviewStatus?: string })[],
+    candidates: structuredClone(SEED_CANDIDATES) as AdminCandidate[],
+    jobs: structuredClone(SEED_JOBS) as AdminDiscoveryJob[],
+    reports: structuredClone(SEED_REPORTS) as AdminReport[],
+    contactMessages: [] as AdminContactMessage[],
+    auditLogs: structuredClone(SEED_AUDIT_LOGS) as AdminAuditLog[],
+    users: [] as MemUser[],
+    userFavorites: new Map<string, Set<string>>(),
+    youtubeQuotaUsed: 0,
+  };
+}
+
+const globalForMemStore = globalThis as unknown as {
+  __camglMemStore?: ReturnType<typeof createMemStore>;
 };
+
+const memStore = (globalForMemStore.__camglMemStore ??= createMemStore());
 
 function isDbConfigured(): boolean {
   return Boolean(

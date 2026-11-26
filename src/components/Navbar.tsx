@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Compass, Flame, Heart, LogIn, MapPin, PlusCircle, Shuffle, Search, User } from "lucide-react";
+import { Compass, Flame, Heart, LogIn, MapPin, PlusCircle, Search, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { AuthUser } from "@/lib/types";
 import { BrandLogo } from "./BrandLogo";
@@ -139,13 +139,6 @@ export function Navbar() {
               <span className="hidden sm:inline">{t.login}</span>
             </Link>
           )}
-          <Link
-            href={localizePath("/random", locale)}
-            className="px-3.5 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-sm"
-          >
-            <Shuffle className="w-4 h-4" />
-            <span className="hidden sm:inline">{t.random}</span>
-          </Link>
         </div>
       </div>
     </header>
