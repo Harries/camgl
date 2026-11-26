@@ -2,9 +2,12 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AuthFormClient } from "@/components/AuthFormClient";
+import { getUserById } from "@/lib/repository";
 import { getSessionUserId } from "@/lib/user-auth";
 import { getServerLocale } from "@/lib/i18n-server";
 import { getMessages, localizePath } from "@/lib/i18n";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getServerLocale();
@@ -16,7 +19,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function LoginPage() {
   const [userId, locale] = await Promise.all([getSessionUserId(), getServerLocale()]);
-  if (userId) {
+  const user = userId ? await getUserById(userId) : null;
+  if (user) {
     redirect(localizePath("/profile", locale));
   }
   return (

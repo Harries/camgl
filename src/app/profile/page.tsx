@@ -28,7 +28,8 @@ export default async function ProfilePage() {
   ]);
 
   if (!user) {
-    redirect(localizePath("/login?next=/profile", locale));
+    const loginTarget = localizePath("/login?next=/profile", locale);
+    redirect(`/api/v1/auth/logout?next=${encodeURIComponent(loginTarget)}`);
   }
 
   return <ProfileClient initialUser={user} initialFavorites={favorites} />;
