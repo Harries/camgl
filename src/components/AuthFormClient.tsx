@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
-import { Github, Lock, Mail, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Github, KeyRound, Lock, Mail, User } from "lucide-react";
 import { useI18n } from "./I18nProvider";
 import { localizePath } from "@/lib/i18n";
 
@@ -15,9 +15,46 @@ export function AuthFormClient({ mode }: { mode: "login" | "register" }) {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
+  const [sendingCode, setSendingCode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [countdown, setCountdown] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
+  const handleSendCode = async () => {
+    setError("");
+    if (!email.trim() || !email.includes("@")) {
+      setError(ta.emailRequiredForCode);
+      return;
+    }
+    setSendingCode(true);
+    try {
+      const res = await fetch("/api/v1/auth/send-register-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setError(data.error || ta.authError);
+      } else {
+        setCodeSent(true);
+        setCountdown(60);
+      }
+    } catch {
+      setError(ta.authError);
+    } finally {
+      setSendingCode(false);
+    }
+  };
 
   const nextUrl = searchParams.get("next");
   const oauthError = searchParams.get("error");
@@ -39,7 +76,7 @@ export function AuthFormClient({ mode }: { mode: "login" | "register" }) {
     setLoading(true);
     try {
       const endpoint = mode === "login" ? "/api/v1/auth/login" : "/api/v1/auth/register";
-      const payload = mode === "login" ? { email, password } : { name, email, password };
+      const payload = mode === "login" ? { email, password } : { name, email, password, code };
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -118,23 +155,72 @@ export function AuthFormClient({ mode }: { mode: "login" | "register" }) {
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
               {ta.emailLabel}
             </label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-              />
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                />
+              </div>
+              {mode === "register" && (
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  disabled={sendingCode || countdown > 0}
+                  className="shrink-0 px-3 py-2 rounded-xl text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors cursor-pointer"
+                >
+                  {countdown > 0 ? `${countdown}s` : ta.sendCodeBtn}
+                </button>
+              )}
             </div>
+            {mode === "register" && codeSent && (
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
+                {ta.codeSentHint}
+              </p>
+            )}
           </div>
 
+          {mode === "register" && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {ta.codeLabel}
+              </label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  required
+                  inputMode="numeric"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder={ta.codePlaceholder}
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                />
+              </div>
+            </div>
+          )}
+
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              {ta.passwordLabel}
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {ta.passwordLabel}
+              </label>
+              {mode === "login" && (
+                <Link
+                  href={localizePath("/forgot-password", locale)}
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {ta.forgotPasswordLink}
+                </Link>
+              )}
+            </div>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input

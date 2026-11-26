@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendSubmissionConfirmationEmail } from "@/lib/mailer";
 import { createSubmission, getUserById } from "@/lib/repository";
 import { getSessionUserId } from "@/lib/user-auth";
 
@@ -24,6 +25,17 @@ export async function POST(request: Request) {
       operator: body.operator ? String(body.operator) : undefined,
       contact,
     });
+
+    const recipient = contact.includes("@") ? contact : user.email;
+    const origin = new URL(request.url).origin;
+    sendSubmissionConfirmationEmail({
+      to: recipient,
+      title: String(body.title),
+      location: String(body.location),
+      category: String(body.category || "City"),
+      siteUrl: process.env.SITE_URL?.trim() || origin,
+    }).catch(() => {});
+
     return NextResponse.json({ ok: true, id: created.id }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });

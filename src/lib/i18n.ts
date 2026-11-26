@@ -296,6 +296,21 @@ export interface Messages {
     myWebcamsTitle: string;
     myWebcamsEmpty: string;
     submitWebcamBtn: string;
+    forgotPasswordLink: string;
+    forgotTitle: string;
+    forgotSubtitle: string;
+    forgotSent: string;
+    sendResetBtn: string;
+    resetTitle: string;
+    resetSubtitle: string;
+    newPasswordLabel: string;
+    resetBtn: string;
+    resetSuccess: string;
+    codeLabel: string;
+    codePlaceholder: string;
+    sendCodeBtn: string;
+    codeSentHint: string;
+    emailRequiredForCode: string;
   };
   seo: {
     homeTitle: string;
@@ -694,6 +709,21 @@ const en: Messages = {
     myWebcamsTitle: "My Submitted Webcams",
     myWebcamsEmpty: "You haven't submitted any live webcams with this email yet.",
     submitWebcamBtn: "Submit a Webcam",
+    forgotPasswordLink: "Forgot password?",
+    forgotTitle: "Forgot Password",
+    forgotSubtitle: "Enter your email and we will send you a password reset link.",
+    forgotSent: "If an account exists for that email, a password reset link has been sent.",
+    sendResetBtn: "Send Reset Link",
+    resetTitle: "Reset Password",
+    resetSubtitle: "Enter a new password for your account.",
+    newPasswordLabel: "New Password",
+    resetBtn: "Update Password",
+    resetSuccess: "Your password has been updated. You can now sign in.",
+    codeLabel: "Email Verification Code",
+    codePlaceholder: "6-digit code",
+    sendCodeBtn: "Send Code",
+    codeSentHint: "Verification code sent to your email (valid for 10 min).",
+    emailRequiredForCode: "Please enter a valid email address first.",
   },
   seo: {
     homeTitle: "LiveCam Global — Verified Live Webcams Around the World",
@@ -1099,6 +1129,21 @@ const zh: Messages = {
     myWebcamsTitle: "我提交的摄像头",
     myWebcamsEmpty: "你还没有使用当前邮箱提交过摄像头。",
     submitWebcamBtn: "提交摄像头",
+    forgotPasswordLink: "忘记密码？",
+    forgotTitle: "找回密码",
+    forgotSubtitle: "输入你的注册邮箱，我们将发送密码重置链接。",
+    forgotSent: "如果该邮箱已注册，重置密码邮件已发送，请查收邮箱。",
+    sendResetBtn: "发送重置邮件",
+    resetTitle: "重置密码",
+    resetSubtitle: "为你的账号设置一个新的登录密码。",
+    newPasswordLabel: "新密码",
+    resetBtn: "确认重置",
+    resetSuccess: "密码已更新，现在可以使用新密码登录了。",
+    codeLabel: "邮箱验证码",
+    codePlaceholder: "请输入 6 位验证码",
+    sendCodeBtn: "发送验证码",
+    codeSentHint: "验证码已发送到你的邮箱，10 分钟内有效。",
+    emailRequiredForCode: "请先输入有效的邮箱地址。",
   },
   seo: {
     homeTitle: "LiveCam Global — 全球实景高清实时摄像头",
@@ -1467,6 +1512,21 @@ const ja: Messages = {
     myWebcamsTitle: "投稿したライブカメラ",
     myWebcamsEmpty: "このメールアドレスで投稿されたカメラはまだありません。",
     submitWebcamBtn: "カメラを投稿",
+    forgotPasswordLink: "パスワードをお忘れですか？",
+    forgotTitle: "パスワード再設定",
+    forgotSubtitle: "登録メールアドレスを入力すると再設定用リンクを送信します。",
+    forgotSent: "該当のメールアドレスが登録されている場合、再設定メールを送信しました。",
+    sendResetBtn: "再設定メールを送信",
+    resetTitle: "新しいパスワードを設定",
+    resetSubtitle: "新しいパスワードを入力してください。",
+    newPasswordLabel: "新しいパスワード",
+    resetBtn: "パスワードを更新",
+    resetSuccess: "パスワードが更新されました。ログインしてください。",
+    codeLabel: "メール認証コード",
+    codePlaceholder: "6桁のコード",
+    sendCodeBtn: "コード送信",
+    codeSentHint: "認証コードをメールに送信しました（10分間有効）。",
+    emailRequiredForCode: "先に有効なメールアドレスを入力してください。",
   },
   seo: {
     homeTitle: "LiveCam Global — 世界の認証済みライブカメラ",
@@ -1821,6 +1881,21 @@ const es: Messages = {
     myWebcamsTitle: "Mis Cámaras Enviadas",
     myWebcamsEmpty: "Aún no has enviado ninguna cámara con este correo.",
     submitWebcamBtn: "Enviar una Cámara",
+    forgotPasswordLink: "¿Olvidaste tu contraseña?",
+    forgotTitle: "Recuperar Contraseña",
+    forgotSubtitle: "Ingresa tu correo y te enviaremos un enlace para restablecerla.",
+    forgotSent: "Si existe una cuenta con ese correo, hemos enviado el enlace de recuperación.",
+    sendResetBtn: "Enviar Enlace",
+    resetTitle: "Restablecer Contraseña",
+    resetSubtitle: "Elige una nueva contraseña para tu cuenta.",
+    newPasswordLabel: "Nueva Contraseña",
+    resetBtn: "Actualizar Contraseña",
+    resetSuccess: "Tu contraseña ha sido actualizada. Ya puedes iniciar sesión.",
+    codeLabel: "Código de Verificación",
+    codePlaceholder: "Código de 6 dígitos",
+    sendCodeBtn: "Enviar Código",
+    codeSentHint: "Código enviado a tu correo (válido por 10 min).",
+    emailRequiredForCode: "Por favor ingresa primero un correo válido.",
   },
   seo: {
     homeTitle: "LiveCam Global — Cámaras en Vivo Verificadas del Mundo",
@@ -2175,6 +2250,21 @@ const fr: Messages = {
     myWebcamsTitle: "Mes Webcams Soumises",
     myWebcamsEmpty: "Vous n'avez pas encore soumis de webcam avec cet e-mail.",
     submitWebcamBtn: "Soumettre une Webcam",
+    forgotPasswordLink: "Mot de passe oublié ?",
+    forgotTitle: "Mot de Passe Oublié",
+    forgotSubtitle: "Entrez votre e-mail pour recevoir un lien de réinitialisation.",
+    forgotSent: "Si un compte existe pour cet e-mail, un lien de réinitialisation a été envoyé.",
+    sendResetBtn: "Envoyer le Lien",
+    resetTitle: "Réinitialiser le Mot de Passe",
+    resetSubtitle: "Choisissez un nouveau mot de passe pour votre compte.",
+    newPasswordLabel: "Nouveau Mot de Passe",
+    resetBtn: "Mettre à Jour",
+    resetSuccess: "Votre mot de passe a été mis à jour. Vous pouvez vous connecter.",
+    codeLabel: "Code de Vérification",
+    codePlaceholder: "Code à 6 chiffres",
+    sendCodeBtn: "Envoyer le Code",
+    codeSentHint: "Code envoyé à votre e-mail (valide 10 min).",
+    emailRequiredForCode: "Veuillez d'abord entrer un e-mail valide.",
   },
   seo: {
     homeTitle: "LiveCam Global — Webcams en Direct Vérifiées dans le Monde",

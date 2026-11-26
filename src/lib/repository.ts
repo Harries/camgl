@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { prisma } from "./db";
 import {
   SEED_AUDIT_LOGS,
@@ -48,6 +49,20 @@ function createMemStore() {
     auditLogs: structuredClone(SEED_AUDIT_LOGS) as AdminAuditLog[],
     users: [] as MemUser[],
     userFavorites: new Map<string, Set<string>>(),
+    passwordResets: [] as Array<{
+      id: string;
+      email: string;
+      tokenHash: string;
+      expiresAt: number;
+      usedAt: number | null;
+    }>,
+    emailCodes: [] as Array<{
+      id: string;
+      email: string;
+      codeHash: string;
+      expiresAt: number;
+      usedAt: number | null;
+    }>,
     youtubeQuotaUsed: 0,
   };
 }
@@ -688,16 +703,62 @@ function toAuthUser(u: {
   };
 }
 
+export async function createEmailVerificationCode(
+  emailInput: string
+): Promise<{ ok: true; code: string; email: string } | { ok: false; error: string }> {
+  const email = emailInput.trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { ok: false, error: "Please enter a valid email address." };
+  }
+
+  const code = String(crypto.randomInt(100000, 1000000));
+  const codeHash = crypto.createHash("sha256").update(`${email}:${code}`).digest("hex");
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  if (isDbConfigured()) {
+    try {
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (existing) {
+        return { ok: false, error: "An account with this email already exists." };
+      }
+      await prisma.emailVerificationCode.create({
+        data: { email, codeHash, expiresAt },
+      });
+      return { ok: true, code, email };
+    } catch {
+      // Fallback
+    }
+  }
+
+  if (memStore.users.some((u) => u.email === email)) {
+    return { ok: false, error: "An account with this email already exists." };
+  }
+  memStore.emailCodes.push({
+    id: `evc-${Date.now()}`,
+    email,
+    codeHash,
+    expiresAt: expiresAt.getTime(),
+    usedAt: null,
+  });
+  return { ok: true, code, email };
+}
+
 export async function registerUser(input: {
   name: string;
   email: string;
   password: string;
+  code: string;
 }): Promise<{ ok: true; user: AuthUser } | { ok: false; error: string }> {
   const email = input.email.trim().toLowerCase();
   const name = input.name.trim();
+  const code = input.code.trim();
   if (!name || !email || input.password.length < 6) {
     return { ok: false, error: "Name, valid email, and password (min 6 chars) are required." };
   }
+  if (!/^\d{6}$/.test(code)) {
+    return { ok: false, error: "Please enter the 6-digit email verification code." };
+  }
+  const codeHash = crypto.createHash("sha256").update(`${email}:${code}`).digest("hex");
   const passwordHash = hashPassword(input.password);
 
   if (isDbConfigured()) {
@@ -706,9 +767,22 @@ export async function registerUser(input: {
       if (existing) {
         return { ok: false, error: "An account with this email already exists." };
       }
-      const created = await prisma.user.create({
-        data: { email, name, passwordHash, role: "USER" },
+      const codeRecord = await prisma.emailVerificationCode.findFirst({
+        where: { email, codeHash, usedAt: null, expiresAt: { gt: new Date() } },
+        orderBy: { createdAt: "desc" },
       });
+      if (!codeRecord) {
+        return { ok: false, error: "Verification code is invalid or has expired." };
+      }
+      const [created] = await prisma.$transaction([
+        prisma.user.create({
+          data: { email, name, passwordHash, emailVerifiedAt: new Date(), role: "USER" },
+        }),
+        prisma.emailVerificationCode.update({
+          where: { id: codeRecord.id },
+          data: { usedAt: new Date() },
+        }),
+      ]);
       return { ok: true, user: toAuthUser(created) };
     } catch {
       // Fallback
@@ -718,6 +792,13 @@ export async function registerUser(input: {
   if (memStore.users.some((u) => u.email === email)) {
     return { ok: false, error: "An account with this email already exists." };
   }
+  const codeRecord = [...memStore.emailCodes]
+    .reverse()
+    .find((c) => c.email === email && c.codeHash === codeHash && !c.usedAt && c.expiresAt > Date.now());
+  if (!codeRecord) {
+    return { ok: false, error: "Verification code is invalid or has expired." };
+  }
+  codeRecord.usedAt = Date.now();
   const created: MemUser = {
     id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     email,
@@ -866,6 +947,97 @@ export async function updateUserProfile(
   if (!user) return null;
   user.name = name;
   return toAuthUser(user);
+}
+
+export async function createPasswordResetToken(
+  emailInput: string
+): Promise<{ token: string; name: string; email: string } | null> {
+  const email = emailInput.trim().toLowerCase();
+  if (!email) return null;
+
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+  if (isDbConfigured()) {
+    try {
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user) return null;
+      await prisma.passwordResetToken.create({
+        data: {
+          email,
+          tokenHash,
+          expiresAt,
+        },
+      });
+      return { token: rawToken, name: user.name, email: user.email };
+    } catch {
+      // Fallback
+    }
+  }
+
+  const user = memStore.users.find((u) => u.email === email);
+  if (!user) return null;
+  memStore.passwordResets.push({
+    id: `prt-${Date.now()}`,
+    email,
+    tokenHash,
+    expiresAt: expiresAt.getTime(),
+    usedAt: null,
+  });
+  return { token: rawToken, name: user.name, email: user.email };
+}
+
+export async function resetPasswordWithToken(
+  rawToken: string,
+  newPassword: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const cleanToken = rawToken.trim();
+  if (!cleanToken || newPassword.length < 6) {
+    return { ok: false, error: "Valid reset token and password (min 6 chars) are required." };
+  }
+  const tokenHash = crypto.createHash("sha256").update(cleanToken).digest("hex");
+  const passwordHash = hashPassword(newPassword);
+
+  if (isDbConfigured()) {
+    try {
+      const record = await prisma.passwordResetToken.findUnique({
+        where: { tokenHash },
+      });
+      if (!record || record.usedAt || record.expiresAt < new Date()) {
+        return { ok: false, error: "Reset link is invalid or has expired." };
+      }
+      const user = await prisma.user.findUnique({ where: { email: record.email } });
+      if (!user) {
+        return { ok: false, error: "Account not found." };
+      }
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: user.id },
+          data: { passwordHash },
+        }),
+        prisma.passwordResetToken.update({
+          where: { id: record.id },
+          data: { usedAt: new Date() },
+        }),
+      ]);
+      return { ok: true };
+    } catch {
+      // Fallback
+    }
+  }
+
+  const record = memStore.passwordResets.find((r) => r.tokenHash === tokenHash);
+  if (!record || record.usedAt || record.expiresAt < Date.now()) {
+    return { ok: false, error: "Reset link is invalid or has expired." };
+  }
+  const user = memStore.users.find((u) => u.email === record.email);
+  if (!user) {
+    return { ok: false, error: "Account not found." };
+  }
+  user.passwordHash = passwordHash;
+  record.usedAt = Date.now();
+  return { ok: true };
 }
 
 export async function getUserFavoriteSlugs(userId: string): Promise<string[]> {
