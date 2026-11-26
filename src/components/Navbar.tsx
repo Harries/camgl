@@ -62,49 +62,53 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-        <Link href={localizePath("/", locale)} className="flex items-center gap-2.5 shrink-0 group">
-          <BrandLogo className="w-9 h-9 drop-shadow-sm transition-transform group-hover:scale-105" />
-          <div>
-            <div className="font-semibold text-base tracking-tight leading-none text-slate-900 dark:text-white">
-              LiveCam Global
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Link href={localizePath("/", locale)} className="flex items-center gap-2.5 shrink-0 group">
+            <BrandLogo className="w-9 h-9 drop-shadow-sm transition-transform group-hover:scale-105" />
+            <div>
+              <div className="font-semibold text-base tracking-tight leading-none text-slate-900 dark:text-white">
+                LiveCam Global
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.brandSubtitle}</div>
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.brandSubtitle}</div>
-          </div>
-        </Link>
+          </Link>
 
-        <form onSubmit={handleSearch} className="hidden md:flex items-center flex-1 max-w-md relative">
-          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 pointer-events-none" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t.searchPlaceholder}
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-slate-800"
-          />
-        </form>
+          <nav className="flex items-center gap-1 sm:gap-1.5">
+            {navLink("/", t.discover, <Compass className="w-4 h-4 shrink-0" />, true)}
+            {navLink("/countries", t.mapAndCountries, <MapPin className="w-4 h-4 shrink-0" />)}
+            <span className="hidden lg:inline-flex">
+              {navLink("/popular", t.popular, <Flame className="w-4 h-4 shrink-0" />)}
+            </span>
+            <span className="hidden xl:inline-flex">
+              {navLink("/favorites", t.favorites, <Heart className="w-4 h-4 shrink-0" />)}
+            </span>
+            <span className="hidden sm:inline-flex">
+              {navLink("/submit", t.submit, <PlusCircle className="w-4 h-4 shrink-0" />)}
+            </span>
+          </nav>
+        </div>
 
-        <nav className="flex items-center gap-1 sm:gap-1.5">
-          {navLink("/", t.discover, <Compass className="w-4 h-4 shrink-0" />, true)}
-          {navLink("/countries", t.mapAndCountries, <MapPin className="w-4 h-4 shrink-0" />)}
-          <span className="hidden lg:inline-flex">
-            {navLink("/popular", t.popular, <Flame className="w-4 h-4 shrink-0" />)}
-          </span>
-          <span className="hidden lg:inline-flex">
-            {navLink("/favorites", t.favorites, <Heart className="w-4 h-4 shrink-0" />)}
-          </span>
-          <span className="hidden sm:inline-flex">
-            {navLink("/submit", t.submit, <PlusCircle className="w-4 h-4 shrink-0" />)}
-          </span>
-          <LanguageSwitcher className="ml-1" />
-          <ThemeToggle className="ml-1" />
+        <div className="flex items-center gap-1.5 shrink-0">
+          <form onSubmit={handleSearch} className="hidden md:flex items-center w-44 xl:w-56 relative">
+            <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 pointer-events-none" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t.searchPlaceholder}
+              className="w-full pl-9 pr-3 py-1.5 text-sm rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-slate-800"
+            />
+          </form>
+          <LanguageSwitcher />
+          <ThemeToggle />
           <Link
             href={localizePath("/random", locale)}
-            className="ml-1 px-3.5 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-sm"
+            className="px-3.5 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-sm"
           >
             <Shuffle className="w-4 h-4" />
             <span className="hidden sm:inline">{t.random}</span>
           </Link>
-        </nav>
+        </div>
       </div>
     </header>
   );
