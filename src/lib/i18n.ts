@@ -182,6 +182,32 @@ export interface Messages {
     localizedDescription: string;
     bestTimeDefault: string;
     views: string;
+    lastChecked: string;
+    favorite: string;
+    favorited: string;
+    share: string;
+    copied: string;
+    fullscreen: string;
+    randomLive: string;
+    aboutWebcamTitle: string;
+    whatCanYouSeeTitle: string;
+    whatCanYouSeeBody: string;
+    seeHighlight1: string;
+    seeHighlight2: string;
+    seeHighlight3: string;
+    seeHighlight4: string;
+    liveWeatherInTitle: string;
+    temperature: string;
+    humidity: string;
+    windSpeed: string;
+    forecastTitle: string;
+    cameraInfoTitle: string;
+    aboutPlaceTitle: string;
+    aboutPlaceBody: string;
+    webcamLocationTitle: string;
+    nearbyWebcamsTitle: string;
+    moreInCountryTitle: string;
+    distanceKm: string;
   };
   countries: {
     worldExplorer: string;
@@ -485,6 +511,34 @@ const en: Messages = {
     bestTimeDefault:
       "Daylight hours between {sunrise} and {sunset} ({timezone}) offer the clearest visibility, with golden hour around {goldenHour}.",
     views: "views",
+    lastChecked: "Last Checked",
+    favorite: "Favorite",
+    favorited: "Favorited",
+    share: "Share",
+    copied: "Copied!",
+    fullscreen: "Fullscreen",
+    randomLive: "Random Live",
+    aboutWebcamTitle: "About This Live Webcam",
+    whatCanYouSeeTitle: "What Can You See on This Webcam?",
+    whatCanYouSeeBody:
+      "{title} streams live from {city}, {country}, giving you a real-time window into local {categories} scenery, current {weather} sky conditions, and daily activity.",
+    seeHighlight1: "Real-time {categories} views in {city}, {country}",
+    seeHighlight2: "Live {phase} lighting ({localTime} local time)",
+    seeHighlight3: "Current weather conditions: {weather}",
+    seeHighlight4: "Monitored {format} live broadcast",
+    liveWeatherInTitle: "Live Weather in {city}",
+    temperature: "Temperature",
+    humidity: "Humidity",
+    windSpeed: "Wind Speed",
+    forecastTitle: "Upcoming Forecast",
+    cameraInfoTitle: "Camera Information",
+    aboutPlaceTitle: "About {city}",
+    aboutPlaceBody:
+      "{city} is located in {country} ({lat}, {lng}) in the {timezone} timezone. Featured for its {categories} views, daylight today spans from {sunrise} to {sunset} with golden hour around {goldenHour}.",
+    webcamLocationTitle: "Webcam Location",
+    nearbyWebcamsTitle: "Nearby Live Webcams",
+    moreInCountryTitle: "More Webcams in {country}",
+    distanceKm: "{km} km away",
   },
   countries: {
     worldExplorer: "World Explorer",
@@ -797,6 +851,34 @@ const zh: Messages = {
     bestTimeDefault:
       "当地时间 {sunrise} 至 {sunset}（{timezone}）的白天光线最清晰，黄金时段约为 {goldenHour}。",
     views: "次浏览",
+    lastChecked: "最后检测",
+    favorite: "收藏",
+    favorited: "已收藏",
+    share: "分享",
+    copied: "已复制链接",
+    fullscreen: "全屏",
+    randomLive: "随机直播",
+    aboutWebcamTitle: "关于此实时摄像头",
+    whatCanYouSeeTitle: "画面中可以看到什么？",
+    whatCanYouSeeBody:
+      "「{title}」来自 {country}{city}，为您实时呈现当地 {categories} 景观、{weather} 天气变化与街区/自然实况。",
+    seeHighlight1: "{country}{city}的实时 {categories} 景观视角",
+    seeHighlight2: "当前为{phase}光线（当地时间 {localTime}）",
+    seeHighlight3: "当前实时天气：{weather}",
+    seeHighlight4: "持续巡检的 {format} 官方实时流",
+    liveWeatherInTitle: "{city}实时天气",
+    temperature: "当前温度",
+    humidity: "相对湿度",
+    windSpeed: "风速",
+    forecastTitle: "未来天气预报",
+    cameraInfoTitle: "摄像头基础信息",
+    aboutPlaceTitle: "关于 {city}",
+    aboutPlaceBody:
+      "{city}位于{country}（坐标 {lat}, {lng}），属于 {timezone} 时区，以 {categories} 风貌闻名。当地今日日出约 {sunrise}、日落约 {sunset}，黄金拍摄时段约在 {goldenHour}。",
+    webcamLocationTitle: "摄像头地理位置",
+    nearbyWebcamsTitle: "附近实时摄像头",
+    moreInCountryTitle: "更多{country}摄像头",
+    distanceKm: "距此约 {km} 公里",
   },
   countries: {
     worldExplorer: "全球地图探索",
@@ -1071,6 +1153,34 @@ const ja: Messages = {
     bestTimeDefault:
       "日の出（{sunrise}）から日の入り（{sunset}・{timezone}）までの日中が最も見やすく、ゴールデンアワーは {goldenHour} 頃です。",
     views: "回閲覧",
+    lastChecked: "最終確認",
+    favorite: "お気に入り",
+    favorited: "登録済み",
+    share: "共有",
+    copied: "コピーしました",
+    fullscreen: "全画面",
+    randomLive: "ランダムライブ",
+    aboutWebcamTitle: "このライブカメラについて",
+    whatCanYouSeeTitle: "このカメラで見える景色",
+    whatCanYouSeeBody:
+      "「{title}」は {country}・{city} からリアルタイム配信されており、現地の {categories} 風景や {weather} の空模様をそのままご覧いただけます。",
+    seeHighlight1: "{country}・{city} のリアルタイム {categories} ビュー",
+    seeHighlight2: "現在の光環境：{phase}（現地時間 {localTime}）",
+    seeHighlight3: "現在の天気：{weather}",
+    seeHighlight4: "自動監視中の {format} ライブ配信",
+    liveWeatherInTitle: "{city}の現在の天気",
+    temperature: "気温",
+    humidity: "湿度",
+    windSpeed: "風速",
+    forecastTitle: "今後の天気予報",
+    cameraInfoTitle: "カメラ基本情報",
+    aboutPlaceTitle: "{city} について",
+    aboutPlaceBody:
+      "{city}は {country}（{lat}, {lng}・{timezone}）に位置し、{categories} の景観で知られています。本日の日の出は {sunrise}、日の入りは {sunset}、ゴールデンアワーは {goldenHour} 頃です。",
+    webcamLocationTitle: "カメラの設置場所",
+    nearbyWebcamsTitle: "周辺のライブカメラ",
+    moreInCountryTitle: "{country}の他のライブカメラ",
+    distanceKm: "約 {km} km",
   },
   countries: {
     worldExplorer: "ワールドエクスプローラー",
@@ -1331,6 +1441,34 @@ const es: Messages = {
     bestTimeDefault:
       "Entre {sunrise} y {sunset} ({timezone}) ofrece la mejor visibilidad, con la hora dorada alrededor de {goldenHour}.",
     views: "vistas",
+    lastChecked: "Última revisión",
+    favorite: "Favorito",
+    favorited: "Guardado",
+    share: "Compartir",
+    copied: "¡Copiado!",
+    fullscreen: "Pantalla completa",
+    randomLive: "Aleatorio",
+    aboutWebcamTitle: "Acerca de esta cámara en vivo",
+    whatCanYouSeeTitle: "¿Qué se puede ver en esta cámara?",
+    whatCanYouSeeBody:
+      "{title} transmite en vivo desde {city}, {country}, mostrando vistas en tiempo real de {categories}, el cielo ({weather}) y la actividad local.",
+    seeHighlight1: "Vistas de {categories} en tiempo real en {city}, {country}",
+    seeHighlight2: "Iluminación actual de {phase} ({localTime} hora local)",
+    seeHighlight3: "Clima actual: {weather}",
+    seeHighlight4: "Transmisión en vivo {format} monitoreada",
+    liveWeatherInTitle: "Clima en vivo en {city}",
+    temperature: "Temperatura",
+    humidity: "Humedad",
+    windSpeed: "Velocidad del viento",
+    forecastTitle: "Pronóstico próximo",
+    cameraInfoTitle: "Información de la cámara",
+    aboutPlaceTitle: "Acerca de {city}",
+    aboutPlaceBody:
+      "{city} está ubicada en {country} ({lat}, {lng}) en la zona horaria {timezone}. Destaca por sus vistas de {categories}; hoy el sol sale a las {sunrise} y se pone a las {sunset}, con hora dorada sobre las {goldenHour}.",
+    webcamLocationTitle: "Ubicación de la cámara",
+    nearbyWebcamsTitle: "Cámaras en vivo cercanas",
+    moreInCountryTitle: "Más cámaras en {country}",
+    distanceKm: "A {km} km",
   },
   countries: {
     worldExplorer: "Explorador Mundial",
@@ -1591,6 +1729,34 @@ const fr: Messages = {
     bestTimeDefault:
       "Les heures de jour entre {sunrise} et {sunset} ({timezone}) offrent la meilleure visibilité, avec l'heure dorée vers {goldenHour}.",
     views: "vues",
+    lastChecked: "Dernière vérif.",
+    favorite: "Favori",
+    favorited: "Enregistré",
+    share: "Partager",
+    copied: "Copié !",
+    fullscreen: "Plein écran",
+    randomLive: "Aléatoire",
+    aboutWebcamTitle: "À propos de cette webcam en direct",
+    whatCanYouSeeTitle: "Que peut-on voir sur cette webcam ?",
+    whatCanYouSeeBody:
+      "{title} diffuse en direct depuis {city}, {country}, offrant un aperçu en temps réel des paysages ({categories}), de la météo ({weather}) et de l'activité locale.",
+    seeHighlight1: "Vues en direct ({categories}) à {city}, {country}",
+    seeHighlight2: "Lumière actuelle ({phase}, {localTime} heure locale)",
+    seeHighlight3: "Météo actuelle : {weather}",
+    seeHighlight4: "Diffusion {format} surveillée en continu",
+    liveWeatherInTitle: "Météo en direct à {city}",
+    temperature: "Température",
+    humidity: "Humidité",
+    windSpeed: "Vitesse du vent",
+    forecastTitle: "Prévisions à venir",
+    cameraInfoTitle: "Informations sur la caméra",
+    aboutPlaceTitle: "À propos de {city}",
+    aboutPlaceBody:
+      "{city} est située en {country} ({lat}, {lng}) dans le fuseau horaire {timezone}. Connue pour ses vues ({categories}), la journée s'étend de {sunrise} à {sunset} avec l'heure dorée vers {goldenHour}.",
+    webcamLocationTitle: "Emplacement de la webcam",
+    nearbyWebcamsTitle: "Webcams en direct à proximité",
+    moreInCountryTitle: "Plus de webcams en {country}",
+    distanceKm: "À {km} km",
   },
   countries: {
     worldExplorer: "Explorateur Mondial",

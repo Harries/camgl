@@ -29,9 +29,80 @@ const WMO_CODE_LABELS: Record<number, string> = {
   99: "Thunderstorm",
 };
 
-function formatWmoCode(code: number | undefined): string {
+export function formatWmoCode(code: number | undefined): string {
   if (code === undefined || Number.isNaN(code)) return "Fair";
   return WMO_CODE_LABELS[code] ?? "Cloudy";
+}
+
+export interface DetailedWeather {
+  tempC: number;
+  humidity: number | null;
+  windKmh: number | null;
+  condition: string;
+  daily: Array<{
+    date: string;
+    condition: string;
+    minC: number;
+    maxC: number;
+  }>;
+}
+
+export async function fetchDetailedWeather(
+  lat: number,
+  lng: number
+): Promise<DetailedWeather | null> {
+  if (lat === 0 && lng === 0) return null;
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=4&timezone=auto`;
+    const res = await fetch(url, {
+      next: { revalidate: 900 },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      current?: {
+        temperature_2m?: number;
+        relative_humidity_2m?: number;
+        wind_speed_10m?: number;
+        weather_code?: number;
+      };
+      daily?: {
+        time?: string[];
+        weather_code?: number[];
+        temperature_2m_max?: number[];
+        temperature_2m_min?: number[];
+      };
+    };
+    if (!json.current || typeof json.current.temperature_2m !== "number") return null;
+
+    const times = json.daily?.time ?? [];
+    const codes = json.daily?.weather_code ?? [];
+    const maxs = json.daily?.temperature_2m_max ?? [];
+    const mins = json.daily?.temperature_2m_min ?? [];
+
+    const daily = times.slice(0, 4).map((date, idx) => ({
+      date,
+      condition: formatWmoCode(codes[idx]),
+      minC: Math.round(mins[idx] ?? json.current!.temperature_2m!),
+      maxC: Math.round(maxs[idx] ?? json.current!.temperature_2m!),
+    }));
+
+    return {
+      tempC: Math.round(json.current.temperature_2m),
+      humidity:
+        typeof json.current.relative_humidity_2m === "number"
+          ? Math.round(json.current.relative_humidity_2m)
+          : null,
+      windKmh:
+        typeof json.current.wind_speed_10m === "number"
+          ? Math.round(json.current.wind_speed_10m)
+          : null,
+      condition: formatWmoCode(json.current.weather_code),
+      daily,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function coordKey(lat: number, lng: number): string {

@@ -4,7 +4,9 @@ import type { Metadata } from "next";
 import { getWebcamBySlug, listApprovedWebcamsPage } from "@/lib/repository";
 import { WebcamPlayer } from "@/components/WebcamPlayer";
 import { WebcamViewTracker } from "@/components/WebcamViewTracker";
+import { WebcamActionsBar } from "@/components/WebcamActionsBar";
 import { getDaylightInfo } from "@/lib/suncalc";
+import { fetchDetailedWeather } from "@/lib/weather";
 import { absoluteUrl, buildAlternates, getYouTubeThumbnail, withOutboundSource } from "@/lib/seo";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
 import { WebcamThumbnail } from "@/components/WebcamThumbnail";
@@ -22,6 +24,32 @@ import {
 } from "@/lib/i18n";
 
 export const revalidate = 300;
+
+function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+function formatLastChecked(iso: string | undefined, locale: string): string {
+  if (!iso) return "—";
+  try {
+    const langTag = locale === "zh" ? "zh-CN" : locale;
+    return new Intl.DateTimeFormat(langTag, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(iso));
+  } catch {
+    return iso.slice(0, 16).replace("T", " ");
+  }
+}
 
 export async function generateMetadata({
   params,
@@ -85,23 +113,28 @@ export default async function WebcamDetailPage({
   const { slug } = await params;
   const [webcam, locale] = await Promise.all([getWebcamBySlug(slug), getServerLocale()]);
   if (!webcam) notFound();
+
   const tw = getMessages(locale).webcam;
   const countryLabel = getCountryLabel(locale, webcam.country.slug, webcam.country.name, webcam.country.isoCode);
   const cityLabel = getCityLabel(locale, webcam.city.slug, webcam.city.name);
 
-  const { items: allWebcams } = await listApprovedWebcamsPage({ page: 1, pageSize: 12 });
-  const related = allWebcams
-    .filter((w) => w.slug !== webcam.slug)
-    .sort((a, b) => {
-      const aScore =
-        (a.country.slug === webcam.country.slug ? 2 : 0) +
-        (a.categories.some((c) => webcam.categories.some((wc) => wc.slug === c.slug)) ? 1 : 0);
-      const bScore =
-        (b.country.slug === webcam.country.slug ? 2 : 0) +
-        (b.categories.some((c) => webcam.categories.some((wc) => wc.slug === c.slug)) ? 1 : 0);
-      return bScore - aScore;
-    })
-    .slice(0, 5);
+  const [{ items: allWebcams }, detailedWeather] = await Promise.all([
+    listApprovedWebcamsPage({ page: 1, pageSize: 48 }),
+    fetchDetailedWeather(webcam.city.lat, webcam.city.lng),
+  ]);
+
+  const others = allWebcams.filter((w) => w.slug !== webcam.slug);
+  const nearbyCams = others
+    .map((w) => ({
+      cam: w,
+      km: distanceKm(webcam.city.lat, webcam.city.lng, w.city.lat, w.city.lng),
+    }))
+    .sort((a, b) => a.km - b.km)
+    .slice(0, 6);
+
+  const sameCountryCams = others
+    .filter((w) => w.country.slug === webcam.country.slug)
+    .slice(0, 6);
 
   const { isDaylight, localTime, sunriseLocal, sunsetLocal, goldenHourLocal } = getDaylightInfo(
     webcam.city.lat,
@@ -113,9 +146,11 @@ export default async function WebcamDetailPage({
   const weatherLabel = localizeWeatherSummary(webcam.weatherSummary, locale);
   const statusLabel = getStreamStatusLabel(locale, webcam.stream?.status);
   const mediaTypeLabel = getMediaTypeLabel(locale, webcam.stream?.mediaType);
+  const lastCheckedLabel = formatLastChecked(webcam.stream?.lastCheckedAt, locale);
   const categoriesText = webcam.categories
     .map((c) => getCategoryLabel(locale, c.slug, c.name))
     .join(", ");
+
   const aboutDescription =
     locale === "en"
       ? webcam.description
@@ -128,19 +163,30 @@ export default async function WebcamDetailPage({
           phase: isDaylight ? tw.daylight : tw.nighttime,
           weather: weatherLabel,
         });
+
   const bestTimeText =
-    locale === "en"
+    locale === "en" && webcam.bestTime
       ? webcam.bestTime
-      : webcam.bestTime
-        ? formatMessage(tw.bestTimeDefault, {
-            sunrise: sunriseLocal,
-            sunset: sunsetLocal,
-            timezone: webcam.city.timezone,
-            goldenHour: goldenHourLocal,
-          })
-        : null;
+      : formatMessage(tw.bestTimeDefault, {
+          sunrise: sunriseLocal,
+          sunset: sunsetLocal,
+          timezone: webcam.city.timezone,
+          goldenHour: goldenHourLocal,
+        });
+
   const latLabel = `${Math.abs(webcam.city.lat).toFixed(4)}° ${webcam.city.lat >= 0 ? "N" : "S"}`;
   const lngLabel = `${Math.abs(webcam.city.lng).toFixed(4)}° ${webcam.city.lng >= 0 ? "E" : "W"}`;
+
+  const delta = 0.08;
+  const osmBbox = `${(webcam.city.lng - delta).toFixed(4)},${(webcam.city.lat - delta).toFixed(4)},${(webcam.city.lng + delta).toFixed(4)},${(webcam.city.lat + delta).toFixed(4)}`;
+  const osmEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(osmBbox)}&layer=mapnik&marker=${webcam.city.lat.toFixed(4)},${webcam.city.lng.toFixed(4)}`;
+
+  const seeHighlights = [
+    formatMessage(tw.seeHighlight1, { categories: categoriesText, city: cityLabel, country: countryLabel }),
+    formatMessage(tw.seeHighlight2, { phase: isDaylight ? tw.daylight : tw.nighttime, localTime }),
+    formatMessage(tw.seeHighlight3, { weather: weatherLabel }),
+    formatMessage(tw.seeHighlight4, { format: sourceMeta.label }),
+  ];
 
   const faqs = [
     {
@@ -190,7 +236,7 @@ export default async function WebcamDetailPage({
     {
       "@context": "https://schema.org",
       "@type": "VideoObject",
-      name: webcam.title,
+      name: `${webcam.title}, ${cityLabel}`,
       description: aboutDescription,
       ...(thumbnail ? { thumbnailUrl: thumbnail } : {}),
       uploadDate: webcam.stream?.lastCheckedAt ?? new Date().toISOString(),
@@ -259,7 +305,9 @@ export default async function WebcamDetailPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+
+      {/* Breadcrumb */}
+      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
         <Link href={localizePath("/", locale)} className="hover:underline">{tw.home}</Link>
         <span>/</span>
         <Link href={localizePath(`/countries/${webcam.country.slug}`, locale)} className="hover:underline">
@@ -274,16 +322,19 @@ export default async function WebcamDetailPage({
         </Link>
         <span>/</span>
         <span className="text-slate-900 dark:text-white font-medium">{webcam.title}</span>
-      </div>
+      </nav>
 
+      {/* H1 */}
       <div>
         <div className="flex items-center gap-2.5 flex-wrap">
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{webcam.title}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+            {webcam.title}, {cityLabel}
+          </h1>
           <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium border ${sourceMeta.badgeClass}`}>
             {sourceMeta.label}
           </span>
         </div>
-        <div className="flex items-center gap-3 flex-wrap mt-1">
+        <div className="flex items-center gap-3 flex-wrap mt-1.5">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {webcam.country.flag} {cityLabel}, {countryLabel} · {categoriesText}
           </p>
@@ -296,18 +347,45 @@ export default async function WebcamDetailPage({
         </div>
       </div>
 
+      {/* Live Player + Status / Actions / Telemetry */}
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
-        {webcam.stream ? (
-          <WebcamPlayer
-            title={webcam.title}
-            embedUrl={webcam.stream.embedUrl}
-            sourceUrl={webcam.stream.sourceUrl}
-            sourceType={webcam.stream.sourceType}
-            mediaType={webcam.stream.mediaType}
-            externalId={webcam.stream.externalId}
-          />
-        ) : null}
+        <div id="webcam-player-container">
+          {webcam.stream ? (
+            <WebcamPlayer
+              title={webcam.title}
+              embedUrl={webcam.stream.embedUrl}
+              sourceUrl={webcam.stream.sourceUrl}
+              sourceType={webcam.stream.sourceType}
+              mediaType={webcam.stream.mediaType}
+              externalId={webcam.stream.externalId}
+            />
+          ) : null}
+        </div>
 
+        {/* Status, Source, Last Checked + Interactive Actions */}
+        <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-50/70 dark:bg-slate-900/80">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-300">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-600 dark:bg-red-400 live-dot" />
+              {statusLabel}
+            </span>
+            <span>
+              <span className="text-slate-400 dark:text-slate-500">{tw.sourceAttribution}:</span>{" "}
+              <strong className="font-medium text-slate-800 dark:text-slate-200">
+                {webcam.provider?.name ?? tw.officialPartner}
+              </strong>
+            </span>
+            <span className="text-slate-300 dark:text-slate-700">·</span>
+            <span className="tabular-nums">
+              <span className="text-slate-400 dark:text-slate-500">{tw.lastChecked}:</span>{" "}
+              {lastCheckedLabel}
+            </span>
+          </div>
+
+          <WebcamActionsBar slug={webcam.slug} title={`${webcam.title}, ${cityLabel}`} />
+        </div>
+
+        {/* Local Time, Live Weather, Sunrise/Sunset */}
         <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800 border-t border-slate-200 dark:border-slate-800 text-xs bg-white dark:bg-slate-900">
           <div className="p-3.5">
             <div className="text-slate-500 dark:text-slate-400">{tw.localTime}</div>
@@ -320,25 +398,27 @@ export default async function WebcamDetailPage({
             <div className="font-semibold text-slate-900 dark:text-white mt-0.5">{weatherLabel}</div>
           </div>
           <div className="p-3.5">
-            <div className="text-slate-500 dark:text-slate-400">{tw.streamStatus}</div>
-            <div className="font-semibold text-slate-900 dark:text-white mt-0.5">
-              {statusLabel}
+            <div className="text-slate-500 dark:text-slate-400">{tw.sunriseSunset}</div>
+            <div className="font-semibold text-slate-900 dark:text-white mt-0.5 tabular-nums">
+              {sunriseLocal} / {sunsetLocal}
             </div>
           </div>
           <div className="p-3.5">
-            <div className="text-slate-500 dark:text-slate-400">{tw.sourceAttribution}</div>
-            <div className="font-semibold text-slate-900 dark:text-white mt-0.5 truncate">
-              {webcam.provider?.name ?? tw.officialPartner}
+            <div className="text-slate-500 dark:text-slate-400">{tw.goldenHour}</div>
+            <div className="font-semibold text-slate-900 dark:text-white mt-0.5 tabular-nums">
+              {goldenHourLocal}
             </div>
           </div>
         </div>
       </div>
 
+      {/* Structured SEO Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 space-y-6">
-          <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              {formatMessage(tw.aboutTitle, { title: webcam.title })}
+          {/* H2: About This Live Webcam */}
+          <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-3 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {tw.aboutWebcamTitle}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               {aboutDescription}
@@ -352,69 +432,119 @@ export default async function WebcamDetailPage({
                 timezone: webcam.city.timezone,
               })}
             </p>
-            {bestTimeText && (
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-sm">
-                <div className="font-medium text-slate-900 dark:text-white mb-1">{tw.bestTimeToWatch}</div>
-                <div className="text-slate-600 dark:text-slate-300">{bestTimeText}</div>
-              </div>
-            )}
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{tw.categoriesLabel}</span>
-              {webcam.categories.map((cat) => (
-                <Link
-                  key={cat.slug}
-                  href={localizePath(`/categories/${cat.slug}`, locale)}
-                  className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                >
-                  {formatMessage(tw.categoryWebcams, {
-                    name: getCategoryLabel(locale, cat.slug, cat.name),
-                  })}
-                </Link>
-              ))}
-              <Link
-                href={localizePath(`/countries/${webcam.country.slug}`, locale)}
-                className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-              >
-                {webcam.country.flag} {formatMessage(tw.allCountryCams, { country: countryLabel })}
-              </Link>
-            </div>
           </section>
 
-          {/* Daylight & Location Telemetry */}
+          {/* H2: What Can You See on This Webcam? */}
+          <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-3 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {tw.whatCanYouSeeTitle}
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              {formatMessage(tw.whatCanYouSeeBody, {
+                title: webcam.title,
+                city: cityLabel,
+                country: countryLabel,
+                categories: categoriesText,
+                weather: weatherLabel,
+              })}
+            </p>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 text-xs sm:text-sm text-slate-700 dark:text-slate-200">
+              {seeHighlights.map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 dark:bg-slate-800/60 dark:border-slate-800"
+                >
+                  <span className="text-blue-600 dark:text-blue-400 font-bold">•</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {/* H2: Live Weather in {city} */}
           <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              {tw.telemetryTitle}
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {formatMessage(tw.liveWeatherInTitle, { city: cityLabel })}
+            </h2>
+            <div className="grid grid-cols-3 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
+                <div className="text-slate-500 dark:text-slate-400">{tw.temperature}</div>
+                <div className="text-base font-bold text-slate-900 dark:text-white mt-0.5 tabular-nums">
+                  {detailedWeather ? `${detailedWeather.tempC}°C` : weatherLabel}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
+                <div className="text-slate-500 dark:text-slate-400">{tw.windSpeed}</div>
+                <div className="text-base font-bold text-slate-900 dark:text-white mt-0.5 tabular-nums">
+                  {detailedWeather?.windKmh !== null && detailedWeather?.windKmh !== undefined
+                    ? `${detailedWeather.windKmh} km/h`
+                    : "—"}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
+                <div className="text-slate-500 dark:text-slate-400">{tw.humidity}</div>
+                <div className="text-base font-bold text-slate-900 dark:text-white mt-0.5 tabular-nums">
+                  {detailedWeather?.humidity !== null && detailedWeather?.humidity !== undefined
+                    ? `${detailedWeather.humidity}%`
+                    : "—"}
+                </div>
+              </div>
+            </div>
+
+            {detailedWeather && detailedWeather.daily.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  {tw.forecastTitle}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                  {detailedWeather.daily.map((d) => (
+                    <div
+                      key={d.date}
+                      className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 dark:bg-slate-800/50 dark:border-slate-800 space-y-1"
+                    >
+                      <div className="font-medium text-slate-700 dark:text-slate-300 tabular-nums">
+                        {d.date.slice(5)}
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400 truncate">
+                        {localizeWeatherSummary(d.condition, locale)}
+                      </div>
+                      <div className="font-semibold text-slate-900 dark:text-white tabular-nums">
+                        {d.minC}° / {d.maxC}°C
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* H2: Camera Information */}
+          <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {tw.cameraInfoTitle}
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
-                <div className="text-slate-500 dark:text-slate-400">{tw.sunriseSunset}</div>
-                <div className="font-semibold text-slate-900 dark:text-white mt-0.5 tabular-nums">
-                  {sunriseLocal} / {sunsetLocal}
-                </div>
+                <div className="text-slate-500 dark:text-slate-400">{tw.streamStatus}</div>
+                <div className="font-semibold text-slate-900 dark:text-white mt-0.5">{statusLabel}</div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
-                <div className="text-slate-500 dark:text-slate-400">{tw.goldenHour}</div>
-                <div className="font-semibold text-slate-900 dark:text-white mt-0.5 tabular-nums">
-                  {goldenHourLocal}
-                </div>
+                <div className="text-slate-500 dark:text-slate-400">{tw.streamFormat}</div>
+                <div className="font-semibold text-slate-900 dark:text-white mt-0.5">{sourceMeta.label}</div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
-                <div className="text-slate-500 dark:text-slate-400">{tw.coordinates}</div>
-                <div className="font-semibold text-slate-900 dark:text-white mt-0.5 tabular-nums">
-                  {latLabel}, {lngLabel}
+                <div className="text-slate-500 dark:text-slate-400">{tw.sourceAttribution}</div>
+                <div className="font-semibold text-slate-900 dark:text-white mt-0.5 truncate">
+                  {webcam.provider?.name ?? tw.officialPartner}
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
                 <div className="text-slate-500 dark:text-slate-400">{tw.timezone}</div>
-                <div className="font-semibold text-slate-900 dark:text-white mt-0.5">
-                  {webcam.city.timezone}
-                </div>
+                <div className="font-semibold text-slate-900 dark:text-white mt-0.5">{webcam.city.timezone}</div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
-                <div className="text-slate-500 dark:text-slate-400">{tw.streamFormat}</div>
-                <div className="font-semibold text-slate-900 dark:text-white mt-0.5">
-                  {sourceMeta.label}
-                </div>
+                <div className="text-slate-500 dark:text-slate-400">{tw.lastChecked}</div>
+                <div className="font-semibold text-slate-900 dark:text-white mt-0.5 tabular-nums">{lastCheckedLabel}</div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 dark:bg-slate-800/60 dark:border-slate-800">
                 <div className="text-slate-500 dark:text-slate-400">{tw.originalSource}</div>
@@ -432,11 +562,155 @@ export default async function WebcamDetailPage({
                 )}
               </div>
             </div>
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{tw.categoriesLabel}</span>
+              {webcam.categories.map((cat) => (
+                <Link
+                  key={cat.slug}
+                  href={localizePath(`/categories/${cat.slug}`, locale)}
+                  className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                >
+                  {formatMessage(tw.categoryWebcams, {
+                    name: getCategoryLabel(locale, cat.slug, cat.name),
+                  })}
+                </Link>
+              ))}
+            </div>
           </section>
 
-          {/* SEO FAQ Section */}
+          {/* H2: About {city} */}
+          <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-3 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {formatMessage(tw.aboutPlaceTitle, { city: cityLabel })}
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              {formatMessage(tw.aboutPlaceBody, {
+                city: cityLabel,
+                country: countryLabel,
+                lat: latLabel,
+                lng: lngLabel,
+                timezone: webcam.city.timezone,
+                categories: categoriesText,
+                sunrise: sunriseLocal,
+                sunset: sunsetLocal,
+                goldenHour: goldenHourLocal,
+              })}
+            </p>
+          </section>
+
+          {/* H2: Best Time to Watch */}
+          <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-3 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {tw.bestTimeToWatch}
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              {bestTimeText}
+            </p>
+          </section>
+
+          {/* H2: Webcam Location */}
           <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {tw.webcamLocationTitle}
+              </h2>
+              <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                {webcam.country.flag} {cityLabel}, {countryLabel} · {latLabel}, {lngLabel}
+              </span>
+            </div>
+            <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 h-60 bg-slate-100 dark:bg-slate-800">
+              <iframe
+                title={`${webcam.title} Map`}
+                src={osmEmbedUrl}
+                className="w-full h-full border-0"
+                loading="lazy"
+              />
+            </div>
+          </section>
+
+          {/* H2: Nearby Live Webcams */}
+          {nearbyCams.length > 0 && (
+            <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {tw.nearbyWebcamsTitle}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {nearbyCams.map(({ cam, km }) => (
+                  <Link
+                    key={cam.id}
+                    href={localizePath(`/webcams/${cam.slug}`, locale)}
+                    className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors"
+                  >
+                    <div className="w-24 h-14 rounded-lg bg-slate-900 overflow-hidden shrink-0">
+                      <WebcamThumbnail
+                        src={getWebcamPreviewUrl(cam.stream)}
+                        alt={cam.title}
+                        flag={cam.country.flag}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
+                        {cam.title}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {getCityLabel(locale, cam.city.slug, cam.city.name)},{" "}
+                        {getCountryLabel(locale, cam.country.slug, cam.country.name, cam.country.isoCode)}
+                      </div>
+                      <div className="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5 tabular-nums">
+                        {formatMessage(tw.distanceKm, { km })}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* H2: More Webcams in {country} */}
+          {sameCountryCams.length > 0 && (
+            <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {formatMessage(tw.moreInCountryTitle, { country: countryLabel })}
+                </h2>
+                <Link
+                  href={localizePath(`/countries/${webcam.country.slug}`, locale)}
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                >
+                  {formatMessage(tw.allCountryCams, { country: countryLabel })} →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {sameCountryCams.map((cam) => (
+                  <Link
+                    key={cam.id}
+                    href={localizePath(`/webcams/${cam.slug}`, locale)}
+                    className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors"
+                  >
+                    <div className="w-24 h-14 rounded-lg bg-slate-900 overflow-hidden shrink-0">
+                      <WebcamThumbnail
+                        src={getWebcamPreviewUrl(cam.stream)}
+                        alt={cam.title}
+                        flag={cam.country.flag}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
+                        {cam.title}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {getCityLabel(locale, cam.city.slug, cam.city.name)}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* H2: Frequently Asked Questions */}
+          <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 space-y-4 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               {tw.faqTitle}
             </h2>
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -452,40 +726,41 @@ export default async function WebcamDetailPage({
           </section>
         </div>
 
-        <div className="lg:col-span-4 space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm">
+        {/* Sticky Sidebar */}
+        <aside className="lg:col-span-4 space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-3 shadow-sm lg:sticky lg:top-20">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{tw.nearbyRelated}</h2>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{tw.nearbyRelated}</h3>
               <Link href={localizePath("/random", locale)} className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium">
                 {tw.random}
               </Link>
             </div>
             <div className="space-y-2.5">
-              {related.map((r) => (
+              {nearbyCams.slice(0, 5).map(({ cam }) => (
                 <Link
-                  key={r.id}
-                  href={localizePath(`/webcams/${r.slug}`, locale)}
+                  key={cam.id}
+                  href={localizePath(`/webcams/${cam.slug}`, locale)}
                   className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   <div className="w-20 h-12 rounded-lg bg-slate-900 overflow-hidden shrink-0">
                     <WebcamThumbnail
-                      src={getWebcamPreviewUrl(r.stream)}
-                      alt={r.title}
-                      flag={r.country.flag}
+                      src={getWebcamPreviewUrl(cam.stream)}
+                      alt={cam.title}
+                      flag={cam.country.flag}
                     />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">{r.title}</div>
+                    <div className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">{cam.title}</div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {getCityLabel(locale, r.city.slug, r.city.name)},{" "}
-                      {getCountryLabel(locale, r.country.slug, r.country.name, r.country.isoCode)}
+                      {getCityLabel(locale, cam.city.slug, cam.city.name)},{" "}
+                      {getCountryLabel(locale, cam.country.slug, cam.country.name, cam.country.isoCode)}
                     </div>
                   </div>
                 </Link>
               ))}
             </div>
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );
