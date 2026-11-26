@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { listApprovedWebcams } from "@/lib/repository";
+import { listApprovedWebcams, listApprovedWebcamsPage } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
+import { PaginationBar } from "@/components/PaginationBar";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { absoluteUrl, buildAlternates } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n-server";
@@ -46,24 +47,33 @@ export async function generateMetadata({
 
 export default async function CountryDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ country: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
-  const { country } = await params;
-  const [webcams, locale] = await Promise.all([
+  const [{ country }, sp] = await Promise.all([params, searchParams]);
+  const page = Math.max(1, Number(sp.page) || 1);
+  const pageSize = 12;
+
+  const [allWebcams, pageData, locale] = await Promise.all([
     listApprovedWebcams({ country }),
+    listApprovedWebcamsPage({ country, page, pageSize }),
     getServerLocale(),
   ]);
-  if (webcams.length === 0) notFound();
+  if (allWebcams.length === 0) notFound();
+
+  const totalPages = Math.max(1, Math.ceil(pageData.total / pageSize));
+  const webcams = pageData.items;
 
   const msgs = getMessages(locale);
-  const countryInfo = webcams[0].country;
+  const countryInfo = allWebcams[0].country;
   const countryLabel = getCountryLabel(locale, countryInfo.slug, countryInfo.name, countryInfo.isoCode);
   const cityMap = new Map<
     string,
     { name: string; slug: string; localTime: string; count: number }
   >();
-  for (const w of webcams) {
+  for (const w of allWebcams) {
     const existing = cityMap.get(w.city.slug);
     if (existing) {
       existing.count += 1;
@@ -101,7 +111,7 @@ export default async function CountryDetailPage({
           {countryInfo.flag} {formatMessage(msgs.webcam.allCountryCams, { country: countryLabel })}
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          {formatMessage(msgs.home.showingWebcams, { count: webcams.length })}
+          {formatMessage(msgs.home.showingWebcams, { count: pageData.total })}
         </p>
       </div>
 
@@ -133,6 +143,12 @@ export default async function CountryDetailPage({
           <WebcamCard key={cam.id} webcam={cam} />
         ))}
       </div>
+
+      <PaginationBar
+        basePath={localizePath(`/countries/${country}`, locale)}
+        currentPage={page}
+        totalPages={totalPages}
+      />
     </div>
   );
 }

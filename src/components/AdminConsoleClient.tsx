@@ -25,6 +25,10 @@ import {
   ShieldCheck,
   Heart,
   ChevronsUpDown,
+  FileCheck2,
+  Languages,
+  Building2,
+  TrendingUp,
 } from "lucide-react";
 import { BrandLogo } from "./BrandLogo";
 import { ThemeToggle } from "./ThemeToggle";
@@ -37,7 +41,13 @@ import type {
   AdminContactMessage,
   AdminCountry,
   AdminDiscoveryJob,
+  AdminLicense,
+  AdminProvider,
   AdminReport,
+  AdminSeoIssue,
+  AdminSeoRedirect,
+  AdminSubmission,
+  AdminTranslation,
   AdminUser,
   AuthUser,
   PublicWebcam,
@@ -55,6 +65,12 @@ interface AdminData {
   countries?: AdminCountry[];
   cities?: AdminCity[];
   users?: AdminUser[];
+  licenses?: AdminLicense[];
+  translations?: AdminTranslation[];
+  providers?: AdminProvider[];
+  submissions?: AdminSubmission[];
+  seoRedirects?: AdminSeoRedirect[];
+  seoIssues?: AdminSeoIssue[];
   auditLogs: AdminAuditLog[];
   youtubeQuotaUsed: number;
 }
@@ -71,8 +87,46 @@ export function AdminConsoleClient({
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const [tab, setTab] = useState<
-    "dashboard" | "review" | "webcams" | "categories" | "locations" | "users" | "jobs" | "messages" | "reports"
+    | "dashboard"
+    | "review"
+    | "webcams"
+    | "licenses"
+    | "translations"
+    | "partners"
+    | "seo"
+    | "categories"
+    | "locations"
+    | "users"
+    | "jobs"
+    | "messages"
+    | "reports"
   >("dashboard");
+  const [licenseForm, setLicenseForm] = useState({
+    webcamId: initialData.webcams[0]?.id ?? "",
+    permissionType: "YouTube Official Embed",
+    evidence: "",
+    expiresAt: "",
+    status: "ACTIVE",
+  });
+  const [translationForm, setTranslationForm] = useState({
+    entityType: "webcam" as "webcam" | "city" | "country" | "category",
+    entityId: initialData.webcams[0]?.id ?? "",
+    locale: "zh",
+    title: "",
+    description: "",
+  });
+  const [providerForm, setProviderForm] = useState({
+    name: "",
+    type: "hotel",
+    website: "",
+    contact: "",
+    verified: true,
+  });
+  const [redirectForm, setRedirectForm] = useState({
+    fromPath: "",
+    toPath: "",
+    statusCode: 301,
+  });
   const [userSearch, setUserSearch] = useState("");
   const [collapsed, setCollapsed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -315,6 +369,30 @@ export function AdminConsoleClient({
       label: "Webcams & Health",
       badge: data.webcams.length,
       icon: Video,
+    },
+    {
+      key: "licenses" as const,
+      label: "Licenses",
+      badge: (data.licenses ?? []).length,
+      icon: FileCheck2,
+    },
+    {
+      key: "translations" as const,
+      label: "Translations",
+      badge: (data.translations ?? []).length,
+      icon: Languages,
+    },
+    {
+      key: "partners" as const,
+      label: "Partners & Submissions",
+      badge: (data.submissions ?? []).filter((s) => s.status === "PENDING").length,
+      icon: Building2,
+    },
+    {
+      key: "seo" as const,
+      label: "SEO & Redirects",
+      badge: (data.seoIssues ?? []).length,
+      icon: TrendingUp,
     },
     {
       key: "categories" as const,
@@ -1644,6 +1722,567 @@ export function AdminConsoleClient({
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+
+          {tab === "licenses" && (
+            <div className="space-y-4">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const ok = await runAction({
+                    action: "saveLicense",
+                    ...licenseForm,
+                    expiresAt: licenseForm.expiresAt || null,
+                  });
+                  if (ok) {
+                    setLicenseForm((f) => ({ ...f, evidence: "", expiresAt: "" }));
+                  }
+                }}
+                className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm space-y-3"
+              >
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Add / Update License Record
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
+                  <select
+                    value={licenseForm.webcamId}
+                    onChange={(e) => setLicenseForm((f) => ({ ...f, webcamId: e.target.value }))}
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  >
+                    {data.webcams.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.title}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    required
+                    value={licenseForm.permissionType}
+                    onChange={(e) =>
+                      setLicenseForm((f) => ({ ...f, permissionType: e.target.value }))
+                    }
+                    placeholder="Permission type (e.g. Written Partner)"
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  />
+                  <input
+                    type="text"
+                    required
+                    value={licenseForm.evidence}
+                    onChange={(e) => setLicenseForm((f) => ({ ...f, evidence: e.target.value }))}
+                    placeholder="Evidence URL or doc ref"
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  />
+                  <input
+                    type="date"
+                    value={licenseForm.expiresAt}
+                    onChange={(e) => setLicenseForm((f) => ({ ...f, expiresAt: e.target.value }))}
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  />
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Save License
+                  </button>
+                </div>
+              </form>
+
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-x-auto shadow-sm">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Webcam</th>
+                      <th className="px-4 py-3 font-medium">Permission Type</th>
+                      <th className="px-4 py-3 font-medium">Evidence</th>
+                      <th className="px-4 py-3 font-medium">Expires</th>
+                      <th className="px-4 py-3 font-medium">Status</th>
+                      <th className="px-4 py-3 font-medium text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {(data.licenses ?? []).map((lic) => (
+                      <tr key={lic.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                        <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
+                          {lic.webcamTitle}
+                        </td>
+                        <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                          {lic.permissionType}
+                        </td>
+                        <td className="px-4 py-3 text-slate-500 max-w-xs truncate">
+                          {lic.evidence}
+                        </td>
+                        <td className="px-4 py-3 text-slate-500 tabular-nums">
+                          {lic.expiresAt ? lic.expiresAt.slice(0, 10) : "Perpetual"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-medium">
+                            {lic.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => runAction({ action: "deleteLicense", id: lic.id })}
+                            className="text-rose-600 hover:underline font-medium"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {(data.licenses ?? []).length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                          No license records yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {tab === "translations" && (
+            <div className="space-y-4">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const ok = await runAction({ action: "saveTranslation", ...translationForm });
+                  if (ok) {
+                    setTranslationForm((f) => ({ ...f, title: "", description: "" }));
+                  }
+                }}
+                className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm space-y-3"
+              >
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Edit Localized Title & Description
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                  <select
+                    value={translationForm.entityId}
+                    onChange={(e) =>
+                      setTranslationForm((f) => ({ ...f, entityId: e.target.value }))
+                    }
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  >
+                    {data.webcams.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.title}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={translationForm.locale}
+                    onChange={(e) => setTranslationForm((f) => ({ ...f, locale: e.target.value }))}
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  >
+                    <option value="zh">zh (简体中文)</option>
+                    <option value="ja">ja (日本語)</option>
+                    <option value="es">es (Español)</option>
+                    <option value="fr">fr (Français)</option>
+                    <option value="en">en (English)</option>
+                  </select>
+                  <input
+                    type="text"
+                    required
+                    value={translationForm.title}
+                    onChange={(e) => setTranslationForm((f) => ({ ...f, title: e.target.value }))}
+                    placeholder="Localized Title"
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  />
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Save Translation
+                  </button>
+                </div>
+                <textarea
+                  rows={2}
+                  value={translationForm.description}
+                  onChange={(e) =>
+                    setTranslationForm((f) => ({ ...f, description: e.target.value }))
+                  }
+                  placeholder="Original localized description shown on the detail page..."
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                />
+              </form>
+
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-x-auto shadow-sm">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Entity</th>
+                      <th className="px-4 py-3 font-medium">Locale</th>
+                      <th className="px-4 py-3 font-medium">Title</th>
+                      <th className="px-4 py-3 font-medium">Description</th>
+                      <th className="px-4 py-3 font-medium text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {(data.translations ?? []).map((tr) => (
+                      <tr key={tr.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                        <td className="px-4 py-3 font-mono text-slate-600 dark:text-slate-300">
+                          {tr.entityType}:{tr.entityId.slice(0, 10)}
+                        </td>
+                        <td className="px-4 py-3 uppercase font-semibold">{tr.locale}</td>
+                        <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
+                          {tr.title}
+                        </td>
+                        <td className="px-4 py-3 text-slate-500 max-w-md truncate">
+                          {tr.description || "—"}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => runAction({ action: "deleteTranslation", id: tr.id })}
+                            className="text-rose-600 hover:underline font-medium"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {(data.translations ?? []).length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                          No custom translations saved yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {tab === "partners" && (
+            <div className="space-y-4">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const ok = await runAction({ action: "saveProvider", ...providerForm });
+                  if (ok) {
+                    setProviderForm({
+                      name: "",
+                      type: "hotel",
+                      website: "",
+                      contact: "",
+                      verified: true,
+                    });
+                  }
+                }}
+                className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm space-y-3"
+              >
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Add Partner / Operator
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
+                  <input
+                    type="text"
+                    required
+                    value={providerForm.name}
+                    onChange={(e) => setProviderForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="Partner Name"
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  />
+                  <select
+                    value={providerForm.type}
+                    onChange={(e) => setProviderForm((f) => ({ ...f, type: e.target.value }))}
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  >
+                    <option value="hotel">Hotel / Resort</option>
+                    <option value="tourism_board">Tourism Board</option>
+                    <option value="observatory">Observatory</option>
+                    <option value="youtube_channel">YouTube Channel</option>
+                    <option value="partner">Partner</option>
+                  </select>
+                  <input
+                    type="url"
+                    value={providerForm.website}
+                    onChange={(e) => setProviderForm((f) => ({ ...f, website: e.target.value }))}
+                    placeholder="Website URL"
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  />
+                  <input
+                    type="text"
+                    value={providerForm.contact}
+                    onChange={(e) => setProviderForm((f) => ({ ...f, contact: e.target.value }))}
+                    placeholder="Contact (private)"
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  />
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Save Partner
+                  </button>
+                </div>
+              </form>
+
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-x-auto shadow-sm">
+                <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  Partner Operators ({(data.providers ?? []).length})
+                </div>
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th className="px-4 py-2.5 font-medium">Name</th>
+                      <th className="px-4 py-2.5 font-medium">Type</th>
+                      <th className="px-4 py-2.5 font-medium">Website</th>
+                      <th className="px-4 py-2.5 font-medium">Contact</th>
+                      <th className="px-4 py-2.5 font-medium">Webcams</th>
+                      <th className="px-4 py-2.5 font-medium text-right">Verified</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {(data.providers ?? []).map((p) => (
+                      <tr key={p.id}>
+                        <td className="px-4 py-2.5 font-medium text-slate-900 dark:text-white">
+                          {p.name}
+                        </td>
+                        <td className="px-4 py-2.5 text-slate-500">{p.type}</td>
+                        <td className="px-4 py-2.5 text-blue-600 truncate max-w-xs">
+                          {p.website || "—"}
+                        </td>
+                        <td className="px-4 py-2.5 text-slate-500">{p.contact || "—"}</td>
+                        <td className="px-4 py-2.5 tabular-nums">{p.webcamCount}</td>
+                        <td className="px-4 py-2.5 text-right">
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() =>
+                              runAction({ action: "toggleProviderVerified", id: p.id })
+                            }
+                            className={`px-2.5 py-1 rounded-full font-medium ${
+                              p.verified
+                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                            }`}
+                          >
+                            {p.verified ? "Verified" : "Unverified"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-x-auto shadow-sm">
+                <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  Partner & Operator Submissions ({(data.submissions ?? []).length})
+                </div>
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th className="px-4 py-2.5 font-medium">Title</th>
+                      <th className="px-4 py-2.5 font-medium">Location</th>
+                      <th className="px-4 py-2.5 font-medium">Operator / Contact</th>
+                      <th className="px-4 py-2.5 font-medium">Status</th>
+                      <th className="px-4 py-2.5 font-medium text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {(data.submissions ?? []).map((s) => (
+                      <tr key={s.id}>
+                        <td className="px-4 py-2.5 font-medium text-slate-900 dark:text-white">
+                          {s.title}
+                        </td>
+                        <td className="px-4 py-2.5 text-slate-500">{s.location}</td>
+                        <td className="px-4 py-2.5 text-slate-500">
+                          {s.operator || "—"} ({s.contact})
+                        </td>
+                        <td className="px-4 py-2.5">{s.status}</td>
+                        <td className="px-4 py-2.5 text-right space-x-2">
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() =>
+                              runAction({
+                                action: "reviewSubmission",
+                                id: s.id,
+                                status: "APPROVED",
+                              })
+                            }
+                            className="text-emerald-600 hover:underline font-medium"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() =>
+                              runAction({
+                                action: "reviewSubmission",
+                                id: s.id,
+                                status: "REJECTED",
+                              })
+                            }
+                            className="text-rose-600 hover:underline font-medium"
+                          >
+                            Reject
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {tab === "seo" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm">
+                  <div className="text-xs text-slate-500">Indexable Sitemaps</div>
+                  <div className="text-lg font-bold text-slate-900 dark:text-white mt-1">
+                    5 Locales + Index
+                  </div>
+                  <a
+                    href="/sitemap.xml"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1 mt-1"
+                  >
+                    Open /sitemap.xml <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm">
+                  <div className="text-xs text-slate-500">Quality Issues Detected</div>
+                  <div className="text-lg font-bold text-amber-600 mt-1">
+                    {(data.seoIssues ?? []).length}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1">
+                    Thin descriptions, missing licenses, offline streams
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm">
+                  <div className="text-xs text-slate-500">Active Redirects</div>
+                  <div className="text-lg font-bold text-slate-900 dark:text-white mt-1">
+                    {(data.seoRedirects ?? []).length}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1">301 / 302 URL preservation rules</div>
+                </div>
+              </div>
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const ok = await runAction({ action: "saveSeoRedirect", ...redirectForm });
+                  if (ok) setRedirectForm({ fromPath: "", toPath: "", statusCode: 301 });
+                }}
+                className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm space-y-3"
+              >
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Add Redirect Rule
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                  <input
+                    type="text"
+                    required
+                    value={redirectForm.fromPath}
+                    onChange={(e) => setRedirectForm((f) => ({ ...f, fromPath: e.target.value }))}
+                    placeholder="/old-webcam-slug"
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  />
+                  <input
+                    type="text"
+                    required
+                    value={redirectForm.toPath}
+                    onChange={(e) => setRedirectForm((f) => ({ ...f, toPath: e.target.value }))}
+                    placeholder="/webcams/new-slug"
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  />
+                  <select
+                    value={redirectForm.statusCode}
+                    onChange={(e) =>
+                      setRedirectForm((f) => ({ ...f, statusCode: Number(e.target.value) }))
+                    }
+                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  >
+                    <option value={301}>301 Permanent</option>
+                    <option value={302}>302 Temporary</option>
+                  </select>
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Save Redirect
+                  </button>
+                </div>
+              </form>
+
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-x-auto shadow-sm">
+                <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  SEO Quality Issues ({(data.seoIssues ?? []).length})
+                </div>
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th className="px-4 py-2.5 font-medium">Webcam</th>
+                      <th className="px-4 py-2.5 font-medium">Slug</th>
+                      <th className="px-4 py-2.5 font-medium">Issues</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {(data.seoIssues ?? []).slice(0, 30).map((issue) => (
+                      <tr key={issue.webcamId}>
+                        <td className="px-4 py-2.5 font-medium text-slate-900 dark:text-white">
+                          {issue.title}
+                        </td>
+                        <td className="px-4 py-2.5 font-mono text-slate-500">{issue.slug}</td>
+                        <td className="px-4 py-2.5 text-amber-600 dark:text-amber-400">
+                          {issue.issues.join(" · ")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {(data.seoRedirects ?? []).length > 0 && (
+                <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-x-auto shadow-sm">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                      <tr>
+                        <th className="px-4 py-2.5 font-medium">From</th>
+                        <th className="px-4 py-2.5 font-medium">To</th>
+                        <th className="px-4 py-2.5 font-medium">Code</th>
+                        <th className="px-4 py-2.5 font-medium text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {(data.seoRedirects ?? []).map((r) => (
+                        <tr key={r.id}>
+                          <td className="px-4 py-2.5 font-mono">{r.fromPath}</td>
+                          <td className="px-4 py-2.5 font-mono">{r.toPath}</td>
+                          <td className="px-4 py-2.5">{r.statusCode}</td>
+                          <td className="px-4 py-2.5 text-right">
+                            <button
+                              type="button"
+                              onClick={() => runAction({ action: "deleteSeoRedirect", id: r.id })}
+                              className="text-rose-600 hover:underline font-medium"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 

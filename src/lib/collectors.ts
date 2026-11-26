@@ -107,6 +107,7 @@ export interface CollectedCandidateInput {
   sourceType: string;
   mediaType: "LIVE_VIDEO" | "SNAPSHOT";
   externalId: string;
+  channelId?: string;
   title: string;
   countryName: string;
   cityName: string;
@@ -301,7 +302,7 @@ export async function collectFromYouTube(): Promise<CollectedCandidateInput[]> {
         const json = (await res.json()) as {
           items?: Array<{
             id?: { videoId?: string };
-            snippet?: { title?: string; channelTitle?: string };
+            snippet?: { title?: string; channelTitle?: string; channelId?: string };
           }>;
         };
         return json.items ?? [];
@@ -319,6 +320,7 @@ export async function collectFromYouTube(): Promise<CollectedCandidateInput[]> {
         sourceType: "youtube",
         mediaType: "LIVE_VIDEO",
         externalId: vid,
+        channelId: item.snippet?.channelId,
         title: item.snippet?.title || `YouTube Live ${vid}`,
         countryName: "International",
         cityName: "Live Stream",
@@ -375,4 +377,63 @@ export async function collectAndProbeAllSources(): Promise<
 
   // Sort by stabilityScore descending so admin sees the most stable sources first
   return probed.sort((a, b) => b.stabilityScore - a.stabilityScore);
+}
+
+/**
+ * Track a YouTube channel to find its current live broadcast when an old video ID ends/rotates.
+ */
+export async function findLiveStreamForYouTubeChannel(channelId: string): Promise<{
+  videoId: string;
+  embedUrl: string;
+  sourceUrl: string;
+} | null> {
+  const cleanChannelId = channelId.trim();
+  if (!cleanChannelId) return null;
+
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  if (apiKey) {
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${encodeURIComponent(
+          cleanChannelId
+        )}&eventType=live&type=video&videoEmbeddable=true&maxResults=1&key=${apiKey}`,
+        { signal: AbortSignal.timeout(5000) }
+      );
+      if (res.ok) {
+        const json = (await res.json()) as {
+          items?: Array<{ id?: { videoId?: string } }>;
+        };
+        const vid = json.items?.[0]?.id?.videoId;
+        if (vid) {
+          return {
+            videoId: vid,
+            embedUrl: `https://www.youtube-nocookie.com/embed/${vid}`,
+            sourceUrl: `https://www.youtube.com/watch?v=${vid}`,
+          };
+        }
+      }
+    } catch {
+      // fall through to RSS fallback
+    }
+  }
+
+  // Keyless fallback via public YouTube channel RSS + oEmbed check
+  try {
+    const rssRes = await fetch(
+      `https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(cleanChannelId)}`,
+      { signal: AbortSignal.timeout(5000) }
+    );
+    if (!rssRes.ok) return null;
+    const xml = await rssRes.text();
+    const match = xml.match(/<yt:videoId>([a-zA-Z0-9_-]{11})<\/yt:videoId>/);
+    const vid = match?.[1];
+    if (!vid) return null;
+    const sourceUrl = `https://www.youtube.com/watch?v=${vid}`;
+    const embedUrl = `https://www.youtube-nocookie.com/embed/${vid}`;
+    const probe = await probeSourceStability("youtube", embedUrl, sourceUrl);
+    if (!probe.online) return null;
+    return { videoId: vid, embedUrl, sourceUrl };
+  } catch {
+    return null;
+  }
 }

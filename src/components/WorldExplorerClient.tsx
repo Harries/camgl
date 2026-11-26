@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PublicWebcam } from "@/lib/types";
-import { RealMap } from "./RealMap";
+import { RealMap, type MapBounds } from "./RealMap";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
 import {
   formatMessage,
@@ -33,6 +33,50 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
     lat: number;
     zoom: number;
   } | null>(null);
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+  const [bboxWebcams, setBboxWebcams] = useState<PublicWebcam[] | null>(null);
+  const [mapLoading, setMapLoading] = useState(false);
+  const bboxTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleBoundsChange = useCallback((bounds: MapBounds) => {
+    setMapBounds(bounds);
+  }, []);
+
+  useEffect(() => {
+    if (!mapBounds) return;
+    if (bboxTimerRef.current) clearTimeout(bboxTimerRef.current);
+    const controller = new AbortController();
+    bboxTimerRef.current = setTimeout(async () => {
+      setMapLoading(true);
+      try {
+        const params = new URLSearchParams({
+          bbox: `${mapBounds.minLng.toFixed(4)},${mapBounds.minLat.toFixed(4)},${mapBounds.maxLng.toFixed(4)},${mapBounds.maxLat.toFixed(4)}`,
+          zoom: String(mapBounds.zoom),
+        });
+        if (selectedCountry) params.set("country", selectedCountry);
+        if (catFilter !== "all") params.set("category", catFilter);
+        if (statusFilter === "LIVE") params.set("status", "LIVE");
+
+        const res = await fetch(`/api/v1/map?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) return;
+        const json = (await res.json()) as { items?: PublicWebcam[] };
+        if (Array.isArray(json.items)) {
+          setBboxWebcams(json.items);
+        }
+      } catch {
+        // ignore abort or network error
+      } finally {
+        setMapLoading(false);
+      }
+    }, 220);
+
+    return () => {
+      if (bboxTimerRef.current) clearTimeout(bboxTimerRef.current);
+      controller.abort();
+    };
+  }, [mapBounds, selectedCountry, catFilter, statusFilter]);
 
   const countries = useMemo(() => {
     const map = new Map<
@@ -79,14 +123,15 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
   }, [webcams, selectedCountry]);
 
   const filtered = useMemo(() => {
-    return webcams.filter((w) => {
+    const source = bboxWebcams ?? webcams;
+    return source.filter((w) => {
       if (selectedCountry && w.country.slug !== selectedCountry) return false;
       if (selectedCity && w.city.slug !== selectedCity) return false;
       if (catFilter !== "all" && !w.categories.some((c) => c.slug === catFilter)) return false;
       if (statusFilter === "LIVE" && (w.stream?.status ?? "LIVE") !== "LIVE") return false;
       return true;
     });
-  }, [webcams, selectedCountry, selectedCity, catFilter, statusFilter]);
+  }, [bboxWebcams, webcams, selectedCountry, selectedCity, catFilter, statusFilter]);
 
   const activePin = filtered.find((w) => w.slug === selectedSlug) ?? filtered[0] ?? webcams[0];
   const categories = ["all", "city", "beach", "nature", "wildlife", "rail", "ski", "volcano", "port"];
@@ -250,7 +295,10 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
       {/* Full-Width Real Map */}
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden flex flex-col shadow-sm">
         <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400">
-          <span>{formatMessage(tco.matchingCameras, { count: filtered.length })}</span>
+          <span>
+            {formatMessage(tco.matchingCameras, { count: filtered.length })}
+            {mapLoading ? " · Updating viewport..." : ""}
+          </span>
           <span className="inline-flex items-center gap-3 text-slate-600 dark:text-slate-300">
             <span className="inline-flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> {tco.live}
@@ -265,6 +313,7 @@ export function WorldExplorerClient({ webcams }: { webcams: PublicWebcam[] }) {
           selectedSlug={activePin?.slug ?? ""}
           onSelect={handleSelectPin}
           focusCoords={focusCoords}
+          onBoundsChange={handleBoundsChange}
         />
       </div>
 

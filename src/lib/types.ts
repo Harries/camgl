@@ -32,11 +32,14 @@ export interface PublicWebcam {
   stream: {
     sourceType: string;
     externalId: string;
+    channelId?: string | null;
     embedUrl: string;
     sourceUrl: string;
     mediaType: string;
     status: StreamStatus;
+    consecutiveFailures?: number;
     lastCheckedAt: string;
+    nextCheckAt?: string;
   } | null;
   weatherSummary: string;
   mapX: number;
@@ -82,6 +85,7 @@ export interface AdminCandidate {
   sourceType: string;
   mediaType: string;
   externalId: string;
+  channelId?: string | null;
   title: string;
   countryName: string;
   cityName: string;
@@ -168,4 +172,66 @@ export interface AdminAuditLog {
   targetId: string;
   detail: string | null;
   createdAt: string;
+}
+
+export interface AdminLicense {
+  id: string;
+  webcamId: string;
+  webcamTitle: string;
+  webcamSlug: string;
+  permissionType: string;
+  evidence: string;
+  verifiedAt: string;
+  expiresAt: string | null;
+  status: string;
+}
+
+export interface AdminTranslation {
+  id: string;
+  entityType: "webcam" | "city" | "country" | "category";
+  entityId: string;
+  entityLabel?: string;
+  locale: string;
+  title: string;
+  description: string | null;
+  updatedAt: string;
+}
+
+export interface AdminProvider {
+  id: string;
+  name: string;
+  type: string;
+  website: string | null;
+  contact: string | null;
+  verified: boolean;
+  webcamCount: number;
+}
+
+export interface AdminSubmission {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  location: string;
+  sourceUrl: string;
+  operator: string | null;
+  contact: string;
+  declaration: boolean;
+  status: ReviewStatus;
+  createdAt: string;
+}
+
+export interface AdminSeoRedirect {
+  id: string;
+  fromPath: string;
+  toPath: string;
+  statusCode: number;
+  createdAt: string;
+}
+
+export interface AdminSeoIssue {
+  webcamId: string;
+  slug: string;
+  title: string;
+  issues: string[];
 }

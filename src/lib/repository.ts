@@ -16,7 +16,13 @@ import type {
   AdminContactMessage,
   AdminCountry,
   AdminDiscoveryJob,
+  AdminLicense,
+  AdminProvider,
   AdminReport,
+  AdminSeoIssue,
+  AdminSeoRedirect,
+  AdminSubmission,
+  AdminTranslation,
   AdminUser,
   AuthUser,
   PublicWebcam,
@@ -24,7 +30,11 @@ import type {
   UserSubmission,
 } from "./types";
 import { coordKey, fetchWeatherBatch } from "./weather";
-import { collectAndProbeAllSources, probeSourceStability } from "./collectors";
+import {
+  collectAndProbeAllSources,
+  findLiveStreamForYouTubeChannel,
+  probeSourceStability,
+} from "./collectors";
 import { hashPassword, verifyPassword } from "./user-auth";
 
 interface MemUser {
@@ -63,6 +73,21 @@ function createMemStore() {
       expiresAt: number;
       usedAt: number | null;
     }>,
+    licenses: SEED_WEBCAMS.slice(0, 6).map((w, idx) => ({
+      id: `lic-seed-${idx + 1}`,
+      webcamId: w.id,
+      webcamTitle: w.title,
+      webcamSlug: w.slug,
+      permissionType: w.stream?.sourceType === "youtube" ? "YouTube Official Embed" : "Official Public Feed",
+      evidence: w.stream?.sourceUrl || "https://www.youtube.com/t/terms",
+      verifiedAt: new Date().toISOString(),
+      expiresAt: null as string | null,
+      status: "ACTIVE",
+    })) as AdminLicense[],
+    translations: [] as AdminTranslation[],
+    providers: [] as AdminProvider[],
+    submissions: [] as AdminSubmission[],
+    seoRedirects: [] as AdminSeoRedirect[],
     youtubeQuotaUsed: 0,
   };
 }
@@ -139,11 +164,14 @@ function mapDbWebcam(r: {
   streams: {
     sourceType: string;
     externalId: string;
+    channelId?: string | null;
     embedUrl: string;
     sourceUrl: string;
     mediaType: string;
     status: string;
+    consecutiveFailures?: number;
     lastCheckedAt: Date | null;
+    nextCheckAt?: Date | null;
   }[];
 }): PublicWebcam & { reviewStatus: string } {
   return {
@@ -177,11 +205,14 @@ function mapDbWebcam(r: {
       ? {
           sourceType: r.streams[0].sourceType,
           externalId: r.streams[0].externalId,
+          channelId: r.streams[0].channelId ?? null,
           embedUrl: r.streams[0].embedUrl,
           sourceUrl: r.streams[0].sourceUrl,
           mediaType: r.streams[0].mediaType,
           status: r.streams[0].status as StreamStatus,
+          consecutiveFailures: r.streams[0].consecutiveFailures ?? 0,
           lastCheckedAt: (r.streams[0].lastCheckedAt ?? new Date()).toISOString(),
+          nextCheckAt: r.streams[0].nextCheckAt ? r.streams[0].nextCheckAt.toISOString() : undefined,
         }
       : null,
     weatherSummary: "—",
@@ -275,6 +306,84 @@ export async function listApprovedWebcams(filters?: {
   });
 
   return enrichWeather(list);
+}
+
+export async function listMapWebcamsByBbox(filters: {
+  minLng: number;
+  minLat: number;
+  maxLng: number;
+  maxLat: number;
+  zoom?: number;
+  country?: string;
+  category?: string;
+  status?: "LIVE";
+}): Promise<PublicWebcam[]> {
+  const { minLng, minLat, maxLng, maxLat, country, category, status } = filters;
+  const crossesAntimeridian = minLng > maxLng;
+  const limit = (filters.zoom ?? 2) < 4 ? 300 : 500;
+
+  if (isDbConfigured()) {
+    try {
+      const rows = await prisma.webcam.findMany({
+        where: {
+          reviewStatus: "APPROVED",
+          streams: {
+            some: {
+              isPrimary: true,
+              mediaType: "LIVE_VIDEO",
+              ...(status === "LIVE" ? { status: "LIVE" } : {}),
+            },
+          },
+          city: {
+            lat: { gte: minLat, lte: maxLat },
+            ...(crossesAntimeridian
+              ? { OR: [{ lng: { gte: minLng } }, { lng: { lte: maxLng } }] }
+              : { lng: { gte: minLng, lte: maxLng } }),
+            country: {
+              slug: country ? country : { not: "international" },
+            },
+            NOT: { AND: [{ lat: 0 }, { lng: 0 }] },
+          },
+          ...(category
+            ? { categories: { some: { category: { slug: category } } } }
+            : {}),
+        },
+        include: {
+          city: { include: { country: true } },
+          provider: true,
+          categories: { include: { category: true } },
+          streams: {
+            where: { isPrimary: true },
+            orderBy: { lastCheckedAt: "desc" },
+            take: 1,
+          },
+        },
+        orderBy: [{ isFeatured: "desc" }, { viewCount: "desc" }],
+        take: limit,
+      });
+
+      return rows.map(mapDbWebcam);
+    } catch {
+      // Fallback
+    }
+  }
+
+  return memStore.webcams
+    .filter((w) => {
+      if (w.reviewStatus && w.reviewStatus !== "APPROVED") return false;
+      if (!isFixedLocationWebcam(w)) return false;
+      if (status === "LIVE" && w.stream?.status !== "LIVE") return false;
+      if (country && w.country.slug !== country) return false;
+      if (category && !w.categories.some((c) => c.slug === category)) return false;
+      if (w.city.lat < minLat || w.city.lat > maxLat) return false;
+      if (crossesAntimeridian) {
+        if (w.city.lng < minLng && w.city.lng > maxLng) return false;
+      } else if (w.city.lng < minLng || w.city.lng > maxLng) {
+        return false;
+      }
+      return true;
+    })
+    .slice(0, limit);
 }
 
 export async function listApprovedWebcamsPage(filters?: {
@@ -1419,10 +1528,60 @@ export async function resolveContactMessage(id: string) {
   return true;
 }
 
+function buildSeoIssues(
+  webcams: (PublicWebcam & { reviewStatus?: string })[],
+  licenses: AdminLicense[]
+): AdminSeoIssue[] {
+  const licensedWebcamIds = new Set(
+    licenses.filter((l) => l.status === "ACTIVE").map((l) => l.webcamId)
+  );
+  const issuesList: AdminSeoIssue[] = [];
+  for (const w of webcams) {
+    const issues: string[] = [];
+    if (!w.description || w.description.trim().length < 40) {
+      issues.push("Thin description (<40 chars)");
+    }
+    if (!licensedWebcamIds.has(w.id)) {
+      issues.push("Missing active license");
+    }
+    if (w.stream?.status === "OFFLINE") {
+      issues.push("Stream offline");
+    }
+    if ((w.stream?.consecutiveFailures ?? 0) >= 3) {
+      issues.push(`High failure count (${w.stream?.consecutiveFailures})`);
+    }
+    if (issues.length > 0) {
+      issuesList.push({
+        webcamId: w.id,
+        slug: w.slug,
+        title: w.title,
+        issues,
+      });
+    }
+  }
+  return issuesList;
+}
+
 export async function getAdminDashboardData() {
   if (isDbConfigured()) {
     try {
-      const [webcams, candidates, jobs, reports, contactMessages, auditLogs, categories, countries, cities, users] = await Promise.all([
+      const [
+        webcams,
+        candidates,
+        jobs,
+        reports,
+        contactMessages,
+        auditLogs,
+        categories,
+        countries,
+        cities,
+        users,
+        licenses,
+        translations,
+        providers,
+        submissions,
+        seoRedirects,
+      ] = await Promise.all([
         prisma.webcam.findMany({
           include: {
             city: { include: { country: true } },
@@ -1473,12 +1632,43 @@ export async function getAdminDashboardData() {
           include: { _count: { select: { favorites: true } } },
           orderBy: { createdAt: "desc" },
         }),
+        prisma.license.findMany({
+          include: { webcam: { select: { id: true, title: true, slug: true } } },
+          orderBy: { verifiedAt: "desc" },
+        }),
+        prisma.translation.findMany({
+          orderBy: [{ entityType: "asc" }, { updatedAt: "desc" }],
+          take: 200,
+        }),
+        prisma.provider.findMany({
+          include: { _count: { select: { webcams: true } } },
+          orderBy: { name: "asc" },
+        }),
+        prisma.submission.findMany({
+          orderBy: { createdAt: "desc" },
+          take: 100,
+        }),
+        prisma.seoRedirect.findMany({
+          orderBy: { createdAt: "desc" },
+        }),
       ]);
 
       const quotaUsed = jobs.reduce((acc, j) => acc + j.quotaCost, 0);
+      const mappedWebcams = webcams.map(mapDbWebcam);
+      const mappedLicenses: AdminLicense[] = licenses.map((l) => ({
+        id: l.id,
+        webcamId: l.webcamId,
+        webcamTitle: l.webcam.title,
+        webcamSlug: l.webcam.slug,
+        permissionType: l.permissionType,
+        evidence: l.evidence,
+        verifiedAt: l.verifiedAt.toISOString(),
+        expiresAt: l.expiresAt ? l.expiresAt.toISOString() : null,
+        status: l.status,
+      }));
 
       return {
-        webcams: webcams.map(mapDbWebcam),
+        webcams: mappedWebcams,
         candidates: candidates.map((c) => ({
           id: c.id,
           source: c.source,
@@ -1575,6 +1765,46 @@ export async function getAdminDashboardData() {
           favoritesCount: u._count.favorites,
           createdAt: u.createdAt.toISOString(),
         })),
+        licenses: mappedLicenses,
+        translations: translations.map((t): AdminTranslation => ({
+          id: t.id,
+          entityType: t.entityType as AdminTranslation["entityType"],
+          entityId: t.entityId,
+          locale: t.locale,
+          title: t.title,
+          description: t.description,
+          updatedAt: t.updatedAt.toISOString(),
+        })),
+        providers: providers.map((p): AdminProvider => ({
+          id: p.id,
+          name: p.name,
+          type: p.type,
+          website: p.website,
+          contact: p.contact,
+          verified: p.verified,
+          webcamCount: p._count.webcams,
+        })),
+        submissions: submissions.map((s): AdminSubmission => ({
+          id: s.id,
+          title: s.title,
+          description: s.description,
+          category: s.category,
+          location: s.location,
+          sourceUrl: s.sourceUrl,
+          operator: s.operator,
+          contact: s.contact,
+          declaration: s.declaration,
+          status: s.status,
+          createdAt: s.createdAt.toISOString(),
+        })),
+        seoRedirects: seoRedirects.map((r): AdminSeoRedirect => ({
+          id: r.id,
+          fromPath: r.fromPath,
+          toPath: r.toPath,
+          statusCode: r.statusCode,
+          createdAt: r.createdAt.toISOString(),
+        })),
+        seoIssues: buildSeoIssues(mappedWebcams, mappedLicenses),
         youtubeQuotaUsed: quotaUsed,
       };
     } catch {
@@ -1652,6 +1882,12 @@ export async function getAdminDashboardData() {
       favoritesCount: memStore.userFavorites.get(u.id)?.size ?? 0,
       createdAt: u.createdAt,
     })),
+    licenses: memStore.licenses,
+    translations: memStore.translations,
+    providers: memStore.providers,
+    submissions: memStore.submissions,
+    seoRedirects: memStore.seoRedirects,
+    seoIssues: buildSeoIssues(memStore.webcams, memStore.licenses),
     youtubeQuotaUsed: memStore.youtubeQuotaUsed,
   };
 }
@@ -2365,6 +2601,7 @@ export async function syncAllSourceCandidates() {
           sourceType: item.sourceType,
           mediaType: item.mediaType as "LIVE_VIDEO" | "SNAPSHOT",
           externalId: item.externalId,
+          channelId: item.channelId ?? null,
           title: item.title,
           countryName: item.countryName,
           cityName: item.cityName,
@@ -2466,28 +2703,128 @@ export async function reprobeCandidates() {
 }
 
 export async function runHealthCheckBatch() {
+  const now = new Date();
+  const OFFLINE_FAILURE_THRESHOLD = 3;
+
   if (isDbConfigured()) {
     try {
-      const streams = await prisma.stream.findMany({ where: { isPrimary: true } });
+      const streams = await prisma.stream.findMany({
+        where: {
+          isPrimary: true,
+          nextCheckAt: { lte: now },
+        },
+        include: {
+          webcam: { select: { id: true, title: true, isFeatured: true, viewCount: true } },
+        },
+        orderBy: [
+          { webcam: { isFeatured: "desc" } },
+          { webcam: { viewCount: "desc" } },
+          { nextCheckAt: "asc" },
+        ],
+        take: 50,
+      });
+
+      // If no streams are due yet, check the oldest 20 so manual trigger always works
+      const targets =
+        streams.length > 0
+          ? streams
+          : await prisma.stream.findMany({
+              where: { isPrimary: true },
+              include: {
+                webcam: { select: { id: true, title: true, isFeatured: true, viewCount: true } },
+              },
+              orderBy: { lastCheckedAt: "asc" },
+              take: 20,
+            });
+
+      let relinkedCount = 0;
       const results = await Promise.all(
-        streams.map(async (s) => {
+        targets.map(async (s) => {
           const probe = await probeSourceStability(s.sourceType, s.embedUrl, s.sourceUrl);
+          if (probe.online) {
+            const intervalMin = s.webcam.isFeatured || s.webcam.viewCount >= 50 ? 30 : 60;
+            return {
+              id: s.id,
+              status: "LIVE" as const,
+              consecutiveFailures: 0,
+              nextCheckAt: new Date(now.getTime() + intervalMin * 60_000),
+              reason: `Online (${probe.latencyMs}ms)`,
+            };
+          }
+
+          // Try YouTube channel tracking if offline and channelId is configured
+          if (s.sourceType === "youtube" && s.channelId) {
+            const relinked = await findLiveStreamForYouTubeChannel(s.channelId);
+            if (relinked && relinked.videoId !== s.externalId) {
+              relinkedCount += 1;
+              return {
+                id: s.id,
+                status: "LIVE" as const,
+                consecutiveFailures: 0,
+                nextCheckAt: new Date(now.getTime() + 30 * 60_000),
+                reason: `Auto-relinked to ${relinked.videoId}`,
+                relink: relinked,
+                webcamTitle: s.webcam.title,
+              };
+            }
+          }
+
+          const failures = (s.consecutiveFailures ?? 0) + 1;
+          const backoffMin = Math.min(24 * 60, 30 * Math.pow(2, failures - 1));
+          const nextStatus =
+            failures >= OFFLINE_FAILURE_THRESHOLD ? ("OFFLINE" as const) : ("UNKNOWN" as const);
           return {
             id: s.id,
-            status: (probe.online ? "LIVE" : "OFFLINE") as "LIVE" | "OFFLINE",
+            status: nextStatus,
+            consecutiveFailures: failures,
+            nextCheckAt: new Date(now.getTime() + backoffMin * 60_000),
+            reason: `Probe failed (${failures}/${OFFLINE_FAILURE_THRESHOLD}, backoff ${backoffMin}m)`,
           };
         })
       );
 
-      const now = new Date();
       await Promise.all(
-        results.map((r) =>
-          prisma.stream.update({
+        results.map(async (r) => {
+          await prisma.stream.update({
             where: { id: r.id },
-            data: { status: r.status, lastCheckedAt: now },
-          })
-        )
+            data: {
+              status: r.status,
+              consecutiveFailures: r.consecutiveFailures,
+              lastCheckedAt: now,
+              nextCheckAt: r.nextCheckAt,
+              ...("relink" in r && r.relink
+                ? {
+                    externalId: r.relink.videoId,
+                    embedUrl: r.relink.embedUrl,
+                    sourceUrl: r.relink.sourceUrl,
+                  }
+                : {}),
+            },
+          });
+          if ("relink" in r && r.relink) {
+            await prisma.auditLog.create({
+              data: {
+                actor: "cron-health",
+                action: "YOUTUBE_STREAM_RELINKED",
+                targetType: "stream",
+                targetId: r.webcamTitle || r.id,
+                detail: `New videoId ${r.relink.videoId}`,
+              },
+            });
+          }
+        })
       );
+
+      if (results.length > 0) {
+        await prisma.healthCheck.createMany({
+          data: results.map((r) => ({
+            streamId: r.id,
+            status: r.status,
+            reason: r.reason,
+            checkedAt: now,
+          })),
+        });
+      }
 
       const liveCount = results.filter((r) => r.status === "LIVE").length;
       await prisma.auditLog.create({
@@ -2496,29 +2833,67 @@ export async function runHealthCheckBatch() {
           action: "HEALTH_CHECK",
           targetType: "stream",
           targetId: `${results.length} streams`,
-          detail: `${liveCount}/${results.length} online`,
+          detail: `${liveCount}/${results.length} online${relinkedCount ? `, ${relinkedCount} relinked` : ""}`,
         },
       });
 
-      return { checked: results.length, liveCount };
+      return { checked: results.length, liveCount, relinkedCount };
     } catch {
       // Fallback
     }
   }
 
-  const now = new Date().toISOString();
+  const nowIso = now.toISOString();
   let liveCount = 0;
-  for (const w of memStore.webcams) {
-    if (w.stream) {
-      const probe = await probeSourceStability(
-        w.stream.sourceType,
-        w.stream.embedUrl,
-        w.stream.sourceUrl
-      );
-      const status = probe.online ? "LIVE" : "OFFLINE";
-      w.stream.status = status;
-      w.stream.lastCheckedAt = now;
-      if (status === "LIVE") liveCount += 1;
+  let relinkedCount = 0;
+  const due = memStore.webcams.filter((w) => {
+    if (!w.stream) return false;
+    if (!w.stream.nextCheckAt) return true;
+    return new Date(w.stream.nextCheckAt).getTime() <= now.getTime();
+  });
+  const targets = due.length > 0 ? due : memStore.webcams.slice(0, 20);
+
+  for (const w of targets) {
+    if (!w.stream) continue;
+    const probe = await probeSourceStability(
+      w.stream.sourceType,
+      w.stream.embedUrl,
+      w.stream.sourceUrl
+    );
+    if (probe.online) {
+      const intervalMin = w.isFeatured || (w.viewCount ?? 0) >= 50 ? 30 : 60;
+      w.stream.status = "LIVE";
+      w.stream.consecutiveFailures = 0;
+      w.stream.lastCheckedAt = nowIso;
+      w.stream.nextCheckAt = new Date(now.getTime() + intervalMin * 60_000).toISOString();
+      liveCount += 1;
+    } else if (w.stream.sourceType === "youtube" && w.stream.channelId) {
+      const relinked = await findLiveStreamForYouTubeChannel(w.stream.channelId);
+      if (relinked && relinked.videoId !== w.stream.externalId) {
+        w.stream.externalId = relinked.videoId;
+        w.stream.embedUrl = relinked.embedUrl;
+        w.stream.sourceUrl = relinked.sourceUrl;
+        w.stream.status = "LIVE";
+        w.stream.consecutiveFailures = 0;
+        w.stream.lastCheckedAt = nowIso;
+        w.stream.nextCheckAt = new Date(now.getTime() + 30 * 60_000).toISOString();
+        liveCount += 1;
+        relinkedCount += 1;
+      } else {
+        const failures = (w.stream.consecutiveFailures ?? 0) + 1;
+        const backoffMin = Math.min(24 * 60, 30 * Math.pow(2, failures - 1));
+        w.stream.consecutiveFailures = failures;
+        w.stream.status = failures >= OFFLINE_FAILURE_THRESHOLD ? "OFFLINE" : "UNKNOWN";
+        w.stream.lastCheckedAt = nowIso;
+        w.stream.nextCheckAt = new Date(now.getTime() + backoffMin * 60_000).toISOString();
+      }
+    } else {
+      const failures = (w.stream.consecutiveFailures ?? 0) + 1;
+      const backoffMin = Math.min(24 * 60, 30 * Math.pow(2, failures - 1));
+      w.stream.consecutiveFailures = failures;
+      w.stream.status = failures >= OFFLINE_FAILURE_THRESHOLD ? "OFFLINE" : "UNKNOWN";
+      w.stream.lastCheckedAt = nowIso;
+      w.stream.nextCheckAt = new Date(now.getTime() + backoffMin * 60_000).toISOString();
     }
   }
   memStore.auditLogs.unshift({
@@ -2526,9 +2901,373 @@ export async function runHealthCheckBatch() {
     actor: "cron-health",
     action: "HEALTH_CHECK",
     targetType: "stream",
-    targetId: `${memStore.webcams.length} streams`,
-    detail: `${liveCount}/${memStore.webcams.length} online`,
+    targetId: `${targets.length} streams`,
+    detail: `${liveCount}/${targets.length} online${relinkedCount ? `, ${relinkedCount} relinked` : ""}`,
     createdAt: "Just now",
   });
-  return { checked: memStore.webcams.length, liveCount };
+  return { checked: targets.length, liveCount, relinkedCount };
+}
+
+export async function upsertLicenseAdmin(input: {
+  id?: string;
+  webcamId: string;
+  permissionType: string;
+  evidence: string;
+  expiresAt?: string | null;
+  status?: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const webcamId = input.webcamId.trim();
+  const permissionType = input.permissionType.trim();
+  const evidence = input.evidence.trim();
+  if (!webcamId || !permissionType || !evidence) {
+    return { ok: false, error: "Webcam, permission type, and evidence are required" };
+  }
+  const expiresAt = input.expiresAt ? new Date(input.expiresAt) : null;
+  const status = input.status?.trim() || "ACTIVE";
+
+  if (isDbConfigured()) {
+    try {
+      if (input.id) {
+        await prisma.license.update({
+          where: { id: input.id },
+          data: { webcamId, permissionType, evidence, expiresAt, status },
+        });
+      } else {
+        await prisma.license.create({
+          data: { webcamId, permissionType, evidence, expiresAt, status },
+        });
+      }
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin@livecam",
+          action: "UPSERT_LICENSE",
+          targetType: "license",
+          targetId: webcamId,
+          detail: `${permissionType} (${status})`,
+        },
+      });
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Failed to save license" };
+    }
+  }
+
+  const cam = memStore.webcams.find((w) => w.id === webcamId);
+  if (!cam) return { ok: false, error: "Webcam not found" };
+  if (input.id) {
+    const existing = memStore.licenses.find((l) => l.id === input.id);
+    if (!existing) return { ok: false, error: "License not found" };
+    existing.permissionType = permissionType;
+    existing.evidence = evidence;
+    existing.expiresAt = expiresAt ? expiresAt.toISOString() : null;
+    existing.status = status;
+  } else {
+    memStore.licenses.unshift({
+      id: `lic-${Date.now()}`,
+      webcamId,
+      webcamTitle: cam.title,
+      webcamSlug: cam.slug,
+      permissionType,
+      evidence,
+      verifiedAt: new Date().toISOString(),
+      expiresAt: expiresAt ? expiresAt.toISOString() : null,
+      status,
+    });
+  }
+  return { ok: true };
+}
+
+export async function deleteLicenseAdmin(id: string): Promise<{ ok: boolean; error?: string }> {
+  if (!id) return { ok: false, error: "License ID required" };
+  if (isDbConfigured()) {
+    try {
+      await prisma.license.delete({ where: { id } });
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "License not found" };
+    }
+  }
+  const idx = memStore.licenses.findIndex((l) => l.id === id);
+  if (idx === -1) return { ok: false, error: "License not found" };
+  memStore.licenses.splice(idx, 1);
+  return { ok: true };
+}
+
+export async function getEntityTranslation(
+  entityType: "webcam" | "city" | "country" | "category",
+  entityId: string,
+  locale: string
+): Promise<{ title: string; description: string | null } | null> {
+  if (isDbConfigured()) {
+    try {
+      const row = await prisma.translation.findUnique({
+        where: { entityType_entityId_locale: { entityType, entityId, locale } },
+      });
+      if (row) return { title: row.title, description: row.description };
+    } catch {
+      // Fallback
+    }
+  }
+  const mem = memStore.translations.find(
+    (t) => t.entityType === entityType && t.entityId === entityId && t.locale === locale
+  );
+  return mem ? { title: mem.title, description: mem.description } : null;
+}
+
+export async function upsertTranslationAdmin(input: {
+  entityType: "webcam" | "city" | "country" | "category";
+  entityId: string;
+  locale: string;
+  title: string;
+  description?: string | null;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const entityId = input.entityId.trim();
+  const locale = input.locale.trim().toLowerCase();
+  const title = input.title.trim();
+  const description = input.description?.trim() || null;
+  if (!entityId || !locale || !title) {
+    return { ok: false, error: "Entity, locale, and title are required" };
+  }
+
+  if (isDbConfigured()) {
+    try {
+      await prisma.translation.upsert({
+        where: {
+          entityType_entityId_locale: {
+            entityType: input.entityType,
+            entityId,
+            locale,
+          },
+        },
+        update: { title, description },
+        create: {
+          entityType: input.entityType,
+          entityId,
+          locale,
+          title,
+          description,
+        },
+      });
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin@livecam",
+          action: "UPSERT_TRANSLATION",
+          targetType: input.entityType,
+          targetId: `${entityId}:${locale}`,
+        },
+      });
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Failed to save translation" };
+    }
+  }
+
+  const existing = memStore.translations.find(
+    (t) => t.entityType === input.entityType && t.entityId === entityId && t.locale === locale
+  );
+  if (existing) {
+    existing.title = title;
+    existing.description = description;
+    existing.updatedAt = new Date().toISOString();
+  } else {
+    memStore.translations.unshift({
+      id: `tr-${Date.now()}`,
+      entityType: input.entityType,
+      entityId,
+      locale,
+      title,
+      description,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+  return { ok: true };
+}
+
+export async function deleteTranslationAdmin(id: string): Promise<{ ok: boolean; error?: string }> {
+  if (!id) return { ok: false, error: "Translation ID required" };
+  if (isDbConfigured()) {
+    try {
+      await prisma.translation.delete({ where: { id } });
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Translation not found" };
+    }
+  }
+  const idx = memStore.translations.findIndex((t) => t.id === id);
+  if (idx === -1) return { ok: false, error: "Translation not found" };
+  memStore.translations.splice(idx, 1);
+  return { ok: true };
+}
+
+export async function upsertProviderAdmin(input: {
+  id?: string;
+  name: string;
+  type: string;
+  website?: string | null;
+  contact?: string | null;
+  verified?: boolean;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const name = input.name.trim();
+  const type = input.type.trim() || "hotel";
+  if (!name) return { ok: false, error: "Provider name is required" };
+  const website = input.website?.trim() || null;
+  const contact = input.contact?.trim() || null;
+  const verified = Boolean(input.verified);
+
+  if (isDbConfigured()) {
+    try {
+      if (input.id) {
+        await prisma.provider.update({
+          where: { id: input.id },
+          data: { name, type, website, contact, verified },
+        });
+      } else {
+        await prisma.provider.create({
+          data: { name, type, website, contact, verified },
+        });
+      }
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Failed to save provider" };
+    }
+  }
+
+  if (input.id) {
+    const existing = memStore.providers.find((p) => p.id === input.id);
+    if (!existing) return { ok: false, error: "Provider not found" };
+    existing.name = name;
+    existing.type = type;
+    existing.website = website;
+    existing.contact = contact;
+    existing.verified = verified;
+  } else {
+    memStore.providers.unshift({
+      id: `prov-${Date.now()}`,
+      name,
+      type,
+      website,
+      contact,
+      verified,
+      webcamCount: 0,
+    });
+  }
+  return { ok: true };
+}
+
+export async function toggleProviderVerifiedAdmin(id: string): Promise<{ ok: boolean; error?: string }> {
+  if (isDbConfigured()) {
+    try {
+      const p = await prisma.provider.findUnique({ where: { id } });
+      if (!p) return { ok: false, error: "Provider not found" };
+      await prisma.provider.update({ where: { id }, data: { verified: !p.verified } });
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Failed to toggle provider" };
+    }
+  }
+  const p = memStore.providers.find((x) => x.id === id);
+  if (!p) return { ok: false, error: "Provider not found" };
+  p.verified = !p.verified;
+  return { ok: true };
+}
+
+export async function reviewSubmissionAdmin(
+  id: string,
+  status: "APPROVED" | "REJECTED"
+): Promise<{ ok: boolean; error?: string }> {
+  if (isDbConfigured()) {
+    try {
+      const sub = await prisma.submission.findUnique({ where: { id } });
+      if (!sub) return { ok: false, error: "Submission not found" };
+      await prisma.submission.update({ where: { id }, data: { status } });
+      if (status === "APPROVED" && sub.operator) {
+        const existingProvider = await prisma.provider.findFirst({
+          where: { name: sub.operator },
+        });
+        if (!existingProvider) {
+          await prisma.provider.create({
+            data: {
+              name: sub.operator,
+              type: "partner",
+              contact: sub.contact,
+              verified: true,
+            },
+          });
+        }
+      }
+      await prisma.auditLog.create({
+        data: {
+          actor: "admin@livecam",
+          action: `SUBMISSION_${status}`,
+          targetType: "submission",
+          targetId: sub.title,
+        },
+      });
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Failed to update submission" };
+    }
+  }
+  const sub = memStore.submissions.find((s) => s.id === id);
+  if (!sub) return { ok: false, error: "Submission not found" };
+  sub.status = status;
+  return { ok: true };
+}
+
+export async function upsertSeoRedirectAdmin(input: {
+  fromPath: string;
+  toPath: string;
+  statusCode?: number;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const fromPath = input.fromPath.trim().startsWith("/")
+    ? input.fromPath.trim()
+    : `/${input.fromPath.trim()}`;
+  const toPath = input.toPath.trim();
+  const statusCode = input.statusCode === 302 ? 302 : 301;
+  if (!fromPath || fromPath === "/" || !toPath) {
+    return { ok: false, error: "Valid fromPath and toPath are required" };
+  }
+
+  if (isDbConfigured()) {
+    try {
+      await prisma.seoRedirect.upsert({
+        where: { fromPath },
+        update: { toPath, statusCode },
+        create: { fromPath, toPath, statusCode },
+      });
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Failed to save redirect" };
+    }
+  }
+
+  const existing = memStore.seoRedirects.find((r) => r.fromPath === fromPath);
+  if (existing) {
+    existing.toPath = toPath;
+    existing.statusCode = statusCode;
+  } else {
+    memStore.seoRedirects.unshift({
+      id: `redir-${Date.now()}`,
+      fromPath,
+      toPath,
+      statusCode,
+      createdAt: new Date().toISOString(),
+    });
+  }
+  return { ok: true };
+}
+
+export async function deleteSeoRedirectAdmin(id: string): Promise<{ ok: boolean; error?: string }> {
+  if (isDbConfigured()) {
+    try {
+      await prisma.seoRedirect.delete({ where: { id } });
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Redirect not found" };
+    }
+  }
+  const idx = memStore.seoRedirects.findIndex((r) => r.id === id);
+  if (idx === -1) return { ok: false, error: "Redirect not found" };
+  memStore.seoRedirects.splice(idx, 1);
+  return { ok: true };
 }

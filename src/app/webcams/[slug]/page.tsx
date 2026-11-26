@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getWebcamBySlug, listApprovedWebcamsPage } from "@/lib/repository";
+import { getEntityTranslation, getWebcamBySlug, listApprovedWebcamsPage } from "@/lib/repository";
 import { WebcamPlayer } from "@/components/WebcamPlayer";
 import { WebcamViewTracker } from "@/components/WebcamViewTracker";
 import { WebcamActionsBar } from "@/components/WebcamActionsBar";
@@ -118,9 +118,10 @@ export default async function WebcamDetailPage({
   const countryLabel = getCountryLabel(locale, webcam.country.slug, webcam.country.name, webcam.country.isoCode);
   const cityLabel = getCityLabel(locale, webcam.city.slug, webcam.city.name);
 
-  const [{ items: allWebcams }, detailedWeather] = await Promise.all([
+  const [{ items: allWebcams }, detailedWeather, dbTranslation] = await Promise.all([
     listApprovedWebcamsPage({ page: 1, pageSize: 48 }),
     fetchDetailedWeather(webcam.city.lat, webcam.city.lng),
+    getEntityTranslation("webcam", webcam.id, locale),
   ]);
 
   const others = allWebcams.filter((w) => w.slug !== webcam.slug);
@@ -152,7 +153,8 @@ export default async function WebcamDetailPage({
     .join(", ");
 
   const aboutDescription =
-    locale === "en"
+    dbTranslation?.description ||
+    (locale === "en"
       ? webcam.description
       : formatMessage(tw.localizedDescription, {
           title: webcam.title,
@@ -162,7 +164,7 @@ export default async function WebcamDetailPage({
           localTime,
           phase: isDaylight ? tw.daylight : tw.nighttime,
           weather: weatherLabel,
-        });
+        }));
 
   const bestTimeText =
     locale === "en" && webcam.bestTime

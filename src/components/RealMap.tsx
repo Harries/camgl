@@ -24,25 +24,37 @@ function buildGeoJson(webcams: PublicWebcam[], selectedSlug: string) {
   };
 }
 
+export interface MapBounds {
+  minLng: number;
+  minLat: number;
+  maxLng: number;
+  maxLat: number;
+  zoom: number;
+}
+
 export function RealMap({
   webcams,
   selectedSlug,
   onSelect,
   focusCoords,
+  onBoundsChange,
 }: {
   webcams: PublicWebcam[];
   selectedSlug: string;
   onSelect: (slug: string) => void;
   focusCoords?: { lng: number; lat: number; zoom: number } | null;
+  onBoundsChange?: (bounds: MapBounds) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const loadedRef = useRef(false);
   const latestDataRef = useRef({ webcams, selectedSlug });
   const onSelectRef = useRef(onSelect);
+  const onBoundsChangeRef = useRef(onBoundsChange);
 
   latestDataRef.current = { webcams, selectedSlug };
   onSelectRef.current = onSelect;
+  onBoundsChangeRef.current = onBoundsChange;
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -182,6 +194,21 @@ export function RealMap({
           map.getCanvas().style.cursor = "";
         });
       }
+
+      const emitBounds = () => {
+        if (!onBoundsChangeRef.current) return;
+        const b = map.getBounds();
+        onBoundsChangeRef.current({
+          minLng: Math.max(-180, b.getWest()),
+          minLat: Math.max(-90, b.getSouth()),
+          maxLng: Math.min(180, b.getEast()),
+          maxLat: Math.min(90, b.getNorth()),
+          zoom: Number(map.getZoom().toFixed(2)),
+        });
+      };
+
+      map.on("moveend", emitBounds);
+      emitBounds();
     });
 
     mapRef.current = map;

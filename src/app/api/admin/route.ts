@@ -7,20 +7,29 @@ import {
   deleteCategoryAdmin,
   deleteCityAdmin,
   deleteCountryAdmin,
+  deleteLicenseAdmin,
+  deleteSeoRedirectAdmin,
+  deleteTranslationAdmin,
   getAdminDashboardData,
   rejectCandidate,
   rejectCandidatesBatch,
   reprobeCandidates,
   resolveContactMessage,
+  reviewSubmissionAdmin,
   runHealthCheckBatch,
   setUserRoleAdmin,
   syncAllSourceCandidates,
+  toggleProviderVerifiedAdmin,
   toggleWebcamFeatured,
   toggleWebcamSuspend,
   updateWebcamDetails,
   upsertCategoryAdmin,
   upsertCityAdmin,
   upsertCountryAdmin,
+  upsertLicenseAdmin,
+  upsertProviderAdmin,
+  upsertSeoRedirectAdmin,
+  upsertTranslationAdmin,
 } from "@/lib/repository";
 
 export async function GET() {
@@ -175,6 +184,76 @@ export async function POST(request: Request) {
         }
         const res = await setUserRoleAdmin(targetId, role);
         if (!res.ok) return NextResponse.json({ error: res.error }, { status: 404 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "saveLicense": {
+        const res = await upsertLicenseAdmin({
+          id: body.id ? String(body.id) : undefined,
+          webcamId: String(body.webcamId ?? ""),
+          permissionType: String(body.permissionType ?? ""),
+          evidence: String(body.evidence ?? ""),
+          expiresAt: body.expiresAt ? String(body.expiresAt) : null,
+          status: body.status ? String(body.status) : "ACTIVE",
+        });
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "deleteLicense": {
+        const res = await deleteLicenseAdmin(String(body.id ?? ""));
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "saveTranslation": {
+        const res = await upsertTranslationAdmin({
+          entityType: (body.entityType || "webcam") as "webcam" | "city" | "country" | "category",
+          entityId: String(body.entityId ?? ""),
+          locale: String(body.locale ?? "zh"),
+          title: String(body.title ?? ""),
+          description: body.description ? String(body.description) : null,
+        });
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "deleteTranslation": {
+        const res = await deleteTranslationAdmin(String(body.id ?? ""));
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "saveProvider": {
+        const res = await upsertProviderAdmin({
+          id: body.id ? String(body.id) : undefined,
+          name: String(body.name ?? ""),
+          type: String(body.type ?? "hotel"),
+          website: body.website ? String(body.website) : null,
+          contact: body.contact ? String(body.contact) : null,
+          verified: Boolean(body.verified),
+        });
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "toggleProviderVerified": {
+        const res = await toggleProviderVerifiedAdmin(String(body.id ?? ""));
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "reviewSubmission": {
+        const status = body.status === "APPROVED" ? "APPROVED" : "REJECTED";
+        const res = await reviewSubmissionAdmin(String(body.id ?? ""), status);
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "saveSeoRedirect": {
+        const res = await upsertSeoRedirectAdmin({
+          fromPath: String(body.fromPath ?? ""),
+          toPath: String(body.toPath ?? ""),
+          statusCode: Number(body.statusCode ?? 301),
+        });
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "deleteSeoRedirect": {
+        const res = await deleteSeoRedirectAdmin(String(body.id ?? ""));
+        if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
         return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }
       default:

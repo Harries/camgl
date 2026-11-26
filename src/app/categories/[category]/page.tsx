@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { listApprovedWebcams, listCategories } from "@/lib/repository";
+import { listApprovedWebcamsPage, listCategories } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
-import { buildAlternates } from "@/lib/seo";
+import { PaginationBar } from "@/components/PaginationBar";
+import { absoluteUrl, buildAlternates } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n-server";
 import { formatMessage, getCategoryLabel, getMessages, localizePath } from "@/lib/i18n";
 
@@ -39,22 +40,41 @@ export async function generateMetadata({
 
 export default async function CategoryPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ category: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
-  const { category } = await params;
-  const [webcams, categories, locale] = await Promise.all([
-    listApprovedWebcams({ category }),
+  const [{ category }, sp] = await Promise.all([params, searchParams]);
+  const page = Math.max(1, Number(sp.page) || 1);
+  const pageSize = 12;
+
+  const [pageData, categories, locale] = await Promise.all([
+    listApprovedWebcamsPage({ category, page, pageSize }),
     listCategories(),
     getServerLocale(),
   ]);
   const catInfo = categories.find((c) => c.slug === category);
   if (!catInfo) notFound();
+  const webcams = pageData.items;
+  const totalPages = Math.max(1, Math.ceil(pageData.total / pageSize));
   const catLabel = getCategoryLabel(locale, catInfo.slug, catInfo.name);
   const tw = getMessages(locale).webcam;
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: catInfo.name, item: absoluteUrl(`/categories/${category}`) },
+    ],
+  };
 
   return (
     <div className="space-y-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-6 shadow-sm space-y-2">
         <div className="text-xs text-slate-500 dark:text-slate-400">
           <Link href={localizePath("/", locale)} className="hover:underline">{tw.home}</Link> / {catLabel}
@@ -63,7 +83,7 @@ export default async function CategoryPage({
           {formatMessage(tw.categoryWebcams, { name: catLabel })}
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          {formatMessage(getMessages(locale).home.showingWebcams, { count: webcams.length })}
+          {formatMessage(getMessages(locale).home.showingWebcams, { count: pageData.total })}
         </p>
       </div>
 
@@ -72,6 +92,12 @@ export default async function CategoryPage({
           <WebcamCard key={cam.id} webcam={cam} />
         ))}
       </div>
+
+      <PaginationBar
+        basePath={localizePath(`/categories/${category}`, locale)}
+        currentPage={page}
+        totalPages={totalPages}
+      />
     </div>
   );
 }

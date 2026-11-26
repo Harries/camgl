@@ -119,22 +119,26 @@ model WebcamCategory {
 }
 
 model Stream {
-  id            String        @id @default(cuid())
-  webcamId      String        @map("webcam_id")
-  sourceType    String        @map("source_type") // "youtube" | "official_embed"
-  externalId    String        @map("external_id")
-  embedUrl      String        @map("embed_url")
-  sourceUrl     String        @map("source_url")
-  mediaType     MediaType     @default(LIVE_VIDEO) @map("media_type")
-  status        StreamStatus  @default(UNKNOWN)
-  lastCheckedAt DateTime?     @map("last_checked_at")
-  isPrimary     Boolean       @default(true) @map("is_primary")
+  id                  String       @id @default(cuid())
+  webcamId            String       @map("webcam_id")
+  sourceType          String       @map("source_type") // "youtube" | "official_embed"
+  externalId          String       @map("external_id")
+  channelId           String?      @map("channel_id")
+  embedUrl            String       @map("embed_url")
+  sourceUrl           String       @map("source_url")
+  mediaType           MediaType    @default(LIVE_VIDEO) @map("media_type")
+  status              StreamStatus @default(UNKNOWN)
+  consecutiveFailures Int          @default(0) @map("consecutive_failures")
+  lastCheckedAt       DateTime?    @map("last_checked_at")
+  nextCheckAt         DateTime     @default(now()) @map("next_check_at")
+  isPrimary           Boolean      @default(true) @map("is_primary")
 
   webcam       Webcam        @relation(fields: [webcamId], references: [id], onDelete: Cascade)
   healthChecks HealthCheck[]
 
   @@unique([sourceType, externalId])
   @@index([status, lastCheckedAt])
+  @@index([nextCheckAt])
   @@map("streams")
 }
 
@@ -171,6 +175,7 @@ model Candidate {
   sourceType     String       @default("official_embed") @map("source_type")
   mediaType      MediaType    @default(LIVE_VIDEO) @map("media_type")
   externalId     String       @map("external_id")
+  channelId      String?      @map("channel_id")
   title          String
   description    String?
   countryName    String       @map("country_name")
@@ -306,4 +311,28 @@ model EmailVerificationCode {
 
   @@index([email])
   @@map("email_verification_codes")
+}
+
+model Translation {
+  id          String   @id @default(cuid())
+  entityType  String   @map("entity_type") // "webcam" | "city" | "country" | "category"
+  entityId    String   @map("entity_id")
+  locale      String
+  title       String
+  description String?
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([entityType, entityId, locale])
+  @@index([entityType, locale])
+  @@map("translations")
+}
+
+model SeoRedirect {
+  id         String   @id @default(cuid())
+  fromPath   String   @unique @map("from_path")
+  toPath     String   @map("to_path")
+  statusCode Int      @default(301) @map("status_code")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("seo_redirects")
 }

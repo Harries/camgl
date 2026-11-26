@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { listApprovedWebcams } from "@/lib/repository";
+import { listApprovedWebcams, listApprovedWebcamsPage } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
+import { PaginationBar } from "@/components/PaginationBar";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { absoluteUrl, buildAlternates } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n-server";
@@ -44,15 +45,22 @@ export async function generateMetadata({
 
 export default async function CityDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ country: string; city: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
-  const { country, city } = await params;
-  const [webcams, locale] = await Promise.all([
-    listApprovedWebcams({ country, city }),
+  const [{ country, city }, sp] = await Promise.all([params, searchParams]);
+  const page = Math.max(1, Number(sp.page) || 1);
+  const pageSize = 12;
+
+  const [pageData, locale] = await Promise.all([
+    listApprovedWebcamsPage({ country, city, page, pageSize }),
     getServerLocale(),
   ]);
-  if (webcams.length === 0) notFound();
+  if (pageData.total === 0) notFound();
+  const webcams = pageData.items;
+  const totalPages = Math.max(1, Math.ceil(pageData.total / pageSize));
 
   const msgs = getMessages(locale);
   const first = webcams[0];
@@ -90,7 +98,7 @@ export default async function CityDetailPage({
           {first.country.flag} {cityLabel}
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          {msgs.webcam.localTime}: <span className="font-medium text-slate-700 dark:text-slate-300">{localTime}</span> · {formatMessage(msgs.home.showingWebcams, { count: webcams.length })}
+          {msgs.webcam.localTime}: <span className="font-medium text-slate-700 dark:text-slate-300">{localTime}</span> · {formatMessage(msgs.home.showingWebcams, { count: pageData.total })}
         </p>
       </div>
 
@@ -99,6 +107,12 @@ export default async function CityDetailPage({
           <WebcamCard key={cam.id} webcam={cam} />
         ))}
       </div>
+
+      <PaginationBar
+        basePath={localizePath(`/countries/${country}/${city}`, locale)}
+        currentPage={page}
+        totalPages={totalPages}
+      />
     </div>
   );
 }
