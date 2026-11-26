@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getCategoryLabel } from "@/lib/i18n";
+import { useRouter } from "next/navigation";
+import { Lock } from "lucide-react";
+import { getCategoryLabel, localizePath } from "@/lib/i18n";
 import { useI18n } from "@/components/I18nProvider";
+import type { AuthUser } from "@/lib/types";
 
 export default function SubmitPage() {
+  const router = useRouter();
   const { locale, messages } = useI18n();
   const ts = messages.submit;
+  const ta = messages.auth;
+  const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -21,8 +28,38 @@ export default function SubmitPage() {
     declaration: false,
   });
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadAuth = () => {
+      fetch("/api/v1/auth/me")
+        .then((res) => (res.ok ? res.json() : { user: null }))
+        .then((data: { user?: AuthUser | null }) => {
+          if (cancelled) return;
+          const u = data.user ?? null;
+          setUser(u);
+          if (u?.email) {
+            setForm((prev) => (prev.contact ? prev : { ...prev, contact: u.email }));
+          }
+          setAuthLoading(false);
+        })
+        .catch(() => {
+          if (!cancelled) setAuthLoading(false);
+        });
+    };
+    loadAuth();
+    window.addEventListener("camgl-auth-changed", loadAuth);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("camgl-auth-changed", loadAuth);
+    };
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!user) {
+      router.push(localizePath("/login?next=/submit", locale));
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/v1/submissions", {
@@ -30,10 +67,53 @@ export default function SubmitPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+      if (res.status === 401) {
+        router.push(localizePath("/login?next=/submit", locale));
+        return;
+      }
       if (res.ok) setSubmitted(true);
     } finally {
       setLoading(false);
     }
+  }
+
+  if (authLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-32 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 animate-pulse" />
+        <div className="h-80 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 animate-pulse" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-lg mx-auto py-8">
+        <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-8 text-center space-y-4 shadow-sm">
+          <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
+            <Lock className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h1 className="text-lg font-bold text-slate-900 dark:text-white">{ta.loginTitle}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{ts.subtitle}</p>
+          </div>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <Link
+              href={localizePath("/login?next=/submit", locale)}
+              className="px-5 py-2.5 rounded-xl text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            >
+              {ta.loginBtn}
+            </Link>
+            <Link
+              href={localizePath("/register?next=/submit", locale)}
+              className="px-5 py-2.5 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            >
+              {ta.registerBtn}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (submitted) {
