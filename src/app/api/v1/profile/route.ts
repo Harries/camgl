@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
-import { getUserById, listUserFavoriteWebcams, updateUserProfile } from "@/lib/repository";
-import { getSessionUserId } from "@/lib/user-auth";
+import {
+  deleteUserAccountAndData,
+  getUserById,
+  listUserFavoriteWebcams,
+  updateUserProfile,
+} from "@/lib/repository";
+import { getSessionUserId, USER_COOKIE_NAME } from "@/lib/user-auth";
 
 export async function GET() {
   const userId = await getSessionUserId();
@@ -36,4 +41,23 @@ export async function PATCH(request: Request) {
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
+}
+
+export async function DELETE() {
+  const userId = await getSessionUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const deleted = await deleteUserAccountAndData(userId);
+  if (!deleted) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  const res = NextResponse.json({ ok: true });
+  res.cookies.set(USER_COOKIE_NAME, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
+  return res;
 }

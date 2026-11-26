@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { Navbar } from "./Navbar";
 import { useI18n } from "./I18nProvider";
 import { localizePath } from "@/lib/i18n";
+import { CookieConsentBanner, OPEN_CONSENT_EVENT } from "./CookieConsentBanner";
+import { TelemetryReporter } from "./TelemetryReporter";
 
 export function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -36,9 +38,18 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
             <Link href={localizePath("/privacy", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.privacy}</Link>
             <Link href={localizePath("/terms", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.terms}</Link>
             <Link href={localizePath("/contact", locale)} className="hover:text-slate-900 dark:hover:text-white">{tf.contact}</Link>
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event(OPEN_CONSENT_EVENT))}
+              className="hover:text-slate-900 dark:hover:text-white cursor-pointer"
+            >
+              {locale === "zh" ? "Cookie 设置" : "Cookie Settings"}
+            </button>
           </div>
         </div>
       </footer>
+      <CookieConsentBanner />
+      <TelemetryReporter />
     </div>
   );
 }

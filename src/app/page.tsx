@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  listApprovedWebcams,
   listApprovedWebcamsPage,
   listCategories,
   listCountriesSummary,
@@ -8,6 +9,11 @@ import {
 import { InfiniteWebcamGrid } from "@/components/InfiniteWebcamGrid";
 import { HeroCarousel } from "@/components/HeroCarousel";
 import { getServerLocale } from "@/lib/i18n-server";
+import {
+  getThemeSectionHeading,
+  matchesWeatherTheme,
+  WEATHER_THEMES,
+} from "@/lib/themes";
 import {
   formatMessage,
   getCategoryLabel,
@@ -25,16 +31,22 @@ export default async function HomePage({
 }) {
   const [{ category }, locale] = await Promise.all([searchParams, getServerLocale()]);
   const th = getMessages(locale).home;
-  const [pageData, categories, countries, featuredSlides] = await Promise.all([
+  const [pageData, allWebcams, categories, countries, featuredSlides] = await Promise.all([
     listApprovedWebcamsPage({
       ...(category ? { category } : {}),
       page: 1,
       pageSize: 12,
     }),
+    listApprovedWebcams(),
     listCategories(),
     listCountriesSummary(),
     listFeaturedWebcams(6),
   ]);
+  const themeHeading = getThemeSectionHeading(locale);
+  const themeCounts = WEATHER_THEMES.map((t) => ({
+    ...t,
+    count: allWebcams.filter((w) => matchesWeatherTheme(w, t.slug)).length,
+  }));
 
   const webcams = pageData.items;
   const totalWebcams = pageData.total;
@@ -156,6 +168,35 @@ export default async function HomePage({
               <span>{ct.flag}</span>
               <span className="font-medium">{getCountryLabel(locale, ct.slug, ct.name)}</span>
               <span className="text-slate-400 dark:text-slate-500">({ct.webcamCount})</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Daylight & Weather Themes Strip */}
+      <section className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 space-y-4 shadow-sm">
+        <div>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+            {themeHeading.title}
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {themeHeading.subtitle}
+          </p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {themeCounts.map((t) => (
+            <Link
+              key={t.slug}
+              href={localizePath(`/themes/${t.slug}`, locale)}
+              className={`p-3.5 rounded-xl border transition-all hover:shadow-sm flex flex-col justify-between gap-2 ${t.accentClass}`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-lg">{t.icon}</span>
+                <span className="text-xs font-bold tabular-nums">{t.count}</span>
+              </div>
+              <div className="text-xs font-semibold leading-snug">
+                {t.title[locale] ?? t.title.en}
+              </div>
             </Link>
           ))}
         </div>

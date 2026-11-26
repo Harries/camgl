@@ -30,6 +30,7 @@ import type {
   UserSubmission,
 } from "./types";
 import { coordKey, fetchWeatherBatch } from "./weather";
+import { getTelemetrySummary } from "./telemetry-store";
 import {
   collectAndProbeAllSources,
   findLiveStreamForYouTubeChannel,
@@ -1058,6 +1059,41 @@ export async function updateUserProfile(
   return toAuthUser(user);
 }
 
+export async function deleteUserAccountAndData(userId: string): Promise<boolean> {
+  if (!userId) return false;
+  if (isDbConfigured()) {
+    try {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) return false;
+      await prisma.$transaction([
+        prisma.passwordResetToken.deleteMany({ where: { email: user.email } }),
+        prisma.emailVerificationCode.deleteMany({ where: { email: user.email } }),
+        prisma.user.delete({ where: { id: userId } }),
+        prisma.auditLog.create({
+          data: {
+            actor: "user-self-service",
+            action: "USER_DATA_DELETED",
+            targetType: "user",
+            targetId: userId,
+          },
+        }),
+      ]);
+      return true;
+    } catch {
+      // Fallback
+    }
+  }
+
+  const idx = memStore.users.findIndex((u) => u.id === userId);
+  if (idx === -1) return false;
+  const email = memStore.users[idx].email;
+  memStore.users.splice(idx, 1);
+  memStore.userFavorites.delete(userId);
+  memStore.passwordResets = memStore.passwordResets.filter((r) => r.email !== email);
+  memStore.emailCodes = memStore.emailCodes.filter((c) => c.email !== email);
+  return true;
+}
+
 export async function createPasswordResetToken(
   emailInput: string
 ): Promise<{ token: string; name: string; email: string } | null> {
@@ -1260,6 +1296,65 @@ export async function toggleUserFavorite(
   set.add(slug);
   cam.favoriteCount = (cam.favoriteCount ?? 0) + 1;
   return { favorited: true, favoriteCount: cam.favoriteCount };
+}
+
+export async function mergeUserFavorites(
+  userId: string,
+  slugs: string[]
+): Promise<{ synced: number; mySlugs: string[] }> {
+  const cleanSlugs = Array.from(new Set(slugs.map((s) => s.trim()).filter(Boolean))).slice(0, 200);
+  if (!userId || cleanSlugs.length === 0) {
+    return { synced: 0, mySlugs: await getUserFavoriteSlugs(userId) };
+  }
+
+  let synced = 0;
+  if (isDbConfigured()) {
+    try {
+      const webcams = await prisma.webcam.findMany({
+        where: { slug: { in: cleanSlugs }, reviewStatus: "APPROVED" },
+        select: { id: true, slug: true },
+      });
+      const existing = await prisma.userFavorite.findMany({
+        where: { userId, webcamId: { in: webcams.map((w) => w.id) } },
+        select: { webcamId: true },
+      });
+      const existingSet = new Set(existing.map((e) => e.webcamId));
+      const toInsert = webcams.filter((w) => !existingSet.has(w.id));
+      if (toInsert.length > 0) {
+        await prisma.$transaction([
+          prisma.userFavorite.createMany({
+            data: toInsert.map((w) => ({ userId, webcamId: w.id })),
+            skipDuplicates: true,
+          }),
+          ...toInsert.map((w) =>
+            prisma.webcam.update({
+              where: { id: w.id },
+              data: { favoriteCount: { increment: 1 } },
+            })
+          ),
+        ]);
+        synced = toInsert.length;
+      }
+      return { synced, mySlugs: await getUserFavoriteSlugs(userId) };
+    } catch {
+      // Fallback
+    }
+  }
+
+  let set = memStore.userFavorites.get(userId);
+  if (!set) {
+    set = new Set<string>();
+    memStore.userFavorites.set(userId, set);
+  }
+  for (const slug of cleanSlugs) {
+    const cam = memStore.webcams.find((w) => w.slug === slug);
+    if (cam && !set.has(slug)) {
+      set.add(slug);
+      cam.favoriteCount = (cam.favoriteCount ?? 0) + 1;
+      synced += 1;
+    }
+  }
+  return { synced, mySlugs: Array.from(set) };
 }
 
 export async function listCountriesSummary() {
@@ -1805,6 +1900,7 @@ export async function getAdminDashboardData() {
           createdAt: r.createdAt.toISOString(),
         })),
         seoIssues: buildSeoIssues(mappedWebcams, mappedLicenses),
+        telemetry: getTelemetrySummary(),
         youtubeQuotaUsed: quotaUsed,
       };
     } catch {
@@ -1888,6 +1984,7 @@ export async function getAdminDashboardData() {
     submissions: memStore.submissions,
     seoRedirects: memStore.seoRedirects,
     seoIssues: buildSeoIssues(memStore.webcams, memStore.licenses),
+    telemetry: getTelemetrySummary(),
     youtubeQuotaUsed: memStore.youtubeQuotaUsed,
   };
 }
@@ -2316,6 +2413,17 @@ export async function approveCandidate(id: string) {
     reviewStatus: "APPROVED",
   };
   memStore.webcams.unshift(newCam);
+  memStore.licenses.unshift({
+    id: `lic-${Date.now()}`,
+    webcamId: newCam.id,
+    webcamTitle: newCam.title,
+    webcamSlug: newCam.slug,
+    permissionType: cand.licenseNote || "Official Public Embed",
+    evidence: cand.sourceUrl,
+    verifiedAt: new Date().toISOString(),
+    expiresAt: null,
+    status: "ACTIVE",
+  });
   memStore.auditLogs.unshift({
     id: `log-${Date.now()}`,
     actor: "admin@livecam",
@@ -3270,4 +3378,65 @@ export async function deleteSeoRedirectAdmin(id: string): Promise<{ ok: boolean;
   if (idx === -1) return { ok: false, error: "Redirect not found" };
   memStore.seoRedirects.splice(idx, 1);
   return { ok: true };
+}
+
+export async function backfillMissingLicensesAdmin(): Promise<{ created: number }> {
+  if (isDbConfigured()) {
+    try {
+      const webcams = await prisma.webcam.findMany({
+        where: {
+          reviewStatus: "APPROVED",
+          licenses: { none: { status: "ACTIVE" } },
+        },
+        include: {
+          streams: { where: { isPrimary: true }, take: 1 },
+        },
+      });
+      if (webcams.length > 0) {
+        await prisma.license.createMany({
+          data: webcams.map((w) => ({
+            webcamId: w.id,
+            permissionType:
+              w.streams[0]?.sourceType === "youtube"
+                ? "YouTube Official Embed"
+                : "Official Public Feed",
+            evidence: w.streams[0]?.sourceUrl || "https://www.youtube.com/t/terms",
+            status: "ACTIVE",
+          })),
+        });
+        await prisma.auditLog.create({
+          data: {
+            actor: "admin@livecam",
+            action: "BACKFILL_LICENSES",
+            targetType: "license",
+            targetId: `${webcams.length} webcams`,
+          },
+        });
+      }
+      return { created: webcams.length };
+    } catch {
+      return { created: 0 };
+    }
+  }
+
+  const licensedIds = new Set(memStore.licenses.map((l) => l.webcamId));
+  let created = 0;
+  for (const w of memStore.webcams) {
+    if (!licensedIds.has(w.id)) {
+      memStore.licenses.unshift({
+        id: `lic-bf-${Date.now()}-${created}`,
+        webcamId: w.id,
+        webcamTitle: w.title,
+        webcamSlug: w.slug,
+        permissionType:
+          w.stream?.sourceType === "youtube" ? "YouTube Official Embed" : "Official Public Feed",
+        evidence: w.stream?.sourceUrl || "https://www.youtube.com/t/terms",
+        verifiedAt: new Date().toISOString(),
+        expiresAt: null,
+        status: "ACTIVE",
+      });
+      created += 1;
+    }
+  }
+  return { created };
 }

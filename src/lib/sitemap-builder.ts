@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { listApprovedWebcams, listCategories, listCountriesSummary } from "@/lib/repository";
 import { getSiteUrl } from "@/lib/seo";
 import { DEFAULT_LOCALE, localizePath, SUPPORTED_LOCALES, type Locale } from "@/lib/i18n";
+import { WEATHER_THEMES } from "@/lib/themes";
 
 function localizedUrl(baseUrl: string, path: string, locale: Locale): string {
   const locPath = localizePath(path, locale);
@@ -71,6 +72,14 @@ async function collectAllPaths(): Promise<
       path: `/categories/${cat.slug}`,
       changeFrequency: "daily",
       priority: 0.75,
+    });
+  }
+
+  for (const theme of WEATHER_THEMES) {
+    entries.push({
+      path: `/themes/${theme.slug}`,
+      changeFrequency: "hourly",
+      priority: 0.7,
     });
   }
 

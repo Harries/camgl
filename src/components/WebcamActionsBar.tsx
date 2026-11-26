@@ -3,8 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Check, Heart, Lock, Maximize2, Share2, Shuffle } from "lucide-react";
+import { Check, Heart, Maximize2, Share2, Shuffle } from "lucide-react";
 import { localizePath } from "@/lib/i18n";
+import {
+  clearLocalFavorites,
+  getLocalFavorites,
+  LOCAL_FAVORITES_EVENT,
+  toggleLocalFavorite,
+} from "@/lib/local-favorites";
 import { useI18n } from "./I18nProvider";
 
 export function WebcamActionsBar({
@@ -36,28 +42,61 @@ export function WebcamActionsBar({
     const loadAuth = () => {
       fetch("/api/v1/auth/me")
         .then((res) => (res.ok ? res.json() : { user: null, favoriteSlugs: [] }))
-        .then((data: { user?: unknown; favoriteSlugs?: string[] }) => {
+        .then(async (data: { user?: unknown; favoriteSlugs?: string[] }) => {
           if (cancelled) return;
-          setLoggedIn(Boolean(data.user));
-          setFavorited(Array.isArray(data.favoriteSlugs) && data.favoriteSlugs.includes(slug));
+          const isLoggedIn = Boolean(data.user);
+          setLoggedIn(isLoggedIn);
+          if (isLoggedIn) {
+            const localSlugs = getLocalFavorites();
+            if (localSlugs.length > 0) {
+              try {
+                const syncRes = await fetch("/api/v1/favorites", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ syncSlugs: localSlugs }),
+                });
+                if (syncRes.ok) {
+                  clearLocalFavorites();
+                  const syncJson = (await syncRes.json()) as { mySlugs?: string[] };
+                  if (!cancelled && Array.isArray(syncJson.mySlugs)) {
+                    setFavorited(syncJson.mySlugs.includes(slug));
+                    setAuthLoaded(true);
+                    return;
+                  }
+                }
+              } catch {
+                // ignore sync error
+              }
+            }
+            setFavorited(Array.isArray(data.favoriteSlugs) && data.favoriteSlugs.includes(slug));
+          } else {
+            setFavorited(getLocalFavorites().includes(slug));
+          }
           setAuthLoaded(true);
         })
         .catch(() => {
-          if (!cancelled) setAuthLoaded(true);
+          if (!cancelled) {
+            setFavorited(getLocalFavorites().includes(slug));
+            setAuthLoaded(true);
+          }
         });
     };
     loadAuth();
     window.addEventListener("camgl-auth-changed", loadAuth);
+    window.addEventListener(LOCAL_FAVORITES_EVENT, loadAuth);
     return () => {
       cancelled = true;
       window.removeEventListener("camgl-auth-changed", loadAuth);
+      window.removeEventListener(LOCAL_FAVORITES_EVENT, loadAuth);
     };
   }, [slug]);
 
   const toggleFavorite = async () => {
     if (!authLoaded) return;
     if (!loggedIn) {
-      router.push(localizePath(`/login?next=${encodeURIComponent(pathname)}`, locale));
+      const res = toggleLocalFavorite(slug);
+      setFavorited(res.favorited);
+      setFavoriteCount((prev) => Math.max(0, prev + (res.favorited ? 1 : -1)));
       return;
     }
     if (toggling) return;
@@ -70,7 +109,8 @@ export function WebcamActionsBar({
       });
       if (res.status === 401) {
         setLoggedIn(false);
-        router.push(localizePath(`/login?next=${encodeURIComponent(pathname)}`, locale));
+        const localRes = toggleLocalFavorite(slug);
+        setFavorited(localRes.favorited);
         return;
       }
       if (res.ok) {
@@ -121,18 +161,13 @@ export function WebcamActionsBar({
         type="button"
         onClick={toggleFavorite}
         disabled={toggling}
-        title={!loggedIn && authLoaded ? ta.loginToFavorite : undefined}
         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer disabled:opacity-60 ${
           favorited
             ? "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-300"
             : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         }`}
       >
-        {!loggedIn && authLoaded ? (
-          <Lock className="w-3.5 h-3.5 text-slate-400" />
-        ) : (
-          <Heart className={`w-3.5 h-3.5 ${favorited ? "fill-current" : ""}`} />
-        )}
+        <Heart className={`w-3.5 h-3.5 ${favorited ? "fill-current" : ""}`} />
         <span>{favorited ? tw.favorited : tw.favorite}</span>
         <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700/80 text-[11px] tabular-nums">
           {favoriteCount}

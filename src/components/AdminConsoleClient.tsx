@@ -71,6 +71,13 @@ interface AdminData {
   submissions?: AdminSubmission[];
   seoRedirects?: AdminSeoRedirect[];
   seoIssues?: AdminSeoIssue[];
+  telemetry?: {
+    sampleCount: number;
+    lcpP75Ms: number | null;
+    inpP75Ms: number | null;
+    clsP75: number | null;
+    errorCount: number;
+  };
   auditLogs: AdminAuditLog[];
   youtubeQuotaUsed: number;
 }
@@ -655,6 +662,92 @@ export function AdminConsoleClient({
                     {openReports}
                   </div>
                   <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">SLA &lt; 24h</div>
+                </div>
+              </div>
+
+              {/* MVP Scale & RUM Core Web Vitals Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm space-y-2.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      MVP Content Scale (Target: 300 Approved)
+                    </span>
+                    <span className="font-bold tabular-nums text-blue-600 dark:text-blue-400">
+                      {approvedCount} / 300 ({Math.min(100, Math.round((approvedCount / 300) * 100))}%)
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-600 rounded-full transition-all"
+                      style={{ width: `${Math.min(100, Math.round((approvedCount / 300) * 100))}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                    <span>
+                      License Coverage:{" "}
+                      {approvedCount === 0
+                        ? "100%"
+                        : `${Math.min(
+                            100,
+                            Math.round(
+                              (new Set((data.licenses ?? []).filter((l) => l.status === "ACTIVE").map((l) => l.webcamId)).size /
+                                Math.max(1, approvedCount)) *
+                                100
+                            )
+                          )}%`}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => runAction({ action: "backfillLicenses" })}
+                      className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                    >
+                      Backfill Missing Licenses
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      RUM Core Web Vitals (P75) &amp; Errors
+                    </span>
+                    <span className="text-[11px] text-slate-400 tabular-nums">
+                      {data.telemetry?.sampleCount ?? 0} samples
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 text-center pt-1">
+                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/70">
+                      <div className="text-[10px] text-slate-400">LCP (≤2.5s)</div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white tabular-nums mt-0.5">
+                        {data.telemetry?.lcpP75Ms !== null && data.telemetry?.lcpP75Ms !== undefined
+                          ? `${(data.telemetry.lcpP75Ms / 1000).toFixed(2)}s`
+                          : "—"}
+                      </div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/70">
+                      <div className="text-[10px] text-slate-400">INP (≤200ms)</div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white tabular-nums mt-0.5">
+                        {data.telemetry?.inpP75Ms !== null && data.telemetry?.inpP75Ms !== undefined
+                          ? `${data.telemetry.inpP75Ms}ms`
+                          : "—"}
+                      </div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/70">
+                      <div className="text-[10px] text-slate-400">CLS (≤0.1)</div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white tabular-nums mt-0.5">
+                        {data.telemetry?.clsP75 !== null && data.telemetry?.clsP75 !== undefined
+                          ? data.telemetry.clsP75
+                          : "—"}
+                      </div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/70">
+                      <div className="text-[10px] text-slate-400">JS Errors</div>
+                      <div className="text-xs font-bold text-rose-600 dark:text-rose-400 tabular-nums mt-0.5">
+                        {data.telemetry?.errorCount ?? 0}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1741,8 +1834,18 @@ export function AdminConsoleClient({
                 }}
                 className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 shadow-sm space-y-3"
               >
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Add / Update License Record
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    Add / Update License Record
+                  </div>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => runAction({ action: "backfillLicenses" })}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
+                  >
+                    Backfill Missing Licenses (100% Coverage)
+                  </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
                   <select

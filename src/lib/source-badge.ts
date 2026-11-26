@@ -62,6 +62,7 @@ const SNAPSHOT_LABELS: Record<Locale, string> = {
   ja: "スナップショット",
   es: "Instantánea",
   fr: "Instantané",
+  de: "Schnappschuss",
 };
 
 const OFFICIAL_EMBED_LABELS: Record<Locale, string> = {
@@ -70,6 +71,7 @@ const OFFICIAL_EMBED_LABELS: Record<Locale, string> = {
   ja: "公式埋め込み",
   es: "Inserción Oficial",
   fr: "Intégration Officielle",
+  de: "Offizieller Embed",
 };
 
 export function getSourceTypeMeta(

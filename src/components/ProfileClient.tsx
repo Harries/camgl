@@ -47,6 +47,8 @@ export function ProfileClient({
   const [name, setName] = useState(initialUser.name);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState("");
 
   const handleSave = async (e: React.FormEvent) => {
@@ -84,6 +86,29 @@ export function ProfileClient({
     });
     if (res.ok) {
       setFavorites((prev) => prev.filter((w) => w.slug !== slug));
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/v1/profile", { method: "DELETE" });
+      if (res.ok) {
+        try {
+          window.localStorage.removeItem("camgl_local_favorites");
+        } catch {
+          // ignore
+        }
+        window.dispatchEvent(new Event("camgl-auth-changed"));
+        window.location.href = localizePath("/", locale);
+      } else {
+        setError("Failed to delete account");
+        setDeleting(false);
+      }
+    } catch {
+      setError("Failed to delete account");
+      setDeleting(false);
     }
   };
 
@@ -399,6 +424,51 @@ export function ProfileClient({
                 {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
               </div>
             </form>
+
+            <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-3">
+              <div className="text-sm font-semibold text-rose-600 dark:text-rose-400">
+                {locale === "zh" ? "隐私与数据删除" : "Privacy & Data Deletion"}
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-lg leading-relaxed">
+                {locale === "zh"
+                  ? "您可以随时永久删除您的账号及所有关联的个人资料、收藏记录与验证令牌。此操作不可撤销。"
+                  : "You can permanently delete your account along with all associated profile data, saved favorites, and verification tokens at any time. This action cannot be undone."}
+              </p>
+              {!confirmDelete ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/70 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  {locale === "zh" ? "申请删除账号与个人数据" : "Delete My Account & Data"}
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={handleDeleteAccount}
+                    className="px-4 py-2 rounded-xl text-xs font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-60 cursor-pointer"
+                  >
+                    {deleting
+                      ? locale === "zh"
+                        ? "正在删除..."
+                        : "Deleting..."
+                      : locale === "zh"
+                      ? "确认永久删除"
+                      : "Confirm Permanent Deletion"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    className="px-3 py-2 rounded-xl text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                  >
+                    {locale === "zh" ? "取消" : "Cancel"}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </section>

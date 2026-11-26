@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   listMostLikedWebcams,
   listUserFavoriteWebcams,
+  mergeUserFavorites,
   toggleUserFavorite,
 } from "@/lib/repository";
 import { getSessionUserId } from "@/lib/user-auth";
@@ -29,6 +30,11 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
+    if (Array.isArray(body?.syncSlugs)) {
+      const slugs = body.syncSlugs.map((s: unknown) => String(s)).filter(Boolean);
+      const merged = await mergeUserFavorites(userId, slugs);
+      return NextResponse.json({ ok: true, ...merged });
+    }
     const slug = String(body?.slug ?? "").trim();
     if (!slug) {
       return NextResponse.json({ error: "Webcam slug is required" }, { status: 400 });

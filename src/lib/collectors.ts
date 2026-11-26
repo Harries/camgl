@@ -277,6 +277,12 @@ const YOUTUBE_DISCOVERY_QUERIES = [
   "live mountain ski webcam",
   "live train railway webcam",
   "live harbour port webcam",
+  "live volcano webcam",
+  "airport live cam",
+  "ライブカメラ",
+  "webcam en direct",
+  "webcam en directo",
+  "live webcam deutschland",
 ];
 
 export async function collectFromYouTube(): Promise<CollectedCandidateInput[]> {

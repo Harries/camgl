@@ -4,6 +4,7 @@ import { getSessionUserId } from "@/lib/user-auth";
 import {
   approveCandidate,
   approveCandidatesBatch,
+  backfillMissingLicensesAdmin,
   deleteCategoryAdmin,
   deleteCityAdmin,
   deleteCountryAdmin,
@@ -254,6 +255,10 @@ export async function POST(request: Request) {
       case "deleteSeoRedirect": {
         const res = await deleteSeoRedirectAdmin(String(body.id ?? ""));
         if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+        return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
+      }
+      case "backfillLicenses": {
+        await backfillMissingLicensesAdmin();
         return NextResponse.json({ ok: true, data: await getAdminDashboardData() });
       }
       default:
