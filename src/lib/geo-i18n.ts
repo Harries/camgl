@@ -31,6 +31,7 @@ const COUNTRY_NAMES: Record<string, Partial<Record<Locale, string>>> = {
   brazil: { en: "Brazil", zh: "巴西", ja: "ブラジル", es: "Brasil", fr: "Brésil", de: "Brasilien" },
   guatemala: { en: "Guatemala", zh: "危地马拉", ja: "グアテマラ", es: "Guatemala", fr: "Guatemala", de: "Guatemala" },
   philippines: { en: "Philippines", zh: "菲律宾", ja: "フィリピン", es: "Filipinas", fr: "Philippines", de: "Philippinen" },
+  curacao: { en: "Curaçao", zh: "库拉索", ja: "キュラソー", es: "Curazao", fr: "Curaçao", de: "Curaçao" },
 };
 
 const CITY_NAMES: Record<string, Partial<Record<Locale, string>>> = {

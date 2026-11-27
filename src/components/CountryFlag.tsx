@@ -30,7 +30,7 @@ export function CountryFlag({
 }) {
   const normalizedIso =
     isoCode && /^[a-zA-Z]{2}$/.test(isoCode.trim()) ? isoCode.trim().toLowerCase() : null;
-  const code = normalizedIso ?? emojiToIsoCode(flag);
+  const code = emojiToIsoCode(flag) ?? normalizedIso;
 
   if (code) {
     return (
