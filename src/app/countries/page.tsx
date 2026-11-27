@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { listApprovedWebcams, listCategories } from "@/lib/repository";
 import { WorldExplorerClient } from "@/components/WorldExplorerClient";
+import { CountryFlag } from "@/components/CountryFlag";
 import { absoluteUrl, buildAlternates } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n-server";
 import { formatMessage, getCategoryLabel, getCityLabel, getCountryLabel, getMessages, localizePath } from "@/lib/i18n";
@@ -154,7 +155,7 @@ export default async function CountriesPage() {
                     href={localizePath(`/countries/${country.slug}`, locale)}
                     className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-2"
                   >
-                    <span>{country.flag}</span>
+                    <CountryFlag flag={country.flag} />
                     <span>{getCountryLabel(locale, country.slug, country.name)}</span>
                   </Link>
                 </h3>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "flag-icons/css/flag-icons.min.css";
 import "./globals.css";
 import { SiteShell } from "@/components/SiteShell";
 import { ThemeProvider } from "@/components/ThemeProvider";

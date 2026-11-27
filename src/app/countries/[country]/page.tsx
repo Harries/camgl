@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { listApprovedWebcams } from "@/lib/repository";
 import { WebcamCard } from "@/components/WebcamCard";
+import { CountryFlag } from "@/components/CountryFlag";
 import { PaginationBar } from "@/components/PaginationBar";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { absoluteUrl, buildAlternates } from "@/lib/seo";
@@ -108,8 +109,9 @@ export default async function CountryDetailPage({
           <span>/</span>
           <span className="text-slate-900 dark:text-white font-medium">{countryLabel}</span>
         </div>
-        <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-          {countryInfo.flag} {formatMessage(msgs.webcam.allCountryCams, { country: countryLabel })}
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <CountryFlag isoCode={countryInfo.isoCode} flag={countryInfo.flag} />
+          <span>{formatMessage(msgs.webcam.allCountryCams, { country: countryLabel })}</span>
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {formatMessage(msgs.home.showingWebcams, { count: allWebcams.length })}

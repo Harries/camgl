@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CountryFlag } from "./CountryFlag";
 
 export function WebcamThumbnail({
   src,
@@ -41,7 +42,9 @@ export function WebcamThumbnail({
       } ${className}`}
     >
       <div className="text-center px-4 text-white/90">
-        <div className="text-2xl mb-1">{flag}</div>
+        <div className="text-2xl mb-1 flex justify-center">
+          <CountryFlag flag={flag} />
+        </div>
         {subtitle && <div className="text-xs font-medium opacity-80">{subtitle}</div>}
       </div>
     </div>

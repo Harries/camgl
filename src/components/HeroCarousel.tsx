@@ -12,6 +12,7 @@ import {
   localizePath,
 } from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
+import { CountryFlag } from "./CountryFlag";
 
 export function HeroCarousel({ slides }: { slides: PublicWebcam[] }) {
   const { locale, messages } = useI18n();
@@ -84,15 +85,17 @@ export function HeroCarousel({ slides }: { slides: PublicWebcam[] }) {
 
         <div className="relative z-10 flex items-end justify-between gap-4 pb-2">
           <div className="min-w-0">
-            <div className="text-xs text-slate-300">
-              {current.country.flag}{" "}
-              {getCountryLabel(
-                locale,
-                current.country.slug,
-                current.country.name,
-                current.country.isoCode
-              )}{" "}
-              · {getCityLabel(locale, current.city.slug, current.city.name)}
+            <div className="text-xs text-slate-300 flex items-center gap-1.5">
+              <CountryFlag isoCode={current.country.isoCode} flag={current.country.flag} />
+              <span>
+                {getCountryLabel(
+                  locale,
+                  current.country.slug,
+                  current.country.name,
+                  current.country.isoCode
+                )}{" "}
+                · {getCityLabel(locale, current.city.slug, current.city.name)}
+              </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-bold mt-1 line-clamp-2">
               {current.title}

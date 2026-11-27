@@ -8,6 +8,7 @@ import {
 } from "@/lib/repository";
 import { InfiniteWebcamGrid } from "@/components/InfiniteWebcamGrid";
 import { HeroCarousel } from "@/components/HeroCarousel";
+import { CountryFlag } from "@/components/CountryFlag";
 import { getServerLocale } from "@/lib/i18n-server";
 import {
   getThemeSectionHeading,
@@ -164,7 +165,7 @@ export default async function HomePage({
               href={localizePath(`/countries/${ct.slug}`, locale)}
               className="px-3.5 py-2 rounded-lg text-sm border border-slate-200 bg-slate-50 text-slate-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:border-blue-500 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5"
             >
-              <span>{ct.flag}</span>
+              <CountryFlag flag={ct.flag} />
               <span className="font-medium">{getCountryLabel(locale, ct.slug, ct.name)}</span>
               <span className="text-slate-400 dark:text-slate-500">({ct.webcamCount})</span>
             </Link>

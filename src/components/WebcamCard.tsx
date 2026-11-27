@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Eye, Heart } from "lucide-react";
+import { CountryFlag } from "./CountryFlag";
 import type { PublicWebcam } from "@/lib/types";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
@@ -75,8 +76,9 @@ export function WebcamCard({ webcam }: { webcam: PublicWebcam }) {
 
       <div className="p-4 space-y-1.5 flex-1">
         <div className="flex items-center justify-between gap-2 text-sm text-slate-500 dark:text-slate-400">
-          <span>
-            {webcam.country.flag} {countryLabel} · {cityLabel}
+          <span className="inline-flex items-center gap-1.5">
+            <CountryFlag isoCode={webcam.country.isoCode} flag={webcam.country.flag} />
+            <span>{countryLabel} · {cityLabel}</span>
           </span>
           <span>{weatherLabel}</span>
         </div>

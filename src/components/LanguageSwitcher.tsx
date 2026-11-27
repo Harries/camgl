@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Globe } from "lucide-react";
 import { LOCALE_OPTIONS } from "@/lib/i18n";
+import { CountryFlag } from "./CountryFlag";
 import { useI18n } from "./I18nProvider";
 
 export function LanguageSwitcher({ className = "" }: { className?: string }) {
@@ -66,7 +67,7 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
                 }`}
               >
                 <span className="flex items-center gap-2.5">
-                  <span className="text-base leading-none">{opt.flag}</span>
+                  <CountryFlag flag={opt.flag} className="text-sm" />
                   <span>{opt.label}</span>
                 </span>
                 {active && <Check className="w-3.5 h-3.5 shrink-0" />}

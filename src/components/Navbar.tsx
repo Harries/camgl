@@ -19,6 +19,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import type { AuthUser } from "@/lib/types";
 import { BrandLogo } from "./BrandLogo";
+import { CountryFlag } from "./CountryFlag";
 import { ThemeToggle } from "./ThemeToggle";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useI18n } from "./I18nProvider";
@@ -237,7 +238,7 @@ export function Navbar() {
                                 }`}
                               >
                                 <span className="flex items-center gap-2 min-w-0">
-                                  <span className="shrink-0">{co.flag}</span>
+                                  <CountryFlag isoCode={co.isoCode} flag={co.flag} />
                                   <span className="truncate">
                                     {getCountryLabel(locale, co.slug, co.name, co.isoCode)}
                                   </span>
@@ -263,7 +264,7 @@ export function Navbar() {
                           <>
                             <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                               <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
-                                <span>{activeCountry.flag}</span>
+                                <CountryFlag isoCode={activeCountry.isoCode} flag={activeCountry.flag} />
                                 <span>
                                   {getCountryLabel(
                                     locale,

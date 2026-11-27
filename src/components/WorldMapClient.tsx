@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { PublicWebcam } from "@/lib/types";
 import { localizePath } from "@/lib/i18n";
 import { useI18n } from "./I18nProvider";
+import { CountryFlag } from "./CountryFlag";
 
 export function WorldMapClient({ webcams }: { webcams: PublicWebcam[] }) {
   const { locale } = useI18n();
@@ -113,8 +114,9 @@ export function WorldMapClient({ webcams }: { webcams: PublicWebcam[] }) {
         <div className="lg:col-span-4 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 flex flex-col justify-between gap-4 shadow-sm">
           {active && (
             <div className="space-y-3">
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {active.country.flag} {active.country.name} · {active.city.name}
+              <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <CountryFlag isoCode={active.country.isoCode} flag={active.country.flag} />
+                <span>{active.country.name} · {active.city.name}</span>
               </div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">{active.title}</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3">{active.description}</p>

@@ -10,6 +10,7 @@ import { fetchDetailedWeather } from "@/lib/weather";
 import { absoluteUrl, buildAlternates, getYouTubeThumbnail, withOutboundSource } from "@/lib/seo";
 import { getSourceTypeMeta, getWebcamPreviewUrl } from "@/lib/source-badge";
 import { WebcamThumbnail } from "@/components/WebcamThumbnail";
+import { CountryFlag } from "@/components/CountryFlag";
 import { getServerLocale } from "@/lib/i18n-server";
 import {
   formatMessage,
@@ -341,8 +342,9 @@ export default async function WebcamDetailPage({
           </span>
         </div>
         <div className="flex items-center gap-3 flex-wrap mt-1.5">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {webcam.country.flag} {cityLabel}, {countryLabel} · {categoriesText}
+          <p className="text-xs text-slate-500 dark:text-slate-400 inline-flex items-center gap-1.5">
+            <CountryFlag isoCode={webcam.country.isoCode} flag={webcam.country.flag} />
+            <span>{cityLabel}, {countryLabel} · {categoriesText}</span>
           </p>
           <span className="text-slate-300 dark:text-slate-700 text-xs">·</span>
           <WebcamViewTracker
@@ -624,8 +626,9 @@ export default async function WebcamDetailPage({
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {tw.webcamLocationTitle}
               </h2>
-              <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                {webcam.country.flag} {cityLabel}, {countryLabel} · {latLabel}, {lngLabel}
+              <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums inline-flex items-center gap-1.5">
+                <CountryFlag isoCode={webcam.country.isoCode} flag={webcam.country.flag} />
+                <span>{cityLabel}, {countryLabel} · {latLabel}, {lngLabel}</span>
               </span>
             </div>
             <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 h-60 bg-slate-100 dark:bg-slate-800">
