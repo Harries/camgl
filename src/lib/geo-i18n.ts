@@ -29,6 +29,8 @@ const COUNTRY_NAMES: Record<string, Partial<Record<Locale, string>>> = {
   thailand: { en: "Thailand", zh: "泰国", ja: "タイ", es: "Tailandia", fr: "Thaïlande", de: "Thailand" },
   portugal: { en: "Portugal", zh: "葡萄牙", ja: "ポルトガル", es: "Portugal", fr: "Portugal", de: "Portugal" },
   brazil: { en: "Brazil", zh: "巴西", ja: "ブラジル", es: "Brasil", fr: "Brésil", de: "Brasilien" },
+  guatemala: { en: "Guatemala", zh: "危地马拉", ja: "グアテマラ", es: "Guatemala", fr: "Guatemala", de: "Guatemala" },
+  philippines: { en: "Philippines", zh: "菲律宾", ja: "フィリピン", es: "Filipinas", fr: "Philippines", de: "Philippinen" },
 };
 
 const CITY_NAMES: Record<string, Partial<Record<Locale, string>>> = {
@@ -96,6 +98,8 @@ const CITY_NAMES: Record<string, Partial<Record<Locale, string>>> = {
   "niagara-falls": { en: "Niagara Falls", zh: "尼亚加拉瀑布", ja: "ナイアガラの滝", es: "Cataratas del Niágara", fr: "Chutes du Niagara" },
   nuremberg: { en: "Nuremberg", zh: "纽伦堡", ja: "ニュルンベルク", es: "Núremberg", fr: "Nuremberg" },
   osaka: { en: "Osaka", zh: "大阪", ja: "大阪", es: "Osaka", fr: "Osaka" },
+  quetzaltenango: { en: "Quetzaltenango", zh: "克萨尔特南戈", ja: "ケツァルテナンゴ", es: "Quetzaltenango", fr: "Quetzaltenango" },
+  sorsogon: { en: "Sorsogon", zh: "索索贡", ja: "ソルソゴン", es: "Sorsogon", fr: "Sorsogon" },
   "pa-tong": { en: "Pa Tong", zh: "芭东", ja: "パトン", es: "Patong", fr: "Patong" },
   palafrugell: { en: "Palafrugell", zh: "帕拉夫鲁赫尔", ja: "パラフルジェイ", es: "Palafrugell", fr: "Palafrugell" },
   plymouth: { en: "Plymouth", zh: "普利茅斯", ja: "プリマス", es: "Plymouth", fr: "Plymouth" },
