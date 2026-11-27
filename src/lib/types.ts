@@ -74,6 +74,7 @@ export interface AdminUser {
   name: string;
   role: string;
   githubId: string | null;
+  googleId: string | null;
   avatarUrl: string | null;
   favoritesCount: number;
   createdAt: string;

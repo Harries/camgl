@@ -47,6 +47,7 @@ interface MemUser {
   name: string;
   passwordHash: string | null;
   githubId?: string | null;
+  googleId?: string | null;
   avatarUrl?: string | null;
   role: string;
   createdAt: string;
@@ -950,26 +951,36 @@ export async function authenticateUser(input: {
   return toAuthUser(user);
 }
 
-export async function findOrCreateGithubUser(input: {
-  githubId: string;
+async function findOrCreateOAuthUser(input: {
+  provider: "github" | "google";
+  providerId: string;
   email: string;
   name: string;
   avatarUrl?: string | null;
+  emailVerified?: boolean;
 }): Promise<AuthUser> {
   const email = input.email.trim().toLowerCase();
-  const name = input.name.trim() || "GitHub User";
+  const defaultName = input.provider === "google" ? "Google User" : "GitHub User";
+  const name = input.name.trim() || defaultName;
+  const providerField = input.provider === "google" ? "googleId" : "githubId";
 
   if (isDbConfigured()) {
     try {
-      const byGithub = await prisma.user.findUnique({
-        where: { githubId: input.githubId },
+      const byProvider = await prisma.user.findUnique({
+        where:
+          input.provider === "google"
+            ? { googleId: input.providerId }
+            : { githubId: input.providerId },
       });
-      if (byGithub) {
+      if (byProvider) {
         const updated = await prisma.user.update({
-          where: { id: byGithub.id },
+          where: { id: byProvider.id },
           data: {
-            avatarUrl: input.avatarUrl ?? byGithub.avatarUrl,
-            name: byGithub.name || name,
+            avatarUrl: input.avatarUrl ?? byProvider.avatarUrl,
+            name: byProvider.name || name,
+            ...(input.emailVerified && !byProvider.emailVerifiedAt
+              ? { emailVerifiedAt: new Date() }
+              : {}),
           },
         });
         return toAuthUser(updated);
@@ -980,8 +991,11 @@ export async function findOrCreateGithubUser(input: {
         const linked = await prisma.user.update({
           where: { id: byEmail.id },
           data: {
-            githubId: input.githubId,
+            [providerField]: input.providerId,
             avatarUrl: input.avatarUrl ?? byEmail.avatarUrl,
+            ...(input.emailVerified && !byEmail.emailVerifiedAt
+              ? { emailVerifiedAt: new Date() }
+              : {}),
           },
         });
         return toAuthUser(linked);
@@ -991,8 +1005,9 @@ export async function findOrCreateGithubUser(input: {
         data: {
           email,
           name,
-          githubId: input.githubId,
+          [providerField]: input.providerId,
           avatarUrl: input.avatarUrl ?? null,
+          emailVerifiedAt: input.emailVerified ? new Date() : null,
           role: "USER",
         },
       });
@@ -1003,10 +1018,10 @@ export async function findOrCreateGithubUser(input: {
   }
 
   const existing =
-    memStore.users.find((u) => u.githubId === input.githubId) ??
+    memStore.users.find((u) => u[providerField] === input.providerId) ??
     memStore.users.find((u) => u.email === email);
   if (existing) {
-    existing.githubId = input.githubId;
+    existing[providerField] = input.providerId;
     existing.avatarUrl = input.avatarUrl ?? existing.avatarUrl ?? null;
     return toAuthUser(existing);
   }
@@ -1016,13 +1031,45 @@ export async function findOrCreateGithubUser(input: {
     email,
     name,
     passwordHash: null,
-    githubId: input.githubId,
+    [providerField]: input.providerId,
     avatarUrl: input.avatarUrl ?? null,
     role: "USER",
     createdAt: new Date().toISOString(),
   };
   memStore.users.push(created);
   return toAuthUser(created);
+}
+
+export async function findOrCreateGithubUser(input: {
+  githubId: string;
+  email: string;
+  name: string;
+  avatarUrl?: string | null;
+}): Promise<AuthUser> {
+  return findOrCreateOAuthUser({
+    provider: "github",
+    providerId: input.githubId,
+    email: input.email,
+    name: input.name,
+    avatarUrl: input.avatarUrl,
+  });
+}
+
+export async function findOrCreateGoogleUser(input: {
+  googleId: string;
+  email: string;
+  name: string;
+  avatarUrl?: string | null;
+  emailVerified?: boolean;
+}): Promise<AuthUser> {
+  return findOrCreateOAuthUser({
+    provider: "google",
+    providerId: input.googleId,
+    email: input.email,
+    name: input.name,
+    avatarUrl: input.avatarUrl,
+    emailVerified: input.emailVerified,
+  });
 }
 
 export async function getUserById(userId: string): Promise<AuthUser | null> {
@@ -2047,6 +2094,7 @@ export async function getAdminDashboardData() {
           name: u.name,
           role: u.role,
           githubId: u.githubId,
+          googleId: u.googleId,
           avatarUrl: u.avatarUrl,
           favoritesCount: u._count.favorites,
           createdAt: u.createdAt.toISOString(),
@@ -2165,6 +2213,7 @@ export async function getAdminDashboardData() {
       name: u.name,
       role: u.role,
       githubId: u.githubId ?? null,
+      googleId: u.googleId ?? null,
       avatarUrl: u.avatarUrl ?? null,
       favoritesCount: memStore.userFavorites.get(u.id)?.size ?? 0,
       createdAt: u.createdAt,

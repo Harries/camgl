@@ -2306,7 +2306,7 @@ export function AdminConsoleClient({
                               {u.email}
                             </td>
                             <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
-                              {u.githubId ? "GitHub" : "Email"}
+                              {[u.googleId && "Google", u.githubId && "GitHub"].filter(Boolean).join(" / ") || "Email"}
                             </td>
                             <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">
                               {u.favoritesCount}

@@ -288,9 +288,12 @@ export interface Messages {
     loginToFavorite: string;
     loginPromptBody: string;
     continueWithGithub: string;
+    continueWithGoogle: string;
     orWithEmail: string;
     githubNotConfigured: string;
     githubFailed: string;
+    googleNotConfigured: string;
+    googleFailed: string;
     menuFavorites: string;
     menuWebcams: string;
     menuSettings: string;
@@ -709,9 +712,12 @@ const en: Messages = {
     loginToFavorite: "Sign in to favorite",
     loginPromptBody: "Sign in to your account to view and manage your liked webcams.",
     continueWithGithub: "Continue with GitHub",
+    continueWithGoogle: "Continue with Google / Gmail",
     orWithEmail: "or",
     githubNotConfigured: "GitHub login is not configured yet (missing GITHUB_CLIENT_ID).",
     githubFailed: "GitHub sign-in failed. Please try again.",
+    googleNotConfigured: "Google login is not configured yet (missing GOOGLE_CLIENT_ID).",
+    googleFailed: "Google sign-in failed. Please try again.",
     menuFavorites: "My Favorites",
     menuWebcams: "My Webcams",
     menuSettings: "Account Settings",
@@ -1174,9 +1180,12 @@ const zh: Messages = {
     loginToFavorite: "登录后即可喜欢",
     loginPromptBody: "登录账号后即可查看和管理你喜欢的实时摄像头。",
     continueWithGithub: "使用 GitHub 登录",
+    continueWithGoogle: "使用 Gmail / Google 登录",
     orWithEmail: "或",
     githubNotConfigured: "暂未配置 GitHub 登录（缺少 GITHUB_CLIENT_ID）。",
     githubFailed: "GitHub 登录失败，请重试。",
+    googleNotConfigured: "暂未配置 Google 登录（缺少 GOOGLE_CLIENT_ID）。",
+    googleFailed: "Google 登录失败，请重试。",
     menuFavorites: "我的喜欢",
     menuWebcams: "我的摄像头",
     menuSettings: "个人设置",
@@ -1602,9 +1611,12 @@ const ja: Messages = {
     loginToFavorite: "お気に入り登録にはログインが必要です",
     loginPromptBody: "ログインするとお気に入りのカメラを保存・管理できます。",
     continueWithGithub: "GitHub でログイン",
+    continueWithGoogle: "Google / Gmail でログイン",
     orWithEmail: "または",
     githubNotConfigured: "GitHub ログインがまだ設定されていません（GITHUB_CLIENT_ID 未設定）。",
     githubFailed: "GitHub ログインに失敗しました。もう一度お試しください。",
+    googleNotConfigured: "Google ログインがまだ設定されていません（GOOGLE_CLIENT_ID 未設定）。",
+    googleFailed: "Google ログインに失敗しました。もう一度お試しください。",
     menuFavorites: "お気に入り",
     menuWebcams: "投稿したカメラ",
     menuSettings: "アカウント設定",
@@ -2016,9 +2028,12 @@ const es: Messages = {
     loginToFavorite: "Inicia sesión para dar me gusta",
     loginPromptBody: "Inicia sesión para ver y gestionar tus cámaras favoritas.",
     continueWithGithub: "Continuar con GitHub",
+    continueWithGoogle: "Continuar con Google / Gmail",
     orWithEmail: "o",
     githubNotConfigured: "El inicio con GitHub aún no está configurado (falta GITHUB_CLIENT_ID).",
     githubFailed: "Error al iniciar sesión con GitHub. Inténtalo de nuevo.",
+    googleNotConfigured: "El inicio con Google aún no está configurado (falta GOOGLE_CLIENT_ID).",
+    googleFailed: "Error al iniciar sesión con Google. Inténtalo de nuevo.",
     menuFavorites: "Mis Favoritos",
     menuWebcams: "Mis Cámaras",
     menuSettings: "Configuración",
@@ -2430,9 +2445,12 @@ const fr: Messages = {
     loginToFavorite: "Connectez-vous pour aimer",
     loginPromptBody: "Connectez-vous pour voir et gérer vos webcams favorites.",
     continueWithGithub: "Continuer avec GitHub",
+    continueWithGoogle: "Continuer avec Google / Gmail",
     orWithEmail: "ou",
     githubNotConfigured: "La connexion GitHub n'est pas configurée (GITHUB_CLIENT_ID manquant).",
     githubFailed: "Échec de la connexion GitHub. Veuillez réessayer.",
+    googleNotConfigured: "La connexion Google n'est pas configurée (GOOGLE_CLIENT_ID manquant).",
+    googleFailed: "Échec de la connexion Google. Veuillez réessayer.",
     menuFavorites: "Mes Favoris",
     menuWebcams: "Mes Webcams",
     menuSettings: "Paramètres",
@@ -2844,9 +2862,12 @@ const de: Messages = {
     loginToFavorite: "Anmelden zum Synchronisieren",
     loginPromptBody: "Melden Sie sich an, um Ihre lokalen Favoriten dauerhaft im Konto zu synchronisieren.",
     continueWithGithub: "Mit GitHub fortfahren",
+    continueWithGoogle: "Mit Google / Gmail fortfahren",
     orWithEmail: "oder",
     githubNotConfigured: "GitHub-Login ist nicht konfiguriert (GITHUB_CLIENT_ID fehlt).",
     githubFailed: "GitHub-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
+    googleNotConfigured: "Google-Login ist nicht konfiguriert (GOOGLE_CLIENT_ID fehlt).",
+    googleFailed: "Google-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
     menuFavorites: "Meine Favoriten",
     menuWebcams: "Meine Webcams",
     menuSettings: "Einstellungen",

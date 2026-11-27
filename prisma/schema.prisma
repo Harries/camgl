@@ -267,6 +267,7 @@ model User {
   name            String
   passwordHash    String?        @map("password_hash")
   githubId        String?        @unique @map("github_id")
+  googleId        String?        @unique @map("google_id")
   avatarUrl       String?        @map("avatar_url")
   emailVerifiedAt DateTime?      @map("email_verified_at")
   role            String         @default("USER")
