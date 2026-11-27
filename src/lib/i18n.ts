@@ -335,6 +335,14 @@ export interface Messages {
     termsDesc: string;
     contactTitle: string;
     contactDesc: string;
+    homeKeywords: string[];
+    countriesKeywords: string[];
+    countryKeywords: string[];
+    cityKeywords: string[];
+    categoryKeywords: string[];
+    webcamCityKeyword: string;
+    webcamCountryKeyword: string;
+    webcamCategoryKeyword: string;
   };
   categories: Record<string, string>;
 }
@@ -758,6 +766,48 @@ const en: Messages = {
     contactTitle: "Contact Us",
     contactDesc:
       "Contact LiveCam Global for webcam partnerships, stream removal or privacy requests, and technical support.",
+    homeKeywords: [
+      "live webcam",
+      "world webcams",
+      "live camera",
+      "scenic webcam",
+      "tokyo live cam",
+      "times square live cam",
+      "beach webcam",
+      "weather cam",
+    ],
+    countriesKeywords: [
+      "webcams by country",
+      "world webcams directory",
+      "city live cameras",
+      "global webcam map",
+      "live scenic webcams",
+    ],
+    countryKeywords: [
+      "{country} live webcams",
+      "{country} live cam",
+      "{country} scenic cameras",
+      "{country} city webcams",
+      "{country} live weather",
+    ],
+    cityKeywords: [
+      "{city} live cam",
+      "{city} {country} webcam",
+      "{city} live webcams",
+      "{city} street camera",
+      "{city} live weather",
+      "{country} live webcams",
+    ],
+    categoryKeywords: [
+      "{category} live webcams",
+      "{category} webcam",
+      "{category} live cam",
+      "24/7 {category} camera",
+      "world {category} webcams",
+    ],
+    webcamCityKeyword: "{city} live cam",
+    webcamCountryKeyword: "{country} webcam",
+    webcamCategoryKeyword: "{category} webcam",
   },
   categories: {
     all: "All",
@@ -1173,6 +1223,48 @@ const zh: Messages = {
     termsDesc: "了解 LiveCam Global 的服务条款、官方嵌入规范、内容归属与下架申请流程。",
     contactTitle: "联系我们",
     contactDesc: "联系 LiveCam Global 处理摄像头合作接入、隐私与下架申请或技术支持。",
+    homeKeywords: [
+      "实时摄像头",
+      "全球实景摄像头",
+      "在线直播摄像头",
+      "风景实时监控",
+      "东京实时摄像头",
+      "时代广场直播",
+      "海滩实时摄像头",
+      "实况天气摄像头",
+    ],
+    countriesKeywords: [
+      "按国家浏览摄像头",
+      "全球城市实时摄像头",
+      "世界实景摄像头目录",
+      "全球摄像头地图",
+      "实景风景直播",
+    ],
+    countryKeywords: [
+      "{country}实时摄像头",
+      "{country}实景直播",
+      "{country}城市摄像头",
+      "{country}风景摄像头",
+      "{country}实时天气",
+    ],
+    cityKeywords: [
+      "{city}实时摄像头",
+      "{country}{city}直播",
+      "{city}实景摄像头",
+      "{city}街景直播",
+      "{city}实时天气",
+      "{country}实时摄像头",
+    ],
+    categoryKeywords: [
+      "{category}实时摄像头",
+      "{category}实景直播",
+      "{category}在线摄像头",
+      "24小时{category}直播",
+      "全球{category}摄像头",
+    ],
+    webcamCityKeyword: "{city}实时摄像头",
+    webcamCountryKeyword: "{country}实景摄像头",
+    webcamCategoryKeyword: "{category}摄像头",
   },
   categories: {
     all: "全部",
@@ -1559,6 +1651,48 @@ const ja: Messages = {
     termsDesc: "LiveCam Global の利用規約、公式埋め込み・権利表記・削除依頼について。",
     contactTitle: "お問い合わせ",
     contactDesc: "ライブカメラの提携、配信削除・プライバシーに関するお問い合わせ窓口。",
+    homeKeywords: [
+      "ライブカメラ",
+      "世界のライブカメラ",
+      "リアルタイム映像",
+      "風景ライブカメラ",
+      "東京ライブカメラ",
+      "タイムズスクエアライブ",
+      "ビーチライブカメラ",
+      "お天気カメラ",
+    ],
+    countriesKeywords: [
+      "国別ライブカメラ",
+      "世界の都市ライブカメラ",
+      "世界ライブカメラ一覧",
+      "ライブカメラマップ",
+      "風景ライブ配信",
+    ],
+    countryKeywords: [
+      "{country} ライブカメラ",
+      "{country} リアルタイム映像",
+      "{country} 街並みカメラ",
+      "{country} 観光ライブカメラ",
+      "{country} 天気",
+    ],
+    cityKeywords: [
+      "{city} ライブカメラ",
+      "{country} {city} ライブカメラ",
+      "{city} リアルタイム映像",
+      "{city} 街並みライブ",
+      "{city} 天気",
+      "{country} ライブカメラ",
+    ],
+    categoryKeywords: [
+      "{category} ライブカメラ",
+      "{category} ライブ配信",
+      "{category} リアルタイム映像",
+      "24時間 {category} カメラ",
+      "世界の{category}ライブカメラ",
+    ],
+    webcamCityKeyword: "{city} ライブカメラ",
+    webcamCountryKeyword: "{country} ライブカメラ",
+    webcamCategoryKeyword: "{category} ライブカメラ",
   },
   categories: {
     all: "すべて",
@@ -1931,6 +2065,48 @@ const es: Messages = {
     termsDesc: "Términos de servicio para visitantes, operadores y socios de LiveCam Global.",
     contactTitle: "Contáctanos",
     contactDesc: "Contacta con LiveCam Global para alianzas, privacidad o soporte técnico.",
+    homeKeywords: [
+      "cámaras en vivo",
+      "webcams del mundo",
+      "cámara en directo",
+      "webcam panorámica",
+      "cámara en vivo Tokio",
+      "webcam Times Square",
+      "cámara de playa",
+      "cámara del clima",
+    ],
+    countriesKeywords: [
+      "webcams por país",
+      "directorio mundial de webcams",
+      "cámaras en vivo por ciudad",
+      "mapa global de webcams",
+      "cámaras panorámicas en vivo",
+    ],
+    countryKeywords: [
+      "cámaras en vivo en {country}",
+      "webcam {country}",
+      "{country} en directo",
+      "cámaras de ciudades en {country}",
+      "clima en vivo {country}",
+    ],
+    cityKeywords: [
+      "cámara en vivo {city}",
+      "webcam {city} {country}",
+      "cámaras en vivo en {city}",
+      "cámara callejera {city}",
+      "clima en vivo {city}",
+      "cámaras en vivo en {country}",
+    ],
+    categoryKeywords: [
+      "cámaras en vivo de {category}",
+      "webcam {category}",
+      "{category} en directo",
+      "cámara 24/7 de {category}",
+      "webcams de {category} en el mundo",
+    ],
+    webcamCityKeyword: "cámara en vivo {city}",
+    webcamCountryKeyword: "webcam {country}",
+    webcamCategoryKeyword: "webcam {category}",
   },
   categories: {
     all: "Todas",
@@ -2303,6 +2479,48 @@ const fr: Messages = {
     termsDesc: "Conditions d'utilisation pour les visiteurs, opérateurs et partenaires de LiveCam Global.",
     contactTitle: "Nous Contacter",
     contactDesc: "Contactez LiveCam Global pour un partenariat, un retrait ou le support technique.",
+    homeKeywords: [
+      "webcam en direct",
+      "webcams du monde",
+      "caméra en direct",
+      "webcam panoramique",
+      "webcam Tokyo",
+      "webcam Times Square",
+      "webcam plage",
+      "caméra météo",
+    ],
+    countriesKeywords: [
+      "webcams par pays",
+      "répertoire mondial des webcams",
+      "caméras en direct par ville",
+      "carte mondiale des webcams",
+      "webcams panoramiques en direct",
+    ],
+    countryKeywords: [
+      "webcams en direct {country}",
+      "webcam {country}",
+      "{country} en direct",
+      "caméras des villes {country}",
+      "météo en direct {country}",
+    ],
+    cityKeywords: [
+      "webcam {city}",
+      "webcam {city} {country}",
+      "webcams en direct {city}",
+      "caméra de rue {city}",
+      "météo en direct {city}",
+      "webcams en direct {country}",
+    ],
+    categoryKeywords: [
+      "webcams en direct {category}",
+      "webcam {category}",
+      "{category} en direct",
+      "caméra 24/7 {category}",
+      "webcams {category} dans le monde",
+    ],
+    webcamCityKeyword: "webcam {city}",
+    webcamCountryKeyword: "webcam {country}",
+    webcamCategoryKeyword: "webcam {category}",
   },
   categories: {
     all: "Toutes",
@@ -2675,6 +2893,48 @@ const de: Messages = {
     termsDesc: "Nutzungsbedingungen für Besucher, Betreiber und Partner von LiveCam Global.",
     contactTitle: "Kontakt",
     contactDesc: "Kontaktieren Sie LiveCam Global für Partnerschaften, Entfernungen oder Support.",
+    homeKeywords: [
+      "Live-Webcam",
+      "Welt-Webcams",
+      "Live-Kamera",
+      "Panorama-Webcam",
+      "Tokio Live-Webcam",
+      "Times Square Webcam",
+      "Strand-Webcam",
+      "Wetterkamera",
+    ],
+    countriesKeywords: [
+      "Webcams nach Land",
+      "Weltweites Webcam-Verzeichnis",
+      "Stadt-Live-Kameras",
+      "Globale Webcam-Karte",
+      "Live-Panorama-Webcams",
+    ],
+    countryKeywords: [
+      "{country} Live-Webcams",
+      "{country} Webcam",
+      "{country} live",
+      "{country} Stadt-Webcams",
+      "{country} Live-Wetter",
+    ],
+    cityKeywords: [
+      "{city} Live-Webcam",
+      "{city} {country} Webcam",
+      "{city} Live-Kameras",
+      "{city} Straßenkamera",
+      "{city} Live-Wetter",
+      "{country} Live-Webcams",
+    ],
+    categoryKeywords: [
+      "{category} Live-Webcams",
+      "{category} Webcam",
+      "{category} Live-Kamera",
+      "24/7 {category} Kamera",
+      "Welt-{category}-Webcams",
+    ],
+    webcamCityKeyword: "{city} Live-Webcam",
+    webcamCountryKeyword: "{country} Webcam",
+    webcamCategoryKeyword: "{category} Webcam",
   },
   categories: {
     all: "Alle",
@@ -2736,6 +2996,13 @@ export function formatMessage(
     (acc, [key, val]) => acc.replaceAll(`{${key}}`, String(val)),
     template
   );
+}
+
+export function formatKeywords(
+  templates: string[],
+  vars: Record<string, string | number>
+): string[] {
+  return templates.map((t) => formatMessage(t, vars));
 }
 
 const WEATHER_LABELS: Record<string, Partial<Record<Locale, string>>> = {

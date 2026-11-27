@@ -15,13 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: seo.countriesTitle,
     description: seo.countriesDesc,
-    keywords: [
-      "webcams by country",
-      "world webcams directory",
-      "city live cameras",
-      "global webcam map",
-      "live scenic webcams",
-    ],
+    keywords: seo.countriesKeywords,
     alternates,
     openGraph: {
       title: `${seo.countriesTitle} | LiveCam Global`,

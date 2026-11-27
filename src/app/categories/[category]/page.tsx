@@ -6,7 +6,7 @@ import { WebcamCard } from "@/components/WebcamCard";
 import { PaginationBar } from "@/components/PaginationBar";
 import { absoluteUrl, buildAlternates } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n-server";
-import { formatMessage, getCategoryLabel, getMessages, localizePath } from "@/lib/i18n";
+import { formatKeywords, formatMessage, getCategoryLabel, getMessages, localizePath } from "@/lib/i18n";
 
 export const revalidate = 600;
 
@@ -29,6 +29,7 @@ export async function generateMetadata({
   return {
     title,
     description,
+    keywords: formatKeywords(seo.categoryKeywords, { category: catLabel }),
     alternates,
     openGraph: {
       title: `${title} | LiveCam Global`,

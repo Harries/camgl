@@ -19,16 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: seo.homeTemplate,
     },
     description: seo.homeDesc,
-    keywords: [
-      "live webcam",
-      "world webcams",
-      "live camera",
-      "scenic webcam",
-      "tokyo live cam",
-      "times square live cam",
-      "beach webcam",
-      "weather cam",
-    ],
+    keywords: seo.homeKeywords,
     alternates: buildAlternates("/", locale),
     openGraph: {
       type: "website",

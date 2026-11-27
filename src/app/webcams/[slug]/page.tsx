@@ -84,9 +84,13 @@ export async function generateMetadata({
     description,
     keywords: [
       webcam.title,
-      `${cityLabel} live cam`,
-      `${countryLabel} webcam`,
-      ...webcam.categories.map((c) => `${getCategoryLabel(locale, c.slug, c.name)} webcam`),
+      formatMessage(seo.webcamCityKeyword, { city: cityLabel }),
+      formatMessage(seo.webcamCountryKeyword, { country: countryLabel }),
+      ...webcam.categories.map((c) =>
+        formatMessage(seo.webcamCategoryKeyword, {
+          category: getCategoryLabel(locale, c.slug, c.name),
+        })
+      ),
     ],
     alternates,
     openGraph: {

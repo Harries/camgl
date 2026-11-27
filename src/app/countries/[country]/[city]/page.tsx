@@ -7,7 +7,7 @@ import { PaginationBar } from "@/components/PaginationBar";
 import { getDaylightInfo } from "@/lib/suncalc";
 import { absoluteUrl, buildAlternates } from "@/lib/seo";
 import { getServerLocale } from "@/lib/i18n-server";
-import { formatMessage, getCityLabel, getCountryLabel, getMessages, localizePath } from "@/lib/i18n";
+import { formatKeywords, formatMessage, getCityLabel, getCountryLabel, getMessages, localizePath } from "@/lib/i18n";
 
 export const revalidate = 600;
 
@@ -34,6 +34,7 @@ export async function generateMetadata({
   return {
     title,
     description,
+    keywords: formatKeywords(seo.cityKeywords, { city: cityLabel, country: countryLabel }),
     alternates,
     openGraph: {
       title: `${title} | LiveCam Global`,
