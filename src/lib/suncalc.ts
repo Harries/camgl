@@ -1,7 +1,15 @@
 import SunCalc from "suncalc";
 
+function isValidDate(date: Date): boolean {
+  return !Number.isNaN(date.getTime());
+}
+
+function toSafeIsoString(date: Date): string | null {
+  return isValidDate(date) ? date.toISOString() : null;
+}
+
 function formatLocalClock(date: Date, timezone: string): string {
-  if (Number.isNaN(date.getTime())) return "—";
+  if (!isValidDate(date)) return "—";
   try {
     return new Intl.DateTimeFormat("en-GB", {
       timeZone: timezone,
@@ -17,7 +25,11 @@ function formatLocalClock(date: Date, timezone: string): string {
 export function getDaylightInfo(lat: number, lng: number, timezone: string) {
   const now = new Date();
   const times = SunCalc.getTimes(now, lat, lng);
-  const isDaylight = now >= times.sunrise && now <= times.sunset;
+  // High-latitude locations (e.g. northern Norway) produce Invalid Date for sunrise/sunset during polar night or midnight sun.
+  const isDaylight =
+    isValidDate(times.sunrise) && isValidDate(times.sunset)
+      ? now >= times.sunrise && now <= times.sunset
+      : SunCalc.getPosition(now, lat, lng).altitude > 0;
 
   let localTime = "";
   try {
@@ -35,8 +47,8 @@ export function getDaylightInfo(lat: number, lng: number, timezone: string) {
   return {
     isDaylight,
     localTime,
-    sunrise: times.sunrise.toISOString(),
-    sunset: times.sunset.toISOString(),
+    sunrise: toSafeIsoString(times.sunrise),
+    sunset: toSafeIsoString(times.sunset),
     sunriseLocal: formatLocalClock(times.sunrise, timezone),
     sunsetLocal: formatLocalClock(times.sunset, timezone),
     goldenHourLocal: formatLocalClock(times.goldenHour, timezone),
