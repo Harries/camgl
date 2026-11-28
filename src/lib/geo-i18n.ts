@@ -167,6 +167,11 @@ const CITY_NAMES: Record<string, Partial<Record<Locale, string>>> = {
   varazdin: { en: "Varaždin", zh: "瓦拉日丁", ja: "ヴァラジュディン", es: "Varaždin", fr: "Varaždin", de: "Varaždin" },
   vladivostok: { en: "Vladivostok", zh: "符拉迪沃斯托克", ja: "ウラジオストク", es: "Vladivostok", fr: "Vladivostok", de: "Wladiwostok" },
   zakopane: { en: "Zakopane", zh: "扎科帕内", ja: "ザコパネ", es: "Zakopane", fr: "Zakopane", de: "Zakopane" },
+  adelboden: { en: "Adelboden", zh: "阿德尔博登", ja: "アーデルボーデン", es: "Adelboden", fr: "Adelboden", de: "Adelboden" },
+  pesaro: { en: "Pesaro", zh: "佩萨罗", ja: "ペーザロ", es: "Pésaro", fr: "Pesaro", de: "Pesaro" },
+  eilat: { en: "Eilat", zh: "埃拉特", ja: "エイラート", es: "Eilat", fr: "Eilat", de: "Eilat" },
+  "pas-de-la-casa": { en: "Pas de la Casa", zh: "帕斯德拉卡萨", ja: "パス・デ・ラ・カサ", es: "Pas de la Casa", fr: "Le Pas de la Casa", de: "Pas de la Casa" },
+  "santa-maria": { en: "Santa Maria", zh: "圣玛丽亚", ja: "サンタ・マリア", es: "Santa María", fr: "Santa Maria", de: "Santa Maria" },
   unknown: { en: "Scenic View", zh: "风景点位", ja: "絶景スポット", es: "Vista Panorámica", fr: "Vue Panoramique", de: "Panoramablick" },
 };
 
@@ -299,6 +304,7 @@ const COUNTRY_SLUG_TO_ISO: Record<string, string> = {
   "puerto-rico": "PR",
   aruba: "AW",
   curacao: "CW",
+  "cape-verde": "CV",
   bermuda: "BM",
   greenland: "GL",
   "faroe-islands": "FO",
